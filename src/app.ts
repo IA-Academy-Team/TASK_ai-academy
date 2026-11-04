@@ -4,6 +4,7 @@ import express from "express";
 import { auth } from "./lib/auth.ts";
 import { attachSession } from "./middleware/session.ts";
 import { healthRouter } from "./routes/health.ts";
+import { tasksRouter } from "./routes/tasks.ts";
 
 export function createApp() {
   const app = express();
@@ -26,6 +27,8 @@ export function createApp() {
     }
     res.render("login");
   });
+
+  app.use(tasksRouter);
 
   return app;
 }

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>AI Academy · Centro de control — Tareas</title>
+<style>
+:root{--nav:#1D1930;--primary:#7346CC;--primary-dark:#5A37A5;--lav:#F0EBFB;--paper:#FFF;--bg:#F7F8FC;--ink:#252138;--text:#5A566B;--muted:#898699;--line:#E9E8F0;--green:#178168;--greenlight:#E7F6F0;--orange:#AB702B;--orangelight:#FFF1DE;--red:#BD4565;--redlight:#FCEBF0}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:'Poppins','Segoe UI',Arial,sans-serif;font-size:13px}
+.app{min-height:100vh;display:flex}
+.sidebar{width:245px;flex:0 0 245px;background:var(--nav);color:#DED8EB;padding:24px 16px}
+.sidebar h2{color:#fff;font-size:16px;margin:0 0 20px}
+.sidebar a,.sidebar button{display:block;color:#C8BED8;text-decoration:none;padding:10px 12px;border-radius:10px;font-size:12px;font-weight:650;background:none;border:0;width:100%;text-align:left;cursor:pointer}
+.sidebar a.on{background:#6D4CB5;color:#fff}
+.content{flex:1;max-width:1720px;margin:0 auto;padding:25px 34px 42px}
+.page-title{font-size:25px;font-weight:800;margin:0 0 7px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:13px;box-shadow:0 6px 24px rgba(25,20,45,.035);margin-bottom:20px}
+.pad{padding:19px 23px}
+.form-grid{display:flex;gap:12px;align-items:flex-end}
+.field label{display:block;font-size:11px;font-weight:740;margin-bottom:8px}
+.field input,.field select{padding:11px 13px;min-height:42px;border:1px solid #DDD9E9;border-radius:9px;background:#fff;color:var(--ink)}
+.btn{border:1px solid var(--line);background:#fff;color:#575168;font-weight:720;padding:10px 14px;border-radius:9px;cursor:pointer;font-size:11px}
+.btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+.btn.primary:hover{background:var(--primary-dark)}
+.error{color:var(--red);background:var(--redlight);border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px}
+.table{width:100%;border-collapse:collapse}
+.table th{font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:#8A8799;background:#FBFAFD;text-align:left;padding:12px 11px;border-bottom:1px solid var(--line)}
+.table td{font-size:12px;color:var(--text);padding:12px 11px;border-bottom:1px solid #F0EFF5}
+.badge{display:inline-block;padding:4px 10px;border-radius:999px;font-size:10.5px;font-weight:700}
+.badge.pendiente{background:var(--lav);color:var(--primary-dark)}
+.badge.en_progreso{background:var(--orangelight);color:var(--orange)}
+.badge.completada{background:var(--greenlight);color:var(--green)}
+.filters{display:flex;gap:8px;margin-bottom:14px}
+.filters a{padding:7px 13px;border-radius:999px;border:1px solid var(--line);font-size:11px;color:var(--text);text-decoration:none}
+.filters a.on{background:var(--primary);border-color:var(--primary);color:#fff}
+.empty{padding:20px;text-align:center;color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+<div class="app">
+  <nav class="sidebar">
+    <h2>AI Academy</h2>
+    <a class="on" href="/tareas">Tareas</a>
+    <% if (user.role === "admin") { %><a href="/admin/usuarios">Usuarios</a><% } %>
+    <button type="button" onclick="fetch('/api/auth/sign-out',{method:'POST'}).then(()=>location.href='/login')">Salir</button>
+  </nav>
+  <main class="content">
+    <h1 class="page-title">Centro de control — Tareas</h1>
+
+    <section class="card pad">
+      <% if (typeof error !== "undefined" && error) { %><div class="error"><%= error %></div><% } %>
+      <form method="post" action="/tareas" class="form-grid">
+        <div class="field" style="flex:1">
+          <label for="title">Nueva tarea</label>
+          <input id="title" name="title" maxlength="200" placeholder="Ej.: Revisar propuesta comercial" required />
+        </div>
+        <button type="submit" class="btn primary">Crear tarea</button>
+      </form>
+    </section>
+
+    <div class="filters">
+      <a href="/tareas" class="<%= !estado ? 'on' : '' %>">Todas</a>
+      <a href="/tareas?estado=pendiente" class="<%= estado === 'pendiente' ? 'on' : '' %>">Pendiente</a>
+      <a href="/tareas?estado=en_progreso" class="<%= estado === 'en_progreso' ? 'on' : '' %>">En progreso</a>
+      <a href="/tareas?estado=completada" class="<%= estado === 'completada' ? 'on' : '' %>">Completada</a>
+    </div>
+
+    <section class="card">
+      <% if (tasks.length === 0) { %>
+        <div class="empty">Sin tareas todavía.</div>
+      <% } else { %>
+      <div style="overflow:auto">
+      <table class="table">
+        <thead><tr><th>Tarea</th><th>Estado</th><th>Acción</th></tr></thead>
+        <tbody>
+          <% tasks.forEach(function(t) { %>
+          <tr>
+            <td><%= t.title %></td>
+            <td><span class="badge <%= t.status %>"><%= t.status %></span></td>
+            <td>
+              <form method="post" action="/tareas/<%= t.id %>/estado" style="display:inline">
+                <select name="status" onchange="this.form.submit()">
+                  <option value="pendiente" <%= t.status === 'pendiente' ? 'selected' : '' %>>pendiente</option>
+                  <option value="en_progreso" <%= t.status === 'en_progreso' ? 'selected' : '' %>>en_progreso</option>
+                  <option value="completada" <%= t.status === 'completada' ? 'selected' : '' %>>completada</option>
+                </select>
+              </form>
+            </td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+      </div>
+      <% } %>
+    </section>
+  </main>
+</div>
+</body>
+</html>
