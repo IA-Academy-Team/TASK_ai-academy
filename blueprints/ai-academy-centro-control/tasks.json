@@ -284,7 +284,7 @@
       "tests/middleware/authorize.test.ts",
       "tests/db/tasks-repo.test.ts"
     ],
-    "status": "pending"
+    "status": "done"
   },
   {
     "id": "E2-T5",
