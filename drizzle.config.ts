@@ -4,7 +4,7 @@ import { defineConfig } from "drizzle-kit";
 // with a deliberately wrong fallback below and a clean shell env) — no explicit loader needed.
 export default defineConfig({
   dialect: "postgresql",
-  schema: "./src/db/schema.ts",
+  schema: ["./src/db/schema.ts", "./src/db/auth-schema.ts"],
   out: "./drizzle",
   dbCredentials: {
     url: process.env.DATABASE_URL ?? "postgresql://app:app@localhost:5433/ai_academy",

@@ -83,7 +83,7 @@
       "drizzle.config.ts",
       "src/db/client.ts"
     ],
-    "status": "pending"
+    "status": "done"
   },
   {
     "id": "E1-T4",
