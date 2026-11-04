@@ -25,7 +25,7 @@
       "src/routes/health.ts",
       "tests/smoke/health.test.ts"
     ],
-    "status": "pending"
+    "status": "done"
   },
   {
     "id": "E1-T2",
