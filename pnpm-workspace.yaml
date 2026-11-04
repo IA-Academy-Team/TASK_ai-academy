@@ -1,0 +1,23 @@
+allowBuilds:
+  esbuild: true
+minimumReleaseAgeExclude:
+  - '@better-auth/core@1.7.17'
+  - '@better-auth/drizzle-adapter@1.7.17'
+  - '@better-auth/kysely-adapter@1.7.17'
+  - '@better-auth/memory-adapter@1.7.17'
+  - '@better-auth/mongo-adapter@1.7.17'
+  - '@better-auth/prisma-adapter@1.7.17'
+  - '@better-auth/telemetry@1.7.17'
+  - '@biomejs/biome@2.6.5'
+  - '@biomejs/cli-android-arm64@2.6.5'
+  - '@biomejs/cli-android-x64@2.6.5'
+  - '@biomejs/cli-darwin-arm64@2.6.5'
+  - '@biomejs/cli-darwin-x64@2.6.5'
+  - '@biomejs/cli-linux-arm64-musl@2.6.5'
+  - '@biomejs/cli-linux-arm64@2.6.5'
+  - '@biomejs/cli-linux-x64-musl@2.6.5'
+  - '@biomejs/cli-linux-x64@2.6.5'
+  - '@biomejs/cli-win32-arm64@2.6.5'
+  - '@biomejs/cli-win32-x64@2.6.5'
+  - auth@1.7.17
+  - better-auth@1.7.17
