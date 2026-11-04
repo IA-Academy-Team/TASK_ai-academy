@@ -53,7 +53,7 @@
       "src/db/schema.ts",
       "src/db/client.ts"
     ],
-    "status": "pending"
+    "status": "done"
   },
   {
     "id": "E1-T3",
