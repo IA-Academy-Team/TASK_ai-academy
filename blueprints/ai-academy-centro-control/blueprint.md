@@ -560,7 +560,7 @@ pnpm typecheck                                     # expect: exit 0
 pnpm lint                                          # expect: exit 0
 pnpm build                                          # expect: exit 0, dist/server.js existe
 pnpm test tests/smoke/health.test.ts                 # expect: exit 0, 1 passed
-node --env-file=.env dist/server.js & pid=$!; sleep 1; code="$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/health)"; kill "$pid" 2>/dev/null || true; test "$code" = "200"
+node --env-file=.env dist/server.js & pid=$!; sleep 1; code="$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3100/health)"; kill "$pid" 2>/dev/null || true; test "$code" = "200"
                                                         # expect: exit 0 — el binario construido responde 200 de verdad
 ```
 
@@ -965,7 +965,7 @@ pnpm lint                                     # expect: exit 0
 pnpm typecheck                                 # expect: exit 0
 pnpm test                                       # expect: exit 0
 pnpm build                                       # expect: exit 0
-node --env-file=.env dist/server.js & pid=$!; sleep 1; code="$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/health)"; kill "$pid" 2>/dev/null || true; test "$code" = "200"
+node --env-file=.env dist/server.js & pid=$!; sleep 1; code="$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3100/health)"; kill "$pid" 2>/dev/null || true; test "$code" = "200"
                                                    # expect: exit 0
 ```
 
@@ -1007,7 +1007,7 @@ self-hosted.
 | `PORT` | puerto HTTP de la app | — (default 3000) | 1 | no |
 | `DATABASE_URL` | string de conexión a Postgres | `pnpm db:up` imprime el puerto; local: `postgresql://app:app@localhost:5433/ai_academy` | 2 | sí (en producción) |
 | `BETTER_AUTH_SECRET` | firma las sesiones de better-auth | generar 32+ caracteres aleatorios | 3 | sí |
-| `BETTER_AUTH_URL` | URL base que better-auth usa para cookies/redirects | `http://localhost:3000` en local | 3 | no |
+| `BETTER_AUTH_URL` | URL base que better-auth usa para cookies/redirects | `http://localhost:3100` en local | 3 | no |
 
 `.env.example` está commiteado con las cuatro, con valores de desarrollo funcionales (no en blanco)
 salvo el secreto, que lleva un placeholder explícito a reemplazar. `.env` está en `.gitignore`. La
@@ -1115,7 +1115,7 @@ administrar un servidor). Build command: `pnpm build`. Output: `dist/`. Runtime:
 
 | Environment | Branch | URL | Database | Third-party mode |
 |---|---|---|---|---|
-| Local | — | localhost:3000 | contenedor Docker local | — (no hay terceros) |
+| Local | — | localhost:3100 | contenedor Docker local | — (no hay terceros) |
 | Producción | `main` | a definir por el equipo al desplegar | Postgres en el mismo host o un servicio administrado | — |
 
 No hay ambiente de Preview en v1 — es una herramienta interna de equipo chico, no justifica un
@@ -1350,7 +1350,7 @@ de la documentación de la herramienta.
 
 | Shared value | Single source | Literal value | Every other place it appears | Compared |
 |---|---|---|---|---|
-| Puerto de la app | `src/server.ts` (`process.env.PORT ?? 3000`) | `3000` | `.env.example` (`PORT=3000`), `playwright.config.ts` (`baseURL: "http://localhost:3000"`) | yes |
+| Puerto de la app | `.env.example` (`PORT=3100`) — `src/server.ts` solo tiene un fallback genérico (`?? 3000`) para cuando no hay `.env` | `3100` | `playwright.config.ts` (`baseURL`/`webServer.url` en `http://localhost:3100`) | yes |
 | Puerto de Postgres (host) | `docker-compose.yml` (`ports: "5433:5432"`) | `5433` | `.env.example` (`DATABASE_URL=...localhost:5433/...`), `drizzle.config.ts` (fallback) | yes |
 | Punto de entrada construido | `tsconfig.json` (`outDir: "dist"`, `rootDir: "src"`) + `src/server.ts` | `dist/server.js` | cada `Verify` de §9 que corre el entry point (steps 1 y 12), `package.json`'s `start` script | yes |
 | Nombre del proyecto | `package.json` (`"name"`) | `ai-academy-centro-control` | slug del bundle (`./blueprints/ai-academy-centro-control/`) | yes |
@@ -1378,7 +1378,7 @@ pnpm lint                                              # expect: exit 0, cero er
 pnpm test                                               # expect: exit 0, 0 failed, 0 skipped
 pnpm test:e2e                                            # expect: exit 0, 0 failed
 pnpm build                                                # expect: exit 0
-node --env-file=.env dist/server.js & pid=$!; sleep 1; code="$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/health)"; kill "$pid" 2>/dev/null || true; test "$code" = "200"
+node --env-file=.env dist/server.js & pid=$!; sleep 1; code="$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3100/health)"; kill "$pid" 2>/dev/null || true; test "$code" = "200"
                                                              # expect: exit 0 — prueba que el artefacto construido es el que de verdad corre
 ```
 

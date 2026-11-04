@@ -16,7 +16,7 @@
       "pnpm lint",
       "pnpm build",
       "pnpm test tests/smoke/health.test.ts",
-      "node --env-file=.env dist/server.js & pid=$!; sleep 1; code=\"$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/health)\"; kill \"$pid\" 2>/dev/null || true; test \"$code\" = \"200\""
+      "node --env-file=.env dist/server.js & pid=$!; sleep 1; code=\"$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3100/health)\"; kill \"$pid\" 2>/dev/null || true; test \"$code\" = \"200\""
     ],
     "checkpoint": "step-01-scaffold",
     "files": [
@@ -310,7 +310,7 @@
     "files": [
       "tests/e2e/flujo-completo.spec.ts"
     ],
-    "status": "pending"
+    "status": "done"
   },
   {
     "id": "E2-T6",
@@ -330,7 +330,7 @@
       "pnpm typecheck",
       "pnpm test",
       "pnpm build",
-      "node --env-file=.env dist/server.js & pid=$!; sleep 1; code=\"$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/health)\"; kill \"$pid\" 2>/dev/null || true; test \"$code\" = \"200\""
+      "node --env-file=.env dist/server.js & pid=$!; sleep 1; code=\"$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3100/health)\"; kill \"$pid\" 2>/dev/null || true; test \"$code\" = \"200\""
     ],
     "checkpoint": "step-12-ci-readme",
     "files": [

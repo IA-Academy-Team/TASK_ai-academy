@@ -356,7 +356,7 @@ pnpm lint
 pnpm typecheck
 pnpm test
 pnpm build
-node --env-file=.env dist/server.js & pid=$!; sleep 1; code="$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/health)"; kill "$pid" 2>/dev/null || true; test "$code" = "200"
+node --env-file=.env dist/server.js & pid=$!; sleep 1; code="$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3100/health)"; kill "$pid" 2>/dev/null || true; test "$code" = "200"
 ```
 
 **Checkpoint**

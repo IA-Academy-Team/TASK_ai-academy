@@ -6,12 +6,12 @@ export default defineConfig({
   fullyParallel: false,
   retries: 0,
   use: {
-    baseURL: "http://localhost:3000",
+    baseURL: "http://localhost:3100",
     trace: "retain-on-failure",
   },
   webServer: {
     command: "pnpm dev",
-    url: "http://localhost:3000/health",
+    url: "http://localhost:3100/health",
     reuseExistingServer: true,
     timeout: 30_000,
   },
