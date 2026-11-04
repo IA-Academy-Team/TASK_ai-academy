@@ -142,7 +142,7 @@
       "src/db/tasks-repo.ts",
       "tests/db/tasks-repo.test.ts"
     ],
-    "status": "pending"
+    "status": "done"
   },
   {
     "id": "E1-T6",
