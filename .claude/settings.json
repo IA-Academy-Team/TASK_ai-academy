@@ -1,0 +1,50 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm install:*)",
+      "Bash(pnpm typecheck)",
+      "Bash(pnpm build)",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm lint:*)",
+      "Bash(pnpm format:*)",
+      "Bash(pnpm dev:*)",
+      "Bash(pnpm start:*)",
+      "Bash(pnpm db:up)",
+      "Bash(pnpm db:down)",
+      "Bash(pnpm db:generate)",
+      "Bash(pnpm db:migrate)",
+      "Bash(pnpm db:seed)",
+      "Bash(pnpm db:studio)",
+      "Bash(pnpm auth:generate)",
+      "Bash(pnpm exec playwright install:*)",
+      "Bash(pnpm approve-builds:*)",
+      "Bash(node --env-file=.env dist/server.js)",
+      "Bash(node -e:*)",
+      "Bash(curl -s -o /dev/null -w*)",
+      "Bash(curl -sf http://localhost:*)",
+      "Bash(kill:*)",
+      "Bash(sleep:*)",
+      "Bash(test:*)",
+      "Bash(docker compose up:*)",
+      "Bash(docker compose down:*)",
+      "Bash(docker compose exec:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git tag:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git ls-files:*)",
+      "Bash(git check-ignore:*)",
+      "Bash(git rev-list:*)",
+      "Bash(git rev-parse:*)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Bash(git push:*)",
+      "Bash(docker compose down -v:*)"
+    ]
+  }
+}
