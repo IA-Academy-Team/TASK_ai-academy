@@ -200,7 +200,7 @@
       "src/schemas/task.ts",
       "tests/routes/tasks-filtros.test.ts"
     ],
-    "status": "pending"
+    "status": "done"
   },
   {
     "id": "E2-T2",
