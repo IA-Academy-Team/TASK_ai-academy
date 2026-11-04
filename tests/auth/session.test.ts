@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import supertest from "supertest";
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { createApp } from "../../src/app.ts";
 import { user } from "../../src/db/auth-schema.ts";
 import { db } from "../../src/db/client.ts";
@@ -19,10 +19,6 @@ async function makeAdmin(email: string) {
 }
 
 describe("session and authorize", () => {
-  afterEach(async () => {
-    await db.delete(user);
-  });
-
   it("GET /login sin sesion renderiza el formulario con 200", async () => {
     const app = createApp();
     const res = await supertest(app).get("/login");

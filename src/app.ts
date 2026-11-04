@@ -2,6 +2,7 @@ import path from "node:path";
 import { toNodeHandler } from "better-auth/node";
 import express from "express";
 import { auth } from "./lib/auth.ts";
+import { errorHandler } from "./middleware/error-handler.ts";
 import { attachSession } from "./middleware/session.ts";
 import { adminRouter } from "./routes/admin.ts";
 import { healthRouter } from "./routes/health.ts";
@@ -31,6 +32,8 @@ export function createApp() {
 
   app.use(tasksRouter);
   app.use(adminRouter);
+
+  app.use(errorHandler);
 
   return app;
 }
