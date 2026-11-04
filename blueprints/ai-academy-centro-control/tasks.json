@@ -112,7 +112,7 @@
       "src/views/login.ejs",
       "tests/auth/session.test.ts"
     ],
-    "status": "pending"
+    "status": "done"
   },
   {
     "id": "E1-T5",
