@@ -2,22 +2,115 @@
 <html lang="es">
 <head>
 <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <link rel="icon" type="image/png" href="/static/brand/favicon.png" />
 <title>AI Academy · Centro de control — Login</title>
 <%- include('partials/theme-init') %>
 <%- include('partials/styles') %>
+<style>
+  .login-main{min-height:100vh;display:grid;place-items:center;padding:28px 16px;position:relative;background:radial-gradient(ellipse at 50% 36%,var(--navlight) 0%,var(--nav) 42%,var(--bg) 85%);overflow:hidden}
+  .splash{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:21px;z-index:2;pointer-events:none;transition:opacity .65s ease,visibility .65s ease}
+  .logo-glow{position:absolute;width:260px;height:260px;border-radius:50%;background:color-mix(in srgb,var(--accent) 22%,transparent);filter:blur(80px);z-index:-1}
+  .splash-logo{width:clamp(96px,22vw,140px);height:auto;border-radius:16px;filter:drop-shadow(0 0 28px color-mix(in srgb,var(--accent) 55%,transparent));opacity:0;will-change:transform,opacity}
+  .splash-name{font-size:clamp(24px,6vw,40px);font-weight:800;letter-spacing:.03em;opacity:0;transform:translateY(14px);white-space:nowrap;color:#fff}
+  .splash-name span{color:var(--accent)}
+  .splash-subtitle{color:#C6D6D7;letter-spacing:.27em;text-transform:uppercase;font-size:10px;opacity:0}
+  .play .splash-logo{animation:logoIntro .55s ease-out both,spinZ 2.5s .55s linear both}
+  .play .splash-name{animation:reveal .7s 3.1s ease-out both}
+  .play .splash-subtitle{animation:reveal .7s 3.4s ease-out both}
+  @keyframes logoIntro{from{opacity:0;scale:.72}to{opacity:1;scale:1}}
+  @keyframes spinZ{from{transform:rotateZ(0deg)}to{transform:rotateZ(1800deg)}}
+  @keyframes reveal{to{opacity:1;transform:translateY(0)}}
+  .splash.out{opacity:0;visibility:hidden}
+  .login-card{width:min(100%,380px);opacity:0;transform:translateY(30px) scale(.97);pointer-events:none;transition:opacity .85s ease,transform .85s cubic-bezier(.16,1,.3,1);position:relative;z-index:1}
+  .login-card.show{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
+  .login-brand{display:flex;align-items:center;gap:12px;margin-bottom:22px}
+  .login-brand img{width:42px;height:42px;border-radius:16px;object-fit:cover}
+  .login-brand strong{font-size:16px}
+  .login-brand small{display:block;color:var(--muted);font-size:11px;margin-top:2px}
+  .login-card h1{font-size:18px;margin:0 0 6px}
+  .login-intro{color:var(--muted);font-size:12px;line-height:1.6;margin:0 0 20px}
+  .pw-field{position:relative}
+  .pw-field button{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:0;background:none;color:var(--muted);padding:7px;cursor:pointer;font-size:11px;font-weight:700}
+  .login-options{display:flex;justify-content:space-between;gap:10px;align-items:center;margin:15px 0 20px;font-size:11px;color:var(--muted)}
+  .login-options label{display:flex;align-items:center;gap:8px;font-weight:400;margin:0}
+  .login-options input{width:auto;min-height:auto;accent-color:var(--primary)}
+  .login-options a{color:var(--primary)}
+  .login-bottom{margin-top:20px;text-align:center;color:var(--muted);font-size:11px}
+  .replay{display:block;margin:13px auto 0;border:0;background:transparent;color:var(--primary);text-decoration:underline;text-underline-offset:3px;cursor:pointer;font-size:11px}
+  .notice{min-height:16px;margin:13px 0 0;text-align:center;font-size:12px}
+  .skip{position:fixed;top:18px;right:18px;z-index:5;color:#fff;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);border-radius:22px;padding:9px 15px;cursor:pointer;font-size:12px}
+  .skip.hide{display:none}
+</style>
 </head>
 <body>
-<div class="auth-shell">
-  <form id="login-form" class="card pad auth-card">
-    <h1>AI Academy · Centro de control</h1>
-    <div id="error" class="error" style="display:none"></div>
-    <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" required /></div>
-    <div class="field"><label for="password">Contraseña</label><input id="password" name="password" type="password" required /></div>
-    <button type="submit" class="btn primary" style="width:100%;justify-content:center">Entrar</button>
-  </form>
-</div>
+<main class="login-main">
+  <button class="skip" id="skip" type="button">Omitir intro</button>
+  <div class="splash play" id="splash" aria-label="Animación de presentación de AI Academy">
+    <div class="logo-glow"></div>
+    <img class="splash-logo" alt="Logo AI Academy" src="/static/brand/logo.png" />
+    <div class="splash-name">AI <span>ACADEMY</span></div>
+    <div class="splash-subtitle">Centro de control</div>
+  </div>
+  <section class="card pad login-card" id="login" aria-label="Formulario de acceso" aria-hidden="true">
+    <div class="login-brand">
+      <img src="/static/brand/logo.png" alt="" />
+      <div><strong>AI Academy</strong><small>Centro de control</small></div>
+    </div>
+    <h1>Bienvenido de nuevo</h1>
+    <p class="login-intro">Accede a tu espacio de trabajo con tu cuenta institucional.</p>
+    <form id="login-form">
+      <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" autocomplete="username" required /></div>
+      <div class="field"><label for="password">Contraseña</label>
+        <div class="pw-field">
+          <input id="password" name="password" type="password" autocomplete="current-password" required />
+          <button type="button" id="toggle-password" aria-label="Mostrar contraseña">Mostrar</button>
+        </div>
+      </div>
+      <div class="login-options"><label><input type="checkbox" /> Recordarme</label></div>
+      <button type="submit" class="btn primary" style="width:100%;justify-content:center">Entrar</button>
+      <p class="notice error" id="error" style="display:none"></p>
+    </form>
+    <div class="login-bottom">AI Academy · Acceso exclusivo para el equipo</div>
+    <button class="replay" id="replay" type="button">↻ Repetir animación</button>
+  </section>
+</main>
 <script>
+  const splash = document.getElementById("splash");
+  const login = document.getElementById("login");
+  const skip = document.getElementById("skip");
+  const SPLASH_DURATION_MS = 4500;
+  let timers = [];
+  function cancelTimers() { timers.forEach(clearTimeout); timers = []; }
+  function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
+  function finishSplash() {
+    cancelTimers();
+    splash.classList.add("out");
+    login.classList.add("show");
+    login.setAttribute("aria-hidden", "false");
+    skip.classList.add("hide");
+  }
+  function playSplash() {
+    cancelTimers();
+    login.classList.remove("show");
+    login.setAttribute("aria-hidden", "true");
+    skip.classList.remove("hide");
+    splash.classList.remove("out", "play");
+    void splash.offsetWidth;
+    splash.classList.add("play");
+    later(finishSplash, SPLASH_DURATION_MS);
+  }
+  skip.addEventListener("click", finishSplash);
+  document.getElementById("replay").addEventListener("click", playSplash);
+  document.getElementById("toggle-password").addEventListener("click", () => {
+    const pwd = document.getElementById("password");
+    const btn = document.getElementById("toggle-password");
+    pwd.type = pwd.type === "password" ? "text" : "password";
+    btn.textContent = pwd.type === "password" ? "Mostrar" : "Ocultar";
+  });
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) finishSplash();
+  else later(finishSplash, SPLASH_DURATION_MS);
+
   document.getElementById("login-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const email = document.getElementById("email").value;
