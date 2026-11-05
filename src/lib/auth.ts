@@ -14,6 +14,7 @@ export const auth = betterAuth({
     additionalFields: {
       role: { type: "string", defaultValue: "usuario", input: false },
       isActive: { type: "boolean", defaultValue: true, input: false },
+      weeklyCapacityHours: { type: "number", defaultValue: 40, input: false },
     },
   },
 });

@@ -50,6 +50,7 @@ describe("tasks-repo", () => {
       dependencyId: null,
       due: "2026-01-10",
       supportIds: [],
+      actorId: leader.id,
     });
     expect(t1.status).toBe("pendiente");
     expect(t1.order).toBe(1);
@@ -66,6 +67,7 @@ describe("tasks-repo", () => {
       dependencyId: null,
       due: "2026-01-12",
       supportIds: [],
+      actorId: leader.id,
     });
     expect(t2.order).toBe(2);
 
@@ -88,6 +90,7 @@ describe("tasks-repo", () => {
       dependencyId: null,
       due: "2026-01-05",
       supportIds: [],
+      actorId: leader.id,
     });
     const t = await createTask({
       projectId: project.id,
@@ -101,6 +104,7 @@ describe("tasks-repo", () => {
       dependencyId: dep.id,
       due: "2026-01-10",
       supportIds: [],
+      actorId: leader.id,
     });
 
     await expect(transitionTask(t.id, "activa", leader.id, {})).rejects.toThrow(
@@ -133,6 +137,7 @@ describe("tasks-repo", () => {
       dependencyId: null,
       due: "2026-01-10",
       supportIds: [],
+      actorId: leader.id,
     });
     const b = await createTask({
       projectId: project.id,
@@ -146,6 +151,7 @@ describe("tasks-repo", () => {
       dependencyId: null,
       due: "2026-01-10",
       supportIds: [],
+      actorId: leader.id,
     });
 
     await transitionTask(a.id, "activa", leader.id, {});
@@ -169,6 +175,7 @@ describe("tasks-repo", () => {
       dependencyId: null,
       due: "2026-01-10",
       supportIds: [],
+      actorId: leader.id,
     });
     await transitionTask(t.id, "activa", leader.id, {});
     await transitionTask(t.id, "revision", leader.id, {});
@@ -199,6 +206,7 @@ describe("tasks-repo", () => {
       dependencyId: null,
       due: "2026-01-10",
       supportIds: [],
+      actorId: leader.id,
     });
 
     await expect(
@@ -232,6 +240,7 @@ describe("tasks-repo", () => {
       dependencyId: null,
       due: "2026-01-10",
       supportIds: [],
+      actorId: leader.id,
     });
 
     const log = await logHours({

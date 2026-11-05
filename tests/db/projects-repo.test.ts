@@ -77,6 +77,7 @@ describe("projects-repo", () => {
       limitActive: 5,
       limitReview: 5,
       due: "2026-03-01",
+      actorId: leader.id,
     });
     await setMembers(project.id, [leader.id, member.id]);
 

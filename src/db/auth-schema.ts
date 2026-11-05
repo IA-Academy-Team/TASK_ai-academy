@@ -1,5 +1,12 @@
 import { relations } from "drizzle-orm";
-import { boolean, index, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  index,
+  integer,
+  pgTable,
+  text,
+  timestamp,
+} from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -14,6 +21,7 @@ export const user = pgTable("user", {
     .notNull(),
   role: text("role").default("usuario").notNull(),
   isActive: boolean("is_active").default(true).notNull(),
+  weeklyCapacityHours: integer("weekly_capacity_hours").default(40).notNull(),
 });
 
 export const session = pgTable(

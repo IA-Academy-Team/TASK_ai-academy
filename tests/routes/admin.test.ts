@@ -164,4 +164,55 @@ describe("admin usuarios", () => {
       .where(eq(user.email, "leader1@test.local"));
     expect(after).toBeDefined();
   });
+
+  it("POST /admin/usuarios/:id/eliminar rechaza si tiene historial de auditoría", async () => {
+    const { recordChange } = await import("../../src/db/audit-repo.ts");
+
+    const app = createApp();
+    const adminEmail = "adminx8@test.local";
+    const adminCookie = await signUpAndGetCookie(app, adminEmail);
+    await db
+      .update(user)
+      .set({ role: "admin" })
+      .where(eq(user.email, adminEmail));
+    const [admin] = await db
+      .select()
+      .from(user)
+      .where(eq(user.email, adminEmail));
+
+    await signUpAndGetCookie(app, "actor1@test.local");
+    const [actor] = await db
+      .select()
+      .from(user)
+      .where(eq(user.email, "actor1@test.local"));
+
+    const project = await createProject({
+      name: "Proyecto con historial",
+      code: "AUD-001",
+      objective: "Probar el bloqueo por audit_log",
+      leaderId: admin.id,
+      start: "2026-01-01",
+      due: "2026-02-01",
+      limitActive: 2,
+      limitReview: 2,
+      memberIds: [actor.id],
+    });
+    await recordChange({
+      projectId: project.id,
+      actorId: actor.id,
+      action: "project_settings_updated",
+      note: "registro de prueba",
+    });
+
+    const res = await supertest(app)
+      .post(`/admin/usuarios/${actor.id}/eliminar`)
+      .set("Cookie", adminCookie);
+    expect(res.status).toBe(400);
+
+    const [after] = await db
+      .select()
+      .from(user)
+      .where(eq(user.email, "actor1@test.local"));
+    expect(after).toBeDefined();
+  });
 });

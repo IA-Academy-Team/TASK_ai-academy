@@ -1,8 +1,14 @@
-import { count, eq } from "drizzle-orm";
+import { count, eq, or } from "drizzle-orm";
 import { Router } from "express";
 import { user } from "../db/auth-schema.ts";
 import { db } from "../db/client.ts";
-import { projects, taskLogs, tasks } from "../db/schema.ts";
+import {
+  auditLog,
+  projects,
+  supportRequests,
+  taskLogs,
+  tasks,
+} from "../db/schema.ts";
 import { auth } from "../lib/auth.ts";
 import { authorize } from "../middleware/authorize.ts";
 import { createUserSchema } from "../schemas/admin.ts";
@@ -74,14 +80,33 @@ adminRouter.post(
       .select({ value: count() })
       .from(taskLogs)
       .where(eq(taskLogs.userId, id));
+    const [{ value: auditRows }] = await db
+      .select({ value: count() })
+      .from(auditLog)
+      .where(eq(auditLog.actorId, id));
+    const [{ value: supportRequestRows }] = await db
+      .select({ value: count() })
+      .from(supportRequests)
+      .where(
+        or(
+          eq(supportRequests.requestedBy, id),
+          eq(supportRequests.targetUserId, id),
+        ),
+      );
 
-    if (ledProjects > 0 || ownedTasks > 0 || loggedHours > 0) {
+    if (
+      ledProjects > 0 ||
+      ownedTasks > 0 ||
+      loggedHours > 0 ||
+      auditRows > 0 ||
+      supportRequestRows > 0
+    ) {
       const users = await db.select().from(user);
       res.status(400).render("admin/usuarios", {
         users,
         user: req.user,
         error:
-          "No se puede eliminar: el usuario lidera proyectos, tiene tareas asignadas o registró horas. Desactivalo en su lugar.",
+          "No se puede eliminar: el usuario tiene actividad registrada en el sistema (proyectos, tareas, horas, solicitudes de apoyo o historial). Desactivalo en su lugar.",
       });
       return;
     }

@@ -39,7 +39,7 @@
       body: JSON.stringify({ email, password }),
     });
     if (res.ok) {
-      window.location.href = "/proyectos";
+      window.location.href = "/";
     } else {
       errorBox.textContent = "Email o contraseña incorrectos.";
       errorBox.style.display = "block";

@@ -14,7 +14,7 @@
         <h1 class="page-title">Proyectos</h1>
         <p class="subtitle">Centro de control de AI Academy — cada proyecto agrupa sus propias tareas.</p>
       </div>
-      <a class="btn primary" href="/proyectos/nuevo">+ Nuevo proyecto</a>
+      <% if (user.role === "admin") { %><a class="btn primary" href="/proyectos/nuevo">+ Nuevo proyecto</a><% } %>
     </div>
 
     <% if (items.length === 0) { %>

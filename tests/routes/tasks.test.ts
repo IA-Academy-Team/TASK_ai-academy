@@ -50,6 +50,7 @@ describe("GET/POST /tareas/:id", () => {
       dependencyId: null,
       due: "2026-01-10",
       supportIds: [],
+      actorId: me.id,
     });
 
     const res = await supertest(app)
@@ -80,6 +81,7 @@ describe("GET/POST /tareas/:id", () => {
       dependencyId: null,
       due: "2026-01-10",
       supportIds: [],
+      actorId: me.id,
     });
 
     const r1 = await supertest(app)
@@ -122,6 +124,7 @@ describe("GET/POST /tareas/:id", () => {
       dependencyId: null,
       due: "2026-01-10",
       supportIds: [],
+      actorId: project.leaderId,
     });
     await supertest(app)
       .post(`/tareas/${task.id}/estado`)
@@ -156,6 +159,7 @@ describe("GET/POST /tareas/:id", () => {
       dependencyId: null,
       due: "2026-01-10",
       supportIds: [],
+      actorId: me.id,
     });
 
     const res = await supertest(app)

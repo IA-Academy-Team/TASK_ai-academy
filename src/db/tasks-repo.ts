@@ -1,5 +1,6 @@
-import { and, asc, count, eq } from "drizzle-orm";
+import { and, asc, count, eq, inArray, lt, notInArray } from "drizzle-orm";
 import { HttpError } from "../lib/http-error.ts";
+import { recordChange } from "./audit-repo.ts";
 import { db } from "./client.ts";
 import { projects, taskLogs, taskSupport, tasks } from "./schema.ts";
 
@@ -24,6 +25,7 @@ export async function createTask(input: {
   dependencyId: string | null;
   due: string;
   supportIds: string[];
+  actorId: string;
 }) {
   if (input.dependencyId) {
     const [dep] = await db
@@ -66,6 +68,14 @@ export async function createTask(input: {
       .insert(taskSupport)
       .values(supportIds.map((userId) => ({ taskId: row.id, userId })));
   }
+
+  await recordChange({
+    projectId: input.projectId,
+    taskId: row.id,
+    actorId: input.actorId,
+    action: "task_created",
+    note: `Tarea "${row.title}" creada`,
+  });
 
   return row;
 }
@@ -168,7 +178,15 @@ export async function transitionTask(
     .set(patch)
     .where(eq(tasks.id, id))
     .returning();
-  void actorId;
+
+  await recordChange({
+    projectId: task.projectId,
+    taskId: id,
+    actorId,
+    action: "task_status_changed",
+    note: `${task.status} → ${nextStatus}`,
+  });
+
   return row;
 }
 
@@ -180,6 +198,18 @@ export async function logHours(input: {
   hours: string;
 }) {
   const [row] = await db.insert(taskLogs).values(input).returning();
+
+  const task = await getTask(input.taskId);
+  if (task) {
+    await recordChange({
+      projectId: task.projectId,
+      taskId: input.taskId,
+      actorId: input.userId,
+      action: "task_hours_logged",
+      note: `${input.hours} h el ${input.date}`,
+    });
+  }
+
   return row;
 }
 
@@ -189,4 +219,26 @@ export async function listLogs(taskId: string) {
     .from(taskLogs)
     .where(eq(taskLogs.taskId, taskId))
     .orderBy(asc(taskLogs.date));
+}
+
+export async function countTasksForOwner(ownerId: string, statuses: string[]) {
+  const [{ value }] = await db
+    .select({ value: count() })
+    .from(tasks)
+    .where(and(eq(tasks.ownerId, ownerId), inArray(tasks.status, statuses)));
+  return value;
+}
+
+export async function countOverdueForOwner(ownerId: string, today: string) {
+  const [{ value }] = await db
+    .select({ value: count() })
+    .from(tasks)
+    .where(
+      and(
+        eq(tasks.ownerId, ownerId),
+        lt(tasks.due, today),
+        notInArray(tasks.status, ["completada", "cancelada"]),
+      ),
+    );
+  return value;
 }

@@ -14,6 +14,7 @@ import {
   listTasksByProject,
 } from "../db/tasks-repo.ts";
 import { HttpError } from "../lib/http-error.ts";
+import { authorize } from "../middleware/authorize.ts";
 import {
   createProjectSchema,
   toArray,
@@ -32,21 +33,12 @@ projectsRouter.get("/proyectos", async (req, res) => {
   res.render("proyectos/index", { items, user: req.user });
 });
 
-projectsRouter.get("/proyectos/nuevo", async (req, res) => {
-  if (!req.user) {
-    res.redirect("/login");
-    return;
-  }
+projectsRouter.get("/proyectos/nuevo", authorize("admin"), async (req, res) => {
   const users = await listAllActiveUsers();
   res.render("proyectos/nuevo", { users, user: req.user, error: null });
 });
 
-projectsRouter.post("/proyectos", async (req, res) => {
-  if (!req.user) {
-    res.redirect("/login");
-    return;
-  }
-
+projectsRouter.post("/proyectos", authorize("admin"), async (req, res) => {
   const parsed = createProjectSchema.safeParse(req.body);
   if (!parsed.success) {
     const users = await listAllActiveUsers();
@@ -162,6 +154,7 @@ projectsRouter.post("/proyectos/:id/tareas", async (req, res) => {
     dependencyId: parsed.data.dependencyId,
     due: parsed.data.due,
     supportIds: toArray(parsed.data.support),
+    actorId: req.user.id,
   });
 
   res.redirect(303, `/proyectos/${project.id}`);
@@ -194,6 +187,7 @@ projectsRouter.post("/proyectos/:id/config", async (req, res) => {
     limitActive: parsed.data.limitActive,
     limitReview: parsed.data.limitReview,
     due: parsed.data.due,
+    actorId: req.user.id,
   });
   await setMembers(project.id, [
     ...toArray(parsed.data.members),

@@ -1,4 +1,5 @@
-import { desc, eq, inArray } from "drizzle-orm";
+import { count, desc, eq, inArray } from "drizzle-orm";
+import { recordChange } from "./audit-repo.ts";
 import { user } from "./auth-schema.ts";
 import { db } from "./client.ts";
 import { projectMembers, projects, tasks } from "./schema.ts";
@@ -69,15 +70,41 @@ export async function listAllActiveUsers() {
   return db.select().from(user).where(eq(user.isActive, true));
 }
 
+export async function countActiveProjects() {
+  const [{ value }] = await db
+    .select({ value: count() })
+    .from(projects)
+    .where(eq(projects.status, "activo"));
+  return value;
+}
+
 export async function updateSettings(
   id: string,
-  input: { limitActive: number; limitReview: number; due: string },
+  input: {
+    limitActive: number;
+    limitReview: number;
+    due: string;
+    actorId: string;
+  },
 ) {
   const [row] = await db
     .update(projects)
-    .set({ ...input, updatedAt: new Date() })
+    .set({
+      limitActive: input.limitActive,
+      limitReview: input.limitReview,
+      due: input.due,
+      updatedAt: new Date(),
+    })
     .where(eq(projects.id, id))
     .returning();
+
+  await recordChange({
+    projectId: id,
+    actorId: input.actorId,
+    action: "project_settings_updated",
+    note: `límites ${input.limitActive}/${input.limitReview}, vence ${input.due}`,
+  });
+
   return row;
 }
 

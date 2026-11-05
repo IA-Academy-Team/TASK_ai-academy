@@ -106,3 +106,46 @@ export const taskLogs = pgTable("task_logs", {
     .notNull()
     .defaultNow(),
 });
+
+// action: task_created | task_status_changed | task_hours_logged |
+//         project_settings_updated | support_request_resolved
+export const auditLog = pgTable("audit_log", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  projectId: uuid("project_id")
+    .notNull()
+    .references(() => projects.id, { onDelete: "cascade" }),
+  taskId: uuid("task_id").references(() => tasks.id, { onDelete: "cascade" }),
+  // Sin cascade a propósito: es un registro histórico, igual que
+  // taskLogs.userId — el borrado duro de un usuario queda bloqueado por esta
+  // FK si alguna vez actuó en el sistema (desactivarlo sigue disponible).
+  actorId: text("actor_id")
+    .notNull()
+    .references(() => user.id),
+  action: text("action").notNull(),
+  note: text("note").notNull().default(""),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+// mode: invite | apply · status: pendiente | aceptada | rechazada
+export const supportRequests = pgTable("support_requests", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  taskId: uuid("task_id")
+    .notNull()
+    .references(() => tasks.id, { onDelete: "cascade" }),
+  // Sin cascade, misma razón que auditLog.actorId.
+  requestedBy: text("requested_by")
+    .notNull()
+    .references(() => user.id),
+  targetUserId: text("target_user_id")
+    .notNull()
+    .references(() => user.id),
+  mode: text("mode").notNull(),
+  reason: text("reason").notNull().default(""),
+  status: text("status").notNull().default("pendiente"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+});

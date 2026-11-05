@@ -52,6 +52,7 @@ async function main() {
       dependencyId: null,
       due: "2026-11-15",
       supportIds: [],
+      actorId: admin.id,
     });
 
     console.log(
