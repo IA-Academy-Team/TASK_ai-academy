@@ -37,6 +37,12 @@
                 <button type="submit" class="btn danger">Desactivar</button>
               </form>
               <% } %>
+              <% if (u.id !== user.id) { %>
+              <form method="post" action="/admin/usuarios/<%= u.id %>/eliminar"
+                    onsubmit="return confirm('Eliminar a <%= u.name %> permanentemente?');">
+                <button type="submit" class="btn danger">Eliminar</button>
+              </form>
+              <% } %>
             </td>
           </tr>
           <% }) %>

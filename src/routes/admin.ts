@@ -1,7 +1,8 @@
-import { eq } from "drizzle-orm";
+import { count, eq } from "drizzle-orm";
 import { Router } from "express";
 import { user } from "../db/auth-schema.ts";
 import { db } from "../db/client.ts";
+import { projects, taskLogs, tasks } from "../db/schema.ts";
 import { auth } from "../lib/auth.ts";
 import { authorize } from "../middleware/authorize.ts";
 import { createUserSchema } from "../schemas/admin.ts";
@@ -37,6 +38,55 @@ adminRouter.post(
       .update(user)
       .set({ isActive: false })
       .where(eq(user.id, String(req.params.id)));
+    res.redirect(303, "/admin/usuarios");
+  },
+);
+
+adminRouter.post(
+  "/admin/usuarios/:id/eliminar",
+  authorize("admin"),
+  async (req, res) => {
+    if (!req.user) {
+      res.redirect(303, "/login");
+      return;
+    }
+    const id = String(req.params.id);
+
+    if (id === req.user.id) {
+      const users = await db.select().from(user);
+      res.status(400).render("admin/usuarios", {
+        users,
+        user: req.user,
+        error: "No podés eliminar tu propia cuenta.",
+      });
+      return;
+    }
+
+    const [{ value: ledProjects }] = await db
+      .select({ value: count() })
+      .from(projects)
+      .where(eq(projects.leaderId, id));
+    const [{ value: ownedTasks }] = await db
+      .select({ value: count() })
+      .from(tasks)
+      .where(eq(tasks.ownerId, id));
+    const [{ value: loggedHours }] = await db
+      .select({ value: count() })
+      .from(taskLogs)
+      .where(eq(taskLogs.userId, id));
+
+    if (ledProjects > 0 || ownedTasks > 0 || loggedHours > 0) {
+      const users = await db.select().from(user);
+      res.status(400).render("admin/usuarios", {
+        users,
+        user: req.user,
+        error:
+          "No se puede eliminar: el usuario lidera proyectos, tiene tareas asignadas o registró horas. Desactivalo en su lugar.",
+      });
+      return;
+    }
+
+    await db.delete(user).where(eq(user.id, id));
     res.redirect(303, "/admin/usuarios");
   },
 );
