@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<title>AI Academy · Centro de control — <%= project.name %></title>
+<%- include('../partials/styles') %>
+</head>
+<body>
+<div class="app">
+  <%- include('../partials/sidebar', { active: 'proyectos', user }) %>
+  <main class="content">
+    <div class="topbar">
+      <div>
+        <span class="flag"><%= project.code %></span>
+        <h1 class="page-title"><%= project.name %></h1>
+        <p class="subtitle"><%= project.objective %></p>
+      </div>
+      <div class="muted small">
+        Activas: <%= activeCount %>/<%= project.limitActive %> ·
+        En revisión: <%= reviewCount %>/<%= project.limitReview %> ·
+        Vence <%= project.due %>
+      </div>
+    </div>
+
+    <% if (error) { %><div class="error"><%= error %></div><% } %>
+
+    <section class="card pad">
+      <div class="sectiontitle"><h3>Nueva tarea</h3></div>
+      <form method="post" action="/proyectos/<%= project.id %>/tareas" class="form-grid">
+        <div class="field full"><label>Título *</label><input name="title" maxlength="200" required /></div>
+        <div class="field full"><label>Entregable esperado *</label><input name="deliverable" maxlength="300" required /></div>
+        <div class="field full"><label>Descripción</label><textarea name="description" maxlength="2000"></textarea></div>
+        <div class="field"><label>Responsable *</label>
+          <select name="ownerId" required>
+            <% allUsers.forEach(function(u) { %><option value="<%= u.id %>"><%= u.name %></option><% }) %>
+          </select>
+        </div>
+        <div class="field"><label>Apoyo</label>
+          <select name="support" multiple>
+            <% allUsers.forEach(function(u) { %><option value="<%= u.id %>"><%= u.name %></option><% }) %>
+          </select>
+        </div>
+        <div class="field"><label>Prioridad *</label>
+          <select name="priority" required>
+            <option value="baja">Baja</option>
+            <option value="media" selected>Media</option>
+            <option value="alta">Alta</option>
+            <option value="critica">Crítica</option>
+          </select>
+        </div>
+        <div class="field"><label>Peso del avance</label><input type="number" name="weight" min="1" max="10" value="1" required /></div>
+        <div class="field"><label>Horas estimadas *</label><input type="number" name="estimate" min="0.5" step="0.5" required /></div>
+        <div class="field"><label>Fecha límite *</label><input type="date" name="due" required /></div>
+        <div class="field full"><label>Depende de</label>
+          <select name="dependencyId">
+            <option value="">Ninguna</option>
+            <% allTasks.forEach(function(t) { %><option value="<%= t.id %>">#<%= t.order %> <%= t.title %></option><% }) %>
+          </select>
+        </div>
+        <div class="foot-actions full">
+          <button type="submit" class="btn primary">Crear tarea</button>
+        </div>
+      </form>
+    </section>
+
+    <div class="filters">
+      <a href="/proyectos/<%= project.id %>" class="<%= !estado ? 'on' : '' %>">Todas</a>
+      <a href="/proyectos/<%= project.id %>?estado=pendiente" class="<%= estado === 'pendiente' ? 'on' : '' %>">Pendiente</a>
+      <a href="/proyectos/<%= project.id %>?estado=activa" class="<%= estado === 'activa' ? 'on' : '' %>">Activa</a>
+      <a href="/proyectos/<%= project.id %>?estado=revision" class="<%= estado === 'revision' ? 'on' : '' %>">Revisión</a>
+      <a href="/proyectos/<%= project.id %>?estado=completada" class="<%= estado === 'completada' ? 'on' : '' %>">Completada</a>
+      <a href="/proyectos/<%= project.id %>?estado=bloqueada" class="<%= estado === 'bloqueada' ? 'on' : '' %>">Bloqueada</a>
+    </div>
+
+    <section class="card">
+      <% if (tasks.length === 0) { %>
+      <div class="empty">Sin tareas en esta vista.</div>
+      <% } else { %>
+      <div style="overflow:auto">
+      <table class="table">
+        <thead><tr><th>#</th><th>Tarea</th><th>Responsable</th><th>Prioridad</th><th>Estado</th><th>Vence</th></tr></thead>
+        <tbody>
+          <% tasks.forEach(function(t) { %>
+          <tr onclick="location.href='/tareas/<%= t.id %>'" style="cursor:pointer">
+            <td><%= t.order %></td>
+            <td><strong><%= t.title %></strong><br/><small class="muted"><%= t.deliverable %></small></td>
+            <td><% const owner = allUsers.find(function(u){ return u.id === t.ownerId }); %><%= owner ? owner.name : t.ownerId %></td>
+            <td><span class="badge <%= t.priority %>"><%= t.priority %></span></td>
+            <td><span class="badge <%= t.status %>"><%= t.status %></span></td>
+            <td><%= t.due %></td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+      </div>
+      <% } %>
+    </section>
+
+    <section class="card pad">
+      <div class="sectiontitle"><h3>Equipo del proyecto</h3></div>
+      <% members.forEach(function(m) { %><span class="badge <%= m.id === project.leaderId ? 'admin' : 'usuario' %>"><%= m.name %><%= m.id === project.leaderId ? ' · líder' : '' %></span> <% }) %>
+    </section>
+
+    <% if (isLeaderOrAdmin) { %>
+    <section class="card pad">
+      <div class="sectiontitle"><h3>Configuración del proyecto</h3></div>
+      <form method="post" action="/proyectos/<%= project.id %>/config" class="form-grid">
+        <div class="field"><label>Máximo de tareas activas</label><input type="number" name="limitActive" min="1" max="20" value="<%= project.limitActive %>" required /></div>
+        <div class="field"><label>Máximo de tareas en revisión</label><input type="number" name="limitReview" min="1" max="20" value="<%= project.limitReview %>" required /></div>
+        <div class="field full"><label>Fecha límite del proyecto</label><input type="date" name="due" value="<%= project.due %>" required /></div>
+        <div class="field full">
+          <label>Integrantes</label>
+          <div class="usergrid">
+            <% allUsers.forEach(function(u) { %>
+            <label class="usercheck">
+              <input type="checkbox" name="members" value="<%= u.id %>" <%= members.some(function(m){return m.id===u.id}) ? 'checked' : '' %> />
+              <%= u.name %>
+            </label>
+            <% }) %>
+          </div>
+        </div>
+        <div class="foot-actions full"><button type="submit" class="btn primary">Guardar configuración</button></div>
+      </form>
+    </section>
+    <% } %>
+  </main>
+</div>
+</body>
+</html>

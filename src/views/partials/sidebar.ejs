@@ -1,0 +1,9 @@
+<nav class="sidebar">
+  <div class="brand">
+    <div class="brandmark">A</div>
+    <h2>AI Academy</h2>
+  </div>
+  <a class="navbtn <%= active === 'proyectos' ? 'on' : '' %>" href="/proyectos">Proyectos</a>
+  <% if (user.role === "admin") { %><a class="navbtn <%= active === 'usuarios' ? 'on' : '' %>" href="/admin/usuarios">Usuarios</a><% } %>
+  <button type="button" class="navbtn" onclick="fetch('/api/auth/sign-out',{method:'POST'}).then(()=>location.href='/login')">Salir</button>
+</nav>

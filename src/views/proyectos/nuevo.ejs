@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<title>AI Academy · Centro de control — Nuevo proyecto</title>
+<%- include('../partials/styles') %>
+</head>
+<body>
+<div class="app">
+  <%- include('../partials/sidebar', { active: 'proyectos', user }) %>
+  <main class="content">
+    <h1 class="page-title">Nuevo proyecto</h1>
+    <p class="subtitle">Paso 1: definí el proyecto y su equipo. Después agregás las tareas.</p>
+
+    <section class="card pad">
+      <% if (error) { %><div class="error"><%= error %></div><% } %>
+      <form method="post" action="/proyectos" class="form-grid">
+        <div class="field"><label>Nombre del proyecto *</label><input name="name" required /></div>
+        <div class="field"><label>Código interno *</label><input name="code" placeholder="NEB-004" required /></div>
+        <div class="field full"><label>Objetivo *</label><textarea name="objective" required></textarea></div>
+        <div class="field"><label>Líder del proyecto *</label>
+          <select name="leaderId" required>
+            <% users.forEach(function(u) { %><option value="<%= u.id %>"><%= u.name %></option><% }) %>
+          </select>
+        </div>
+        <div class="field"><label>Fecha de inicio *</label><input type="date" name="start" required /></div>
+        <div class="field"><label>Fecha límite *</label><input type="date" name="due" required /></div>
+        <div class="field"><label>Máximo de tareas activas a la vez</label><input type="number" name="limitActive" min="1" max="20" value="2" required /></div>
+        <div class="field"><label>Máximo de tareas en revisión a la vez</label><input type="number" name="limitReview" min="1" max="20" value="2" required /></div>
+        <div class="field full">
+          <label>Integrantes del proyecto</label>
+          <div class="usergrid">
+            <% users.forEach(function(u) { %>
+            <label class="usercheck"><input type="checkbox" name="members" value="<%= u.id %>" checked /><%= u.name %></label>
+            <% }) %>
+          </div>
+        </div>
+        <div class="foot-actions full">
+          <a class="btn" href="/proyectos">Cancelar</a>
+          <button type="submit" class="btn primary">Crear proyecto</button>
+        </div>
+      </form>
+    </section>
+  </main>
+</div>
+</body>
+</html>

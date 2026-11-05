@@ -6,6 +6,7 @@ import { errorHandler } from "./middleware/error-handler.ts";
 import { attachSession } from "./middleware/session.ts";
 import { adminRouter } from "./routes/admin.ts";
 import { healthRouter } from "./routes/health.ts";
+import { projectsRouter } from "./routes/projects.ts";
 import { tasksRouter } from "./routes/tasks.ts";
 
 export function createApp() {
@@ -24,12 +25,17 @@ export function createApp() {
 
   app.get("/login", (req, res) => {
     if (req.user) {
-      res.redirect("/tareas");
+      res.redirect("/proyectos");
       return;
     }
     res.render("login");
   });
 
+  app.get("/", (req, res) => {
+    res.redirect(req.user ? "/proyectos" : "/login");
+  });
+
+  app.use(projectsRouter);
   app.use(tasksRouter);
   app.use(adminRouter);
 

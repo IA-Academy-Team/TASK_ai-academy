@@ -9,8 +9,10 @@ description: Use when adding a new server-rendered page (a new EJS view plus the
 A new page is needed that renders server-side HTML (not a JSON API endpoint).
 
 ## Steps
-1. Create `src/views/<area>/<name>.ejs`. Reuse the design tokens from `CLAUDE.md` — no new hex
-   literal.
+1. Create `src/views/<area>/<name>.ejs`. Include the shared shell:
+   `<%- include('../partials/styles') %>` in `<head>`, and
+   `<%- include('../partials/sidebar', { active: '<proyectos|usuarios>', user }) %>` right after
+   `<div class="app">`. Reuse the tokens in `src/views/partials/styles.ejs` — no new hex literal.
 2. Add a `GET` handler in the matching `src/routes/<area>.ts` that loads only the data this view
    needs from a `*-repo.ts` module, then `res.render("<area>/<name>", { ... })`.
 3. If the page is role-restricted, add `authorize("<role>")` to the route's middleware chain —

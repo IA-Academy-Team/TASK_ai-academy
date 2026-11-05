@@ -1,61 +1,54 @@
 import { Router } from "express";
-import { z } from "zod";
+import { getProject, listAllActiveUsers } from "../db/projects-repo.ts";
 import {
-  createTask,
-  filterTasks,
-  listTasks,
-  updateStatus,
+  getTask,
+  listLogs,
+  listSupport,
+  logHours,
+  transitionTask,
 } from "../db/tasks-repo.ts";
-import { createTaskSchema } from "../schemas/task.ts";
-
-const statusEnum = z.enum(["pendiente", "en_progreso", "completada"]);
+import { HttpError } from "../lib/http-error.ts";
+import { logHoursSchema, transitionSchema } from "../schemas/task.ts";
 
 export const tasksRouter = Router();
 
-tasksRouter.get("/tareas", async (req, res) => {
+tasksRouter.get("/tareas/:id", async (req, res) => {
   if (!req.user) {
     res.redirect("/login");
     return;
   }
 
-  const estadoParsed = statusEnum
-    .optional()
-    .safeParse(req.query.estado || undefined);
-  if (!estadoParsed.success) {
-    res.status(400).send("estado inválido");
-    return;
+  const task = await getTask(req.params.id);
+  if (!task) {
+    throw new HttpError(404, "tarea no encontrada");
   }
 
-  const estado = estadoParsed.data;
-  const tasks = estado ? await filterTasks(estado) : await listTasks();
-  res.render("tareas/index", {
-    tasks,
-    estado: estado ?? null,
+  const project = await getProject(task.projectId);
+  const support = await listSupport(task.id);
+  const logs = await listLogs(task.id);
+  const users = await listAllActiveUsers();
+  const dependency = task.dependencyId
+    ? await getTask(task.dependencyId)
+    : null;
+  const totalHours = logs.reduce((sum, l) => sum + Number(l.hours), 0);
+
+  res.render("tareas/detalle", {
+    task,
+    project,
+    support,
+    logs,
+    users,
+    dependency,
+    totalHours,
     user: req.user,
+    isLeaderOrAdmin:
+      req.user.role === "admin" ||
+      (project && req.user.id === project.leaderId),
+    isOwnerOrSupport:
+      req.user.id === task.ownerId ||
+      support.some((s) => s.userId === req.user?.id),
     error: null,
   });
-});
-
-tasksRouter.post("/tareas", async (req, res) => {
-  if (!req.user) {
-    res.redirect("/login");
-    return;
-  }
-
-  const parsed = createTaskSchema.safeParse(req.body);
-  if (!parsed.success) {
-    const tasks = await listTasks();
-    res.status(400).render("tareas/index", {
-      tasks,
-      estado: null,
-      user: req.user,
-      error: "El título es obligatorio.",
-    });
-    return;
-  }
-
-  await createTask(parsed.data);
-  res.redirect(303, "/tareas");
 });
 
 tasksRouter.post("/tareas/:id/estado", async (req, res) => {
@@ -64,17 +57,75 @@ tasksRouter.post("/tareas/:id/estado", async (req, res) => {
     return;
   }
 
-  const parsed = statusEnum.safeParse(req.body.status);
+  const parsed = transitionSchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).send("status inválido");
-    return;
+    throw new HttpError(400, "transición inválida");
   }
 
-  const updated = await updateStatus(req.params.id, parsed.data);
+  if (parsed.data.status === "completada") {
+    const task = await getTask(req.params.id);
+    if (!task) {
+      throw new HttpError(404, "tarea no encontrada");
+    }
+    const project = await getProject(task.projectId);
+    const isLeaderOrAdmin =
+      req.user.role === "admin" ||
+      (project && req.user.id === project.leaderId);
+    if (!isLeaderOrAdmin) {
+      throw new HttpError(
+        403,
+        "solo el líder del proyecto o un admin pueden aprobar la tarea",
+      );
+    }
+  }
+
+  const updated = await transitionTask(
+    req.params.id,
+    parsed.data.status,
+    req.user.id,
+    {
+      evidence: parsed.data.evidence,
+    },
+  );
   if (!updated) {
-    res.status(404).send("tarea no encontrada");
+    throw new HttpError(404, "tarea no encontrada");
+  }
+
+  res.redirect(303, `/tareas/${req.params.id}`);
+});
+
+tasksRouter.post("/tareas/:id/horas", async (req, res) => {
+  if (!req.user) {
+    res.redirect("/login");
     return;
   }
 
-  res.redirect(303, "/tareas");
+  const task = await getTask(req.params.id);
+  if (!task) {
+    throw new HttpError(404, "tarea no encontrada");
+  }
+
+  const parsed = logHoursSchema.safeParse(req.body);
+  if (!parsed.success) {
+    throw new HttpError(400, "registro de horas inválido");
+  }
+
+  const support = await listSupport(task.id);
+  const role = req.user.id === task.ownerId ? "owner" : "support";
+  if (role === "support" && !support.some((s) => s.userId === req.user?.id)) {
+    throw new HttpError(
+      403,
+      "solo el responsable o el apoyo de la tarea pueden registrar horas",
+    );
+  }
+
+  await logHours({
+    taskId: task.id,
+    userId: req.user.id,
+    role,
+    date: parsed.data.date,
+    hours: String(parsed.data.hours),
+  });
+
+  res.redirect(303, `/tareas/${req.params.id}`);
 });

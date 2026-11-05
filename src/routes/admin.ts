@@ -8,9 +8,9 @@ import { createUserSchema } from "../schemas/admin.ts";
 
 export const adminRouter = Router();
 
-adminRouter.get("/admin/usuarios", authorize("admin"), async (_req, res) => {
+adminRouter.get("/admin/usuarios", authorize("admin"), async (req, res) => {
   const users = await db.select().from(user);
-  res.render("admin/usuarios", { users, error: null });
+  res.render("admin/usuarios", { users, user: req.user, error: null });
 });
 
 adminRouter.post("/admin/usuarios", authorize("admin"), async (req, res) => {
@@ -19,6 +19,7 @@ adminRouter.post("/admin/usuarios", authorize("admin"), async (req, res) => {
     const users = await db.select().from(user);
     res.status(400).render("admin/usuarios", {
       users,
+      user: req.user,
       error: "Email, nombre y contraseña (8+ caracteres) son obligatorios.",
     });
     return;

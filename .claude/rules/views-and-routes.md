@@ -5,12 +5,15 @@ paths:
   - "src/routes/**"
 ---
 
-- A view never queries the database. It receives already-shaped data from its route handler.
-- Reuse the CSS tokens in `CLAUDE.md`'s Design system table — no new hex literal in a `.ejs` file.
-- Every route that mutates state validates `req.body`/`req.query` with a Zod schema from
-  `src/schemas/**` before calling a repository.
-- A page route guarded by `authorize("admin")` that rejects an unauthorized request redirects
-  browsers to `/login`; a JSON/API route under the same guard returns `403` instead.
-- Keep `src/views/tareas/index.ejs` and `src/views/admin/usuarios.ejs` as the only two page
-  templates for v1 — do not fork a third variant per role; branch inside the template with the
-  session's `role`.
+- Una vista nunca consulta la base de datos. Recibe los datos ya armados de su route handler.
+- Reusá los tokens CSS de `src/views/partials/styles.ejs` (`<%- include('../partials/styles') %>`)
+  — ningún hex nuevo en un `.ejs`.
+- Cada página autenticada incluye el sidebar compartido: `<%- include('../partials/sidebar', {
+  active: '<proyectos|usuarios>', user }) %>` — siempre pasar `user`, la vista lo necesita.
+- Cada ruta que muta estado valida `req.body`/`req.query` con un schema Zod de `src/schemas/**`
+  antes de llamar a un repositorio.
+- Las transiciones de estado de una tarea viven en `TRANSITIONS` (`src/db/tasks-repo.ts`) — la
+  vista solo muestra los botones ya válidos para el estado actual, pero el repo siempre re-valida;
+  nunca confiar en lo que mostró el formulario.
+- Aprobar una tarea (`completada`) y editar la configuración de un proyecto solo los puede hacer el
+  líder del proyecto o un `admin` — chequeado en la ruta, nunca solo ocultando el botón.

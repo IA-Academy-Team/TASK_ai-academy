@@ -1,6 +1,9 @@
 # AI Academy — Centro de Control
 
-Herramienta interna de gestión de tareas para el equipo de AI Academy, con login y roles `admin`/`usuario`.
+Herramienta interna de gestión de proyectos y tareas para el equipo de AI Academy, con login, roles
+globales `admin`/`usuario`, y un líder por proyecto. Cada tarea tiene responsable, apoyo, prioridad,
+horas estimadas/registradas, dependencia, y un workflow de estado con límites de WIP por proyecto
+(`pendiente → activa → revisión → completada`, más `bloqueada`/`cancelada`).
 
 ## Comandos
 
@@ -37,8 +40,12 @@ Zod · Docker Compose (Postgres local) · Vitest + Supertest · Playwright.
 Express: monta el handler de `better-auth`, el middleware de sesión, los routers de páginas/API, y
 el manejador de errores, en ese orden) → un router en `src/routes/*.ts` → un repositorio en
 `src/db/*-repo.ts` (el único lugar que emite queries de Drizzle) → `src/db/client.ts` → Postgres.
-Las vistas renderizan desde `src/views/**/*.ejs`, reusando los tokens de abajo — nunca un segundo
-sistema de diseño.
+Las vistas renderizan desde `src/views/**/*.ejs`, con el shell compartido en
+`src/views/partials/{styles,sidebar}.ejs` — nunca un segundo sistema de diseño.
+
+**Rutas de página.** `/proyectos` (lista) → `/proyectos/nuevo` (crear) → `/proyectos/:id` (detalle:
+tareas del proyecto + formulario de nueva tarea + configuración si sos líder/admin) → `/tareas/:id`
+(detalle de una tarea: workflow de estado, registro de horas). `/admin/usuarios` solo para `admin`.
 
 **Límites.**
 
@@ -53,7 +60,8 @@ sistema de diseño.
 
 | Concepto | Fuente única de verdad |
 |---|---|
-| Schema de la app (tasks) | `src/db/schema.ts` — cambiar aquí, luego `pnpm db:generate && pnpm db:migrate` |
+| Schema de la app (`projects`, `project_members`, `tasks`, `task_support`, `task_logs`) | `src/db/schema.ts` — cambiar aquí, luego `pnpm db:generate && pnpm db:migrate` |
+| Transiciones de estado válidas de una tarea | `TRANSITIONS` en `src/db/tasks-repo.ts` — única fuente; la vista solo muestra los botones que ya son válidos, el repo los re-valida siempre |
 | Schema de auth (user/session/account/verification) | generado por `pnpm auth:generate` en `src/db/auth-schema.ts` — **nunca editar a mano**; cambiar `src/lib/auth.ts` y regenerar |
 | Acceso a variables de entorno | `.env`, cargado vía `node --env-file=.env` / `tsx --env-file=.env` en cada entry point; `drizzle-kit` y el CLI `auth` cargan `.env` por su cuenta (verificado) |
 | Sesión/usuario actual | `src/middleware/session.ts` — un solo `attachSession()`, usado en todas partes; nunca leer la cookie de auth directamente en una ruta |
@@ -91,10 +99,10 @@ Portado literal de los prototipos HTML existentes (`AI_Academy_V3_2_Crear_Tarea.
 | Texto (ink) | `#252138` | Texto principal |
 | Texto (muted) | `#5A566B` | Texto secundario |
 | Texto (faint) | `#898699` | Placeholders |
-| Éxito | `#178168` sobre `#E7F6F0` | Estado "completada" |
-| Advertencia | `#AB702B` sobre `#FFF1DE` | Estado "en progreso" |
-| Destructivo | `#BD4565` sobre `#FCEBF0` | Errores, estado bloqueado |
-| Info | `#486FA8` sobre `#EAF1FC` | Avisos neutrales |
+| Éxito | `#178168` sobre `#E7F6F0` | Estado "completada", prioridad "baja" (fondo neutro) |
+| Advertencia | `#AB702B` sobre `#FFF1DE` | Estado "revisión", prioridad "alta" |
+| Destructivo | `#BD4565` sobre `#FCEBF0` | Errores, estado "bloqueada", prioridad "crítica" |
+| Info | `#486FA8` sobre `#EAF1FC` | Prioridad "media", rol "usuario" |
 
 - **Tipografía:** `Poppins`/`Segoe UI`/Arial de respaldo, cuerpo `13px`.
 - **Radio:** `10px` botones del sidebar, `13px` tarjetas/brandmark, `full` para avatares.
@@ -104,7 +112,7 @@ Portado literal de los prototipos HTML existentes (`AI_Academy_V3_2_Crear_Tarea.
 
 | Variable | Requerida | Usada por | Fuente |
 |---|---|---|---|
-| `PORT` | no (default 3000) | `src/server.ts` | — |
+| `PORT` | no (default 3100, ver `.env.example`) | `src/server.ts` | — |
 | `DATABASE_URL` | sí | `src/db/client.ts`, `drizzle.config.ts` | string de conexión que imprime `pnpm db:up` |
 | `BETTER_AUTH_SECRET` | sí | `src/lib/auth.ts` | generar 32+ caracteres aleatorios |
 | `BETTER_AUTH_URL` | sí | `src/lib/auth.ts` | `http://localhost:3000` en local |

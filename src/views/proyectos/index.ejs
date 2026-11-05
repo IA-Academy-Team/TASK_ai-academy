@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<title>AI Academy · Centro de control — Proyectos</title>
+<%- include('../partials/styles') %>
+</head>
+<body>
+<div class="app">
+  <%- include('../partials/sidebar', { active: 'proyectos', user }) %>
+  <main class="content">
+    <div class="topbar">
+      <div>
+        <h1 class="page-title">Proyectos</h1>
+        <p class="subtitle">Centro de control de AI Academy — cada proyecto agrupa sus propias tareas.</p>
+      </div>
+      <a class="btn primary" href="/proyectos/nuevo">+ Nuevo proyecto</a>
+    </div>
+
+    <% if (items.length === 0) { %>
+    <div class="card"><div class="empty">Sin proyectos todavía. Creá el primero.</div></div>
+    <% } else { %>
+    <div class="project-grid">
+      <% items.forEach(function(p) { %>
+      <a class="card project-card" href="/proyectos/<%= p.id %>">
+        <span class="flag"><%= p.code %></span>
+        <h3><%= p.name %></h3>
+        <p><%= p.objective %></p>
+        <div class="meta">
+          <span>Vence <%= p.due %></span>
+          <span><%= p.doneCount %>/<%= p.taskCount %> tareas completadas</span>
+        </div>
+        <div class="bar"><span style="width: <%= p.taskCount ? Math.round((p.doneCount / p.taskCount) * 100) : 0 %>%"></span></div>
+      </a>
+      <% }) %>
+    </div>
+    <% } %>
+  </main>
+</div>
+</body>
+</html>

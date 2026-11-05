@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<title>AI Academy · Centro de control — <%= task.title %></title>
+<%- include('../partials/styles') %>
+</head>
+<body>
+<div class="app">
+  <%- include('../partials/sidebar', { active: 'proyectos', user }) %>
+  <main class="content">
+    <div class="topbar">
+      <div>
+        <p class="subtitle"><a href="/proyectos/<%= project.id %>">&larr; <%= project.name %></a></p>
+        <h1 class="page-title">#<%= task.order %> <%= task.title %></h1>
+        <p class="subtitle"><%= task.deliverable %></p>
+      </div>
+      <div>
+        <span class="badge <%= task.priority %>"><%= task.priority %></span>
+        <span class="badge <%= task.status %>"><%= task.status %></span>
+      </div>
+    </div>
+
+    <% if (error) { %><div class="error"><%= error %></div><% } %>
+
+    <div class="form-grid">
+      <section class="card pad">
+        <div class="sectiontitle"><h3>Detalle</h3></div>
+        <% if (task.description) { %><p class="small"><%= task.description %></p><% } %>
+        <div class="detail-row"><span>Responsable</span><strong><% const owner = users.find(function(u){return u.id===task.ownerId}); %><%= owner ? owner.name : task.ownerId %></strong></div>
+        <div class="detail-row"><span>Apoyo</span><strong><%= support.length ? support.map(function(s){ const u = users.find(function(x){return x.id===s.userId}); return u ? u.name : s.userId }).join(', ') : 'Ninguno' %></strong></div>
+        <div class="detail-row"><span>Peso</span><strong><%= task.weight %></strong></div>
+        <div class="detail-row"><span>Estimado</span><strong><%= task.estimate %> h</strong></div>
+        <div class="detail-row"><span>Horas registradas</span><strong><%= totalHours %> h</strong></div>
+        <div class="detail-row"><span>Vence</span><strong><%= task.due %></strong></div>
+        <% if (dependency) { %><div class="detail-row"><span>Depende de</span><strong>#<%= dependency.order %> <%= dependency.title %> (<%= dependency.status %>)</strong></div><% } %>
+        <% if (task.evidence) { %><div class="detail-row"><span>Evidencia</span><strong><%= task.evidence %></strong></div><% } %>
+        <% if (task.approvedAt) { %><div class="detail-row"><span>Aprobada</span><strong><%= task.approvedAt %></strong></div><% } %>
+
+        <div class="sectiontitle" style="margin-top:17px"><h3>Cambiar estado</h3></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <% if (task.status === 'pendiente') { %>
+          <form method="post" action="/tareas/<%= task.id %>/estado"><input type="hidden" name="status" value="activa" /><button class="btn primary" type="submit">Iniciar</button></form>
+          <form method="post" action="/tareas/<%= task.id %>/estado"><input type="hidden" name="status" value="bloqueada" /><button class="btn" type="submit">Bloquear</button></form>
+          <form method="post" action="/tareas/<%= task.id %>/estado"><input type="hidden" name="status" value="cancelada" /><button class="btn danger" type="submit">Cancelar</button></form>
+          <% } %>
+          <% if (task.status === 'activa') { %>
+          <form method="post" action="/tareas/<%= task.id %>/estado"><input type="hidden" name="status" value="revision" /><button class="btn primary" type="submit">Enviar a revisión</button></form>
+          <form method="post" action="/tareas/<%= task.id %>/estado"><input type="hidden" name="status" value="bloqueada" /><button class="btn" type="submit">Bloquear</button></form>
+          <form method="post" action="/tareas/<%= task.id %>/estado"><input type="hidden" name="status" value="cancelada" /><button class="btn danger" type="submit">Cancelar</button></form>
+          <% } %>
+          <% if (task.status === 'revision') { %>
+            <% if (isLeaderOrAdmin) { %>
+            <form method="post" action="/tareas/<%= task.id %>/estado">
+              <input type="hidden" name="status" value="completada" />
+              <% if (!task.evidence) { %><input name="evidence" placeholder="Evidencia" required style="padding:8px;border:1px solid var(--line);border-radius:8px" />&nbsp;<% } %>
+              <button class="btn primary" type="submit">Aprobar</button>
+            </form>
+            <% } %>
+            <form method="post" action="/tareas/<%= task.id %>/estado"><input type="hidden" name="status" value="activa" /><button class="btn" type="submit">Devolver a activa</button></form>
+          <% } %>
+          <% if (task.status === 'bloqueada') { %>
+          <form method="post" action="/tareas/<%= task.id %>/estado"><input type="hidden" name="status" value="pendiente" /><button class="btn" type="submit">Desbloquear</button></form>
+          <form method="post" action="/tareas/<%= task.id %>/estado"><input type="hidden" name="status" value="cancelada" /><button class="btn danger" type="submit">Cancelar</button></form>
+          <% } %>
+        </div>
+      </section>
+
+      <section class="card pad">
+        <div class="sectiontitle"><h3>Registro de horas</h3></div>
+        <% logs.forEach(function(l) { %>
+        <div class="detail-row"><span><%= l.date %> (<%= l.role %>)</span><strong><%= l.hours %> h</strong></div>
+        <% }) %>
+        <% if (isOwnerOrSupport) { %>
+        <form method="post" action="/tareas/<%= task.id %>/horas" style="margin-top:14px">
+          <div class="field"><label>Fecha</label><input type="date" name="date" required /></div>
+          <div class="field"><label>Horas</label><input type="number" name="hours" min="0.5" step="0.5" max="24" required /></div>
+          <button class="btn primary" type="submit" style="margin-top:8px">Registrar</button>
+        </form>
+        <% } %>
+      </section>
+    </div>
+  </main>
+</div>
+</body>
+</html>

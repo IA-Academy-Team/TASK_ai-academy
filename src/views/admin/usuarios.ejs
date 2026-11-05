@@ -3,41 +3,11 @@
 <head>
 <meta charset="utf-8" />
 <title>AI Academy · Centro de control — Usuarios</title>
-<style>
-:root{--nav:#1D1930;--primary:#7346CC;--primary-dark:#5A37A5;--paper:#FFF;--bg:#F7F8FC;--ink:#252138;--text:#5A566B;--line:#E9E8F0;--red:#BD4565;--redlight:#FCEBF0;--green:#178168;--greenlight:#E7F6F0}
-*{box-sizing:border-box}
-html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:'Poppins','Segoe UI',Arial,sans-serif;font-size:13px}
-.app{min-height:100vh;display:flex}
-.sidebar{width:245px;flex:0 0 245px;background:var(--nav);color:#DED8EB;padding:24px 16px}
-.sidebar h2{color:#fff;font-size:16px;margin:0 0 20px}
-.sidebar a{display:block;color:#C8BED8;text-decoration:none;padding:10px 12px;border-radius:10px;font-size:12px;font-weight:650}
-.sidebar a.on{background:#6D4CB5;color:#fff}
-.content{flex:1;max-width:1720px;margin:0 auto;padding:25px 34px 42px}
-.page-title{font-size:25px;font-weight:800;margin:0 0 7px}
-.card{background:var(--paper);border:1px solid var(--line);border-radius:13px;box-shadow:0 6px 24px rgba(25,20,45,.035);margin-bottom:20px}
-.pad{padding:19px 23px}
-.form-grid{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
-.field input{padding:11px 13px;min-height:42px;border:1px solid #DDD9E9;border-radius:9px}
-.btn{border:1px solid var(--line);background:#fff;color:#575168;font-weight:720;padding:10px 14px;border-radius:9px;cursor:pointer;font-size:11px}
-.btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
-.btn.danger{color:var(--red);border-color:#EDCCDA}
-.error{color:var(--red);background:var(--redlight);border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px}
-.table{width:100%;border-collapse:collapse}
-.table th{font-size:9.5px;text-transform:uppercase;color:#8A8799;background:#FBFAFD;text-align:left;padding:12px 11px;border-bottom:1px solid var(--line)}
-.table td{font-size:12px;color:var(--text);padding:12px 11px;border-bottom:1px solid #F0EFF5}
-.badge{display:inline-block;padding:4px 10px;border-radius:999px;font-size:10.5px;font-weight:700}
-.badge.admin{background:#F0EBFB;color:var(--primary-dark)}
-.badge.usuario{background:#EAF1FC;color:#486FA8}
-.badge.off{background:var(--redlight);color:var(--red)}
-</style>
+<%- include('../partials/styles') %>
 </head>
 <body>
 <div class="app">
-  <nav class="sidebar">
-    <h2>AI Academy</h2>
-    <a href="/tareas">Tareas</a>
-    <a class="on" href="/admin/usuarios">Usuarios</a>
-  </nav>
+  <%- include('../partials/sidebar', { active: 'usuarios', user }) %>
   <main class="content">
     <h1 class="page-title">Administración de usuarios</h1>
 
@@ -46,7 +16,7 @@ html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-fa
       <form method="post" action="/admin/usuarios" class="form-grid">
         <div class="field"><input name="name" placeholder="Nombre" required /></div>
         <div class="field"><input name="email" type="email" placeholder="email@aiacademy.local" required /></div>
-        <div class="field"><input name="password" type="password" placeholder="Contraseña (8+)" minlength="8" required /></div>
+        <div class="field full"><input name="password" type="password" placeholder="Contraseña (8+)" minlength="8" required /></div>
         <button type="submit" class="btn primary">Crear usuario</button>
       </form>
     </section>
