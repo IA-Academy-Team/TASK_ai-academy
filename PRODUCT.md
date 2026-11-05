@@ -45,23 +45,23 @@ todo vive en esta app.
 ## Brand Commitments
 
 - Nombre: "AI Academy — Centro de Control".
-- Logo confirmado por el usuario: icono de diamante/destello blanco sobre fondo transparente,
-  rodeado por 4 cuadrantes en degradé púrpura (carpeta, personas, checklist, gráfico de barras) —
-  representan proyectos, equipo, tareas y reportes. Servido en runtime desde `src/public/brand/logo.png`
-  (vía `/static/brand/logo.png`).
-  **Resuelto:** el logomark queda en su púrpura original — no se recolorea hacia teal. La paleta
-  teal/petrol de `CLAUDE.md` / `styles.ejs` sigue siendo el único color de UI (botones, acentos,
-  badges, estado activo del sidebar); el logo es una marca independiente, no un color de acento.
-  Usado como brandmark en el sidebar (`partials/sidebar.ejs`) y como favicon en las 7 vistas
-  autenticadas.
+- Logo actualizado por el usuario (reemplaza el icono de diamante/4-cuadrantes púrpura anterior):
+  marca hexagonal abstracta de trazos blancos entrelazados (forma de "S" doble/cadena), sin color,
+  fondo transparente. Fuente: `src/public/brand/logo.png` (941×941, recortado al cuadro del glifo
+  desde el original 1672×941 provisto).
+  **Resuelto — blanco puro no sirve en todos lados:** el glifo es blanco sólido, perfecto sobre el
+  sidebar (`--nav` siempre oscuro en ambos temas) pero invisible como favicon sobre un navegador en
+  tema claro. Se generó `src/public/brand/favicon.png`: el mismo glifo compuesto sobre una placa
+  sólida `--primary` (#055B5C) — el glifo en sí no se recolorea, solo se le da un fondo donde hace
+  falta. `logo.png` → brandmark del sidebar; `favicon.png` → favicon en las 7 vistas autenticadas.
 - Paleta teal/petrol (claro + oscuro), tipografía Poppins/Segoe UI, radios y sombras — ya fijados
   en `src/views/partials/styles.ejs`, fuente única de tokens. Ver detalle completo en `CLAUDE.md`.
 
 ## Evidence on Hand
 
-- Logo en `src/public/brand/logo.png`, servido vía `express.static` montado en `/static`
-  (`src/app.ts`) — sin más variantes (solo PNG, sin SVG ni favicon multi-tamaño) ni guía de uso
-  aún.
+- Logo en `src/public/brand/logo.png` (glifo transparente) y `src/public/brand/favicon.png`
+  (mismo glifo sobre placa teal), servidos vía `express.static` montado en `/static`
+  (`src/app.ts`) — sin SVG ni favicon multi-tamaño (16/32/apple-touch-icon) todavía.
 - No hay testimonios, casos de estudio, ni prensa — herramienta interna, no se debe fabricar
   ninguno de estos.
 - Pendiente conocido, no resuelto ahora: `pnpm build` (`tsc`) no copia assets no-`.ts` (ni
