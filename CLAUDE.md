@@ -83,30 +83,41 @@ tareas del proyecto + formulario de nueva tarea + configuración si sos líder/a
 
 ## Sistema de diseño
 
-Portado literal de los prototipos HTML existentes (`AI_Academy_V3_2_Crear_Tarea.html`,
-`AI_Academy_V3_3_Filtros_Estados.html`) — reusar estos tokens, no inventar otros.
+Adoptado de `~/Downloads/DESIGN.md` (Sistema de Diseño Universal v1.0, preset `dashboard` /
+`enterprise`) — paleta teal/petrol, modo claro + oscuro. Única fuente de tokens:
+`src/views/partials/styles.ejs` — reusar estas variables, nunca un hex crudo en una vista.
 
-| Rol | Valor | Uso |
-|---|---|---|
-| Primario | `#7346CC` | Botones primarios, enlaces, foco |
-| Primario oscuro | `#5A37A5` | Hover de primario |
-| Fondo de nav | `#1D1930` | Sidebar |
-| Fondo de nav claro | `#302844` | Hover en sidebar |
-| Lavanda | `#F0EBFB` | Fondos sutiles de acento |
-| Fondo de página | `#F7F8FC` | Fondo general |
-| Superficie | `#FFF` | Tarjetas, paneles |
-| Borde | `#E9E8F0` | Divisores, inputs |
-| Texto (ink) | `#252138` | Texto principal |
-| Texto (muted) | `#5A566B` | Texto secundario |
-| Texto (faint) | `#898699` | Placeholders |
-| Éxito | `#178168` sobre `#E7F6F0` | Estado "completada", prioridad "baja" (fondo neutro) |
-| Advertencia | `#AB702B` sobre `#FFF1DE` | Estado "revisión", prioridad "alta" |
-| Destructivo | `#BD4565` sobre `#FCEBF0` | Errores, estado "bloqueada", prioridad "crítica" |
-| Info | `#486FA8` sobre `#EAF1FC` | Prioridad "media", rol "usuario" |
+| Rol | Claro | Oscuro | Uso |
+|---|---|---|---|
+| Primario (acción) | `#055B5C` | `#6EC6CA` | Botones primarios, estado activo del sidebar |
+| Primario hover | `#044748` | `#8BD7D9` | Hover de primario |
+| Acento | `#08979D` | `#6EC6CA` | Enlaces, foco, badge "activa" |
+| Fondo de nav | `#0B2628` | `#0E1E27` | Sidebar |
+| Fondo de nav claro | `#15393B` | `#1C323D` | Hover en sidebar |
+| Acento sutil | `#E3F3F4` | `rgba(110,198,202,.14)` | Fondos sutiles de acento |
+| Fondo de página | `#F5F7FA` | `#111C25` | Fondo general |
+| Superficie | `#FFFFFF` | `#1A2B35` | Tarjetas, paneles |
+| Borde | `#D9E3E7` | `#38505A` | Divisores, inputs |
+| Texto (ink) | `#172B38` | `#F1F6F7` | Texto principal |
+| Texto (muted) | `#526674` | `#C4D5DB` | Texto secundario |
+| Texto (faint) | `#61727C` | `#9FB4BC` | Placeholders |
+| Éxito | `#18794E` sobre `#E6F4EC` | `#3DDC9A` sobre `rgba(24,121,78,.25)` | Estado "completada", prioridad "baja" |
+| Advertencia | `#986100` sobre `#FCF1E3` | `#F2A93B` sobre `rgba(152,97,0,.28)` | Estado "revisión", prioridad "alta" |
+| Destructivo | `#B42318` sobre `#FBE7E5` | `#F2777A` sobre `rgba(180,35,24,.28)` | Errores, estado "bloqueada", prioridad "crítica" |
+| Info | `#205EA6` sobre `#E8F0FA` | `#6FA8E0` sobre `rgba(32,94,166,.28)` | Prioridad "media", rol "usuario" |
 
-- **Tipografía:** `Poppins`/`Segoe UI`/Arial de respaldo, cuerpo `13px`.
-- **Radio:** `10px` botones del sidebar, `13px` tarjetas/brandmark, `full` para avatares.
+- **Tema:** `data-theme="dark"` en `<html>`, fijado sin parpadeo por
+  `src/views/partials/theme-init.ejs` (localStorage `aiacademy-theme`, si no hay preferencia usa
+  `prefers-color-scheme`). Toggle en el sidebar. Todo `.ejs` autenticado incluye `theme-init` antes
+  de `styles` en `<head>`.
+- **Tipografía:** `Poppins`/`Segoe UI`/Arial de respaldo, cuerpo `13px` (identidad existente —
+  DESIGN.md permite conservar tipografía de marca).
+- **Radio:** `12px` botones/inputs/sidebar, `18px` tarjetas, `16px` brandmark, `full` para avatares.
+- **Sombra de tarjeta:** `0 4px 16px rgba(23,43,56,.06)` (claro) / `0 4px 16px rgba(0,0,0,.35)`
+  (oscuro).
+- **Foco:** `outline: 3px solid var(--focus-ring)` global vía `:focus-visible`.
 - **Layout:** sidebar fijo de `245px`, contenido con ancho máximo `1720px`.
+- **Movimiento:** `prefers-reduced-motion: reduce` desactiva transiciones/animaciones global.
 
 ## Entorno
 

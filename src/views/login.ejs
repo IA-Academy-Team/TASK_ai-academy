@@ -3,29 +3,19 @@
 <head>
 <meta charset="utf-8" />
 <title>AI Academy · Centro de control — Login</title>
-<style>
-  :root{--primary:#7346CC;--primary-dark:#5A37A5;--bg:#F7F8FC;--paper:#FFF;--line:#E9E8F0;--ink:#252138;--text:#5A566B;--red:#BD4565;--redlight:#FCEBF0}
-  *{box-sizing:border-box}
-  html,body{margin:0;min-height:100%;background:var(--bg);font-family:'Poppins','Segoe UI',Arial,sans-serif;font-size:13px;display:grid;place-items:center}
-  form{background:var(--paper);border:1px solid var(--line);border-radius:13px;padding:32px;width:320px;box-shadow:0 6px 24px rgba(25,20,45,.035)}
-  h1{font-size:16px;color:var(--ink);margin:0 0 20px}
-  label{display:block;font-size:11px;color:var(--text);margin-bottom:4px}
-  input{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:10px;margin-bottom:14px;font:inherit}
-  button{width:100%;padding:10px;border:0;border-radius:10px;background:var(--primary);color:#fff;font-weight:650;cursor:pointer}
-  button:hover{background:var(--primary-dark)}
-  #error{color:var(--red);background:var(--redlight);border-radius:8px;padding:8px;margin-bottom:12px;display:none;font-size:12px}
-</style>
+<%- include('partials/theme-init') %>
+<%- include('partials/styles') %>
 </head>
 <body>
-<form id="login-form">
-  <h1>AI Academy · Centro de control</h1>
-  <div id="error"></div>
-  <label for="email">Email</label>
-  <input id="email" name="email" type="email" required />
-  <label for="password">Contraseña</label>
-  <input id="password" name="password" type="password" required />
-  <button type="submit">Entrar</button>
-</form>
+<div class="auth-shell">
+  <form id="login-form" class="card pad auth-card">
+    <h1>AI Academy · Centro de control</h1>
+    <div id="error" class="error" style="display:none"></div>
+    <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" required /></div>
+    <div class="field"><label for="password">Contraseña</label><input id="password" name="password" type="password" required /></div>
+    <button type="submit" class="btn primary" style="width:100%;justify-content:center">Entrar</button>
+  </form>
+</div>
 <script>
   document.getElementById("login-form").addEventListener("submit", async (e) => {
     e.preventDefault();

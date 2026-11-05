@@ -6,5 +6,8 @@
   <a class="navbtn <%= active === 'inicio' ? 'on' : '' %>" href="/">Inicio</a>
   <a class="navbtn <%= active === 'proyectos' ? 'on' : '' %>" href="/proyectos">Proyectos</a>
   <% if (user.role === "admin") { %><a class="navbtn <%= active === 'usuarios' ? 'on' : '' %>" href="/admin/usuarios">Usuarios</a><% } %>
-  <button type="button" class="navbtn" onclick="fetch('/api/auth/sign-out',{method:'POST'}).then(()=>location.href='/login')">Salir</button>
+  <div class="sidebar-bottom">
+    <button type="button" class="navbtn" onclick="(function(){var h=document.documentElement;var next=h.getAttribute('data-theme')==='dark'?'light':'dark';h.setAttribute('data-theme',next);try{localStorage.setItem('aiacademy-theme',next)}catch(e){}})()">Cambiar tema</button>
+    <button type="button" class="navbtn" onclick="fetch('/api/auth/sign-out',{method:'POST'}).then(()=>location.href='/login')">Salir</button>
+  </div>
 </nav>
