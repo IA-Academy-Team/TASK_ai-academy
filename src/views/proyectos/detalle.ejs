@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8" />
+<link rel="icon" type="image/png" href="/static/brand/logo.png" />
 <title>AI Academy · Centro de control — <%= project.name %></title>
 <%- include('../partials/theme-init') %>
 <%- include('../partials/styles') %>
@@ -26,7 +27,7 @@
     <% if (error) { %><div class="error"><%= error %></div><% } %>
 
     <section class="card pad">
-      <div class="sectiontitle"><h3>Nueva tarea</h3></div>
+      <div class="sectiontitle"><h2>Nueva tarea</h2></div>
       <form method="post" action="/proyectos/<%= project.id %>/tareas" class="form-grid">
         <div class="field full"><label>Título *</label><input name="title" maxlength="200" required /></div>
         <div class="field full"><label>Entregable esperado *</label><input name="deliverable" maxlength="300" required /></div>
@@ -73,7 +74,7 @@
       <a href="/proyectos/<%= project.id %>?estado=bloqueada" class="<%= estado === 'bloqueada' ? 'on' : '' %>">Bloqueada</a>
     </div>
 
-    <section class="card">
+    <section class="card pad">
       <% if (tasks.length === 0) { %>
       <div class="empty">Sin tareas en esta vista.</div>
       <% } else { %>
@@ -98,13 +99,13 @@
     </section>
 
     <section class="card pad">
-      <div class="sectiontitle"><h3>Equipo del proyecto</h3></div>
+      <div class="sectiontitle"><h2>Equipo del proyecto</h2></div>
       <% members.forEach(function(m) { %><span class="badge <%= m.id === project.leaderId ? 'admin' : 'usuario' %>"><%= m.name %><%= m.id === project.leaderId ? ' · líder' : '' %></span> <% }) %>
     </section>
 
     <% if (isLeaderOrAdmin) { %>
     <section class="card pad">
-      <div class="sectiontitle"><h3>Configuración del proyecto</h3></div>
+      <div class="sectiontitle"><h2>Configuración del proyecto</h2></div>
       <form method="post" action="/proyectos/<%= project.id %>/config" class="form-grid">
         <div class="field"><label>Máximo de tareas activas</label><input type="number" name="limitActive" min="1" max="20" value="<%= project.limitActive %>" required /></div>
         <div class="field"><label>Máximo de tareas en revisión</label><input type="number" name="limitReview" min="1" max="20" value="<%= project.limitReview %>" required /></div>

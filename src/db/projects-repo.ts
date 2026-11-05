@@ -15,26 +15,28 @@ export async function createProject(input: {
   limitReview: number;
   memberIds: string[];
 }) {
-  const [row] = await db
-    .insert(projects)
-    .values({
-      name: input.name,
-      code: input.code,
-      objective: input.objective,
-      leaderId: input.leaderId,
-      start: input.start,
-      due: input.due,
-      limitActive: input.limitActive,
-      limitReview: input.limitReview,
-    })
-    .returning();
+  return db.transaction(async (tx) => {
+    const [row] = await tx
+      .insert(projects)
+      .values({
+        name: input.name,
+        code: input.code,
+        objective: input.objective,
+        leaderId: input.leaderId,
+        start: input.start,
+        due: input.due,
+        limitActive: input.limitActive,
+        limitReview: input.limitReview,
+      })
+      .returning();
 
-  const memberIds = Array.from(new Set([...input.memberIds, input.leaderId]));
-  await db
-    .insert(projectMembers)
-    .values(memberIds.map((userId) => ({ projectId: row.id, userId })));
+    const memberIds = Array.from(new Set([...input.memberIds, input.leaderId]));
+    await tx
+      .insert(projectMembers)
+      .values(memberIds.map((userId) => ({ projectId: row.id, userId })));
 
-  return row;
+    return row;
+  });
 }
 
 export async function listProjects() {
@@ -109,13 +111,15 @@ export async function updateSettings(
 }
 
 export async function setMembers(projectId: string, memberIds: string[]) {
-  await db
-    .delete(projectMembers)
-    .where(eq(projectMembers.projectId, projectId));
-  const unique = Array.from(new Set(memberIds));
-  if (unique.length > 0) {
-    await db
-      .insert(projectMembers)
-      .values(unique.map((userId) => ({ projectId, userId })));
-  }
+  await db.transaction(async (tx) => {
+    await tx
+      .delete(projectMembers)
+      .where(eq(projectMembers.projectId, projectId));
+    const unique = Array.from(new Set(memberIds));
+    if (unique.length > 0) {
+      await tx
+        .insert(projectMembers)
+        .values(unique.map((userId) => ({ projectId, userId })));
+    }
+  });
 }

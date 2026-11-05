@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8" />
+<link rel="icon" type="image/png" href="/static/brand/logo.png" />
 <title>AI Academy · Centro de control — Proyectos</title>
 <%- include('../partials/theme-init') %>
 <%- include('../partials/styles') %>
@@ -25,7 +26,7 @@
       <% items.forEach(function(p) { %>
       <a class="card project-card" href="/proyectos/<%= p.id %>">
         <span class="flag"><%= p.code %></span>
-        <h3><%= p.name %></h3>
+        <h2><%= p.name %></h2>
         <p><%= p.objective %></p>
         <div class="meta">
           <span>Vence <%= p.due %></span>

@@ -6,20 +6,11 @@ import { user } from "../../src/db/auth-schema.ts";
 import { db } from "../../src/db/client.ts";
 import { createProject } from "../../src/db/projects-repo.ts";
 import { createTask } from "../../src/db/tasks-repo.ts";
-
-async function signUpAndGetCookie(
-  app: ReturnType<typeof createApp>,
-  email: string,
-) {
-  const res = await supertest(app)
-    .post("/api/auth/sign-up/email")
-    .send({ email, password: "supersecret123", name: "Test" });
-  return res.headers["set-cookie"];
-}
+import { signUpAndGetCookie } from "../helpers/auth.ts";
 
 async function setup(email: string) {
   const app = createApp();
-  const cookie = await signUpAndGetCookie(app, email);
+  const cookie = await signUpAndGetCookie(email);
   const [me] = await db.select().from(user).where(eq(user.email, email));
   const project = await createProject({
     name: "Proyecto",
@@ -108,10 +99,7 @@ describe("GET/POST /tareas/:id", () => {
 
   it("POST /tareas/:id/estado a completada sin ser líder/admin responde 403", async () => {
     const { app, project } = await setup("task4-leader@test.local");
-    const memberCookie = await signUpAndGetCookie(
-      app,
-      "task4-member@test.local",
-    );
+    const memberCookie = await signUpAndGetCookie("task4-member@test.local");
     const task = await createTask({
       projectId: project.id,
       title: "T",

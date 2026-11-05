@@ -40,34 +40,46 @@ export async function createTask(input: {
     }
   }
 
-  const [{ value: existing }] = await db
-    .select({ value: count() })
-    .from(tasks)
-    .where(eq(tasks.projectId, input.projectId));
+  const row = await db.transaction(async (tx) => {
+    // Lock the project row so two concurrent creates can't both count the
+    // same "existing" total and land on the same order number.
+    await tx
+      .select()
+      .from(projects)
+      .where(eq(projects.id, input.projectId))
+      .for("update");
 
-  const [row] = await db
-    .insert(tasks)
-    .values({
-      projectId: input.projectId,
-      order: existing + 1,
-      title: input.title,
-      deliverable: input.deliverable,
-      description: input.description,
-      ownerId: input.ownerId,
-      priority: input.priority,
-      weight: input.weight,
-      estimate: input.estimate,
-      dependencyId: input.dependencyId,
-      due: input.due,
-    })
-    .returning();
+    const [{ value: existing }] = await tx
+      .select({ value: count() })
+      .from(tasks)
+      .where(eq(tasks.projectId, input.projectId));
 
-  const supportIds = input.supportIds.filter((id) => id !== input.ownerId);
-  if (supportIds.length > 0) {
-    await db
-      .insert(taskSupport)
-      .values(supportIds.map((userId) => ({ taskId: row.id, userId })));
-  }
+    const [created] = await tx
+      .insert(tasks)
+      .values({
+        projectId: input.projectId,
+        order: existing + 1,
+        title: input.title,
+        deliverable: input.deliverable,
+        description: input.description,
+        ownerId: input.ownerId,
+        priority: input.priority,
+        weight: input.weight,
+        estimate: input.estimate,
+        dependencyId: input.dependencyId,
+        due: input.due,
+      })
+      .returning();
+
+    const supportIds = input.supportIds.filter((id) => id !== input.ownerId);
+    if (supportIds.length > 0) {
+      await tx
+        .insert(taskSupport)
+        .values(supportIds.map((userId) => ({ taskId: created.id, userId })));
+    }
+
+    return created;
+  });
 
   await recordChange({
     projectId: input.projectId,
@@ -122,43 +134,6 @@ export async function transitionTask(
     );
   }
 
-  if (nextStatus === "activa") {
-    if (task.dependencyId) {
-      const dep = await getTask(task.dependencyId);
-      if (dep && dep.status !== "completada") {
-        throw new HttpError(
-          400,
-          "la tarea de la que depende todavía no está completada",
-        );
-      }
-    }
-    const [project] = await db
-      .select()
-      .from(projects)
-      .where(eq(projects.id, task.projectId));
-    const activeCount = await countByStatus(task.projectId, "activa");
-    if (project && activeCount >= project.limitActive) {
-      throw new HttpError(
-        400,
-        "el proyecto ya tiene el máximo de tareas activas",
-      );
-    }
-  }
-
-  if (nextStatus === "revision") {
-    const [project] = await db
-      .select()
-      .from(projects)
-      .where(eq(projects.id, task.projectId));
-    const reviewCount = await countByStatus(task.projectId, "revision");
-    if (project && reviewCount >= project.limitReview) {
-      throw new HttpError(
-        400,
-        "el proyecto ya tiene el máximo de tareas en revisión",
-      );
-    }
-  }
-
   if (nextStatus === "completada" && !task.evidence && !input.evidence) {
     throw new HttpError(
       400,
@@ -166,18 +141,81 @@ export async function transitionTask(
     );
   }
 
-  const patch: Record<string, unknown> = {
-    status: nextStatus,
-    updatedAt: new Date(),
-  };
-  if (input.evidence) patch.evidence = input.evidence;
-  if (nextStatus === "completada") patch.approvedAt = new Date();
+  const row = await db.transaction(async (tx) => {
+    if (nextStatus === "activa" || nextStatus === "revision") {
+      // Lock the project row so two concurrent transitions into the same WIP
+      // column can't both read the count as "under the limit" before either commits.
+      await tx
+        .select()
+        .from(projects)
+        .where(eq(projects.id, task.projectId))
+        .for("update");
+    }
 
-  const [row] = await db
-    .update(tasks)
-    .set(patch)
-    .where(eq(tasks.id, id))
-    .returning();
+    if (nextStatus === "activa") {
+      if (task.dependencyId) {
+        const dep = await getTask(task.dependencyId);
+        if (dep && dep.status !== "completada") {
+          throw new HttpError(
+            400,
+            "la tarea de la que depende todavía no está completada",
+          );
+        }
+      }
+      const [project] = await tx
+        .select()
+        .from(projects)
+        .where(eq(projects.id, task.projectId));
+      const [{ value: activeCount }] = await tx
+        .select({ value: count() })
+        .from(tasks)
+        .where(
+          and(eq(tasks.projectId, task.projectId), eq(tasks.status, "activa")),
+        );
+      if (project && activeCount >= project.limitActive) {
+        throw new HttpError(
+          400,
+          "el proyecto ya tiene el máximo de tareas activas",
+        );
+      }
+    }
+
+    if (nextStatus === "revision") {
+      const [project] = await tx
+        .select()
+        .from(projects)
+        .where(eq(projects.id, task.projectId));
+      const [{ value: reviewCount }] = await tx
+        .select({ value: count() })
+        .from(tasks)
+        .where(
+          and(
+            eq(tasks.projectId, task.projectId),
+            eq(tasks.status, "revision"),
+          ),
+        );
+      if (project && reviewCount >= project.limitReview) {
+        throw new HttpError(
+          400,
+          "el proyecto ya tiene el máximo de tareas en revisión",
+        );
+      }
+    }
+
+    const patch: Record<string, unknown> = {
+      status: nextStatus,
+      updatedAt: new Date(),
+    };
+    if (input.evidence) patch.evidence = input.evidence;
+    if (nextStatus === "completada") patch.approvedAt = new Date();
+
+    const [updated] = await tx
+      .update(tasks)
+      .set(patch)
+      .where(eq(tasks.id, id))
+      .returning();
+    return updated;
+  });
 
   await recordChange({
     projectId: task.projectId,

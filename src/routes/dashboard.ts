@@ -11,7 +11,9 @@ dashboardRouter.get("/", async (req, res) => {
     return;
   }
 
-  const today = new Date().toISOString().slice(0, 10);
+  // En hora local, no UTC: toISOString() adelanta la fecha varias horas antes
+  // de la medianoche local, marcando tareas "vencidas" de más.
+  const today = new Date().toLocaleDateString("en-CA");
   const [activeProjects, myActiveTasks, myOverdueTasks, activity] =
     await Promise.all([
       countActiveProjects(),

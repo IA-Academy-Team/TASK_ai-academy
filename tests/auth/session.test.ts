@@ -4,13 +4,11 @@ import { describe, expect, it } from "vitest";
 import { createApp } from "../../src/app.ts";
 import { user } from "../../src/db/auth-schema.ts";
 import { db } from "../../src/db/client.ts";
+import { signUpAndGetCookie } from "../helpers/auth.ts";
 
 async function signUp(email: string, password: string) {
   const app = createApp();
-  const res = await supertest(app)
-    .post("/api/auth/sign-up/email")
-    .send({ email, password, name: "Test" });
-  const cookie = res.headers["set-cookie"];
+  const cookie = await signUpAndGetCookie(email, password);
   return { app, cookie };
 }
 
@@ -76,5 +74,21 @@ describe("session and authorize", () => {
     app2.get("/__whoami2", (req, res) => res.json({ role: req.user?.role }));
     const res = await supertest(app2).get("/__whoami2").set("Cookie", cookie);
     expect(res.body).toEqual({ role: "admin" });
+  });
+
+  it("POST /api/auth/sign-up/email (alta pública) responde 404", async () => {
+    const app = createApp();
+    const res = await supertest(app).post("/api/auth/sign-up/email").send({
+      email: "intruso@test.local",
+      password: "supersecret4",
+      name: "X",
+    });
+    expect(res.status).toBe(404);
+
+    const [created] = await db
+      .select()
+      .from(user)
+      .where(eq(user.email, "intruso@test.local"));
+    expect(created).toBeUndefined();
   });
 });

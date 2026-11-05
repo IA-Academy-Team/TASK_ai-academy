@@ -23,12 +23,14 @@ export async function attachSession(
     headers: new Headers(req.headers as Record<string, string>),
   });
 
-  if (session?.user) {
+  const isActive = (session?.user as unknown as { isActive?: boolean })
+    ?.isActive;
+  if (session?.user && isActive !== false) {
     req.user = {
       id: session.user.id,
       email: session.user.email,
       role: (session.user as unknown as { role: string }).role,
-      isActive: (session.user as unknown as { isActive: boolean }).isActive,
+      isActive: true,
     };
   }
 

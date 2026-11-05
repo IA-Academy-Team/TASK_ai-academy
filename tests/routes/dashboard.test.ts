@@ -1,21 +1,12 @@
 import supertest from "supertest";
 import { describe, expect, it } from "vitest";
 import { createApp } from "../../src/app.ts";
-
-async function signUpAndGetCookie(
-  app: ReturnType<typeof createApp>,
-  email: string,
-) {
-  const res = await supertest(app)
-    .post("/api/auth/sign-up/email")
-    .send({ email, password: "supersecret123", name: "Test" });
-  return res.headers["set-cookie"];
-}
+import { signUpAndGetCookie } from "../helpers/auth.ts";
 
 describe("GET /", () => {
   it("autenticado, responde 200 con el dashboard", async () => {
     const app = createApp();
-    const cookie = await signUpAndGetCookie(app, "dash1@test.local");
+    const cookie = await signUpAndGetCookie("dash1@test.local");
     const res = await supertest(app).get("/").set("Cookie", cookie);
     expect(res.status).toBe(200);
     expect(res.text).toContain("Proyectos activos");

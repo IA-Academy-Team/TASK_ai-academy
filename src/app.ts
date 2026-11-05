@@ -16,7 +16,15 @@ export function createApp() {
   app.set("view engine", "ejs");
   app.set("views", path.join(import.meta.dirname, "views"));
 
+  app.use("/static", express.static(path.join(import.meta.dirname, "public")));
+
   app.use(healthRouter);
+
+  // Las cuentas las crea un admin en /admin/usuarios (auth.api.signUpEmail server-side, no pasa
+  // por esta ruta). No hay alta pública: bloqueamos el endpoint de better-auth que la expone.
+  app.post("/api/auth/sign-up/email", (_req, res) => {
+    res.status(404).json({ success: false, error: "not found" });
+  });
 
   app.all("/api/auth/*splat", toNodeHandler(auth));
 

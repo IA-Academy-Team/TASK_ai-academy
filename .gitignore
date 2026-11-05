@@ -8,3 +8,18 @@ coverage/
 test-results/
 playwright-report/
 graphify-out/
+
+# Installed AI-agent skill tooling (local dev tool install, not project source —
+# .claude/skills/impeccable alone ships a 17MB platform binary)
+.agents/
+.claude/agents/
+.claude/skills/design-taste-frontend
+.claude/skills/impeccable/
+.claude/skills/logo-design/
+.claude/skills/ponytail
+.claude/skills/ponytail-audit
+.claude/skills/ponytail-debt
+.claude/skills/ponytail-gain
+.claude/skills/ponytail-help
+.claude/skills/ponytail-review
+skills-lock.json
