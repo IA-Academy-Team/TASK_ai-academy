@@ -7,6 +7,7 @@ import {
   listProjects,
 } from "../db/projects-repo.ts";
 import { countByStatus, listTasksByProject } from "../db/tasks-repo.ts";
+import { projectRiskInfo } from "../domain/project-risk.ts";
 import { HttpError } from "../lib/http-error.ts";
 import { authorize } from "../middleware/authorize.ts";
 import { createProjectSchema, toArray } from "../schemas/project.ts";
@@ -19,7 +20,9 @@ projectsRouter.get("/proyectos", async (req, res) => {
     res.redirect("/login");
     return;
   }
-  const items = await listProjects();
+  const today = new Date().toLocaleDateString("en-CA");
+  const rows = await listProjects();
+  const items = rows.map((p) => ({ ...p, risk: projectRiskInfo(p, today) }));
   res.render("proyectos/index", { items, user: req.user });
 });
 

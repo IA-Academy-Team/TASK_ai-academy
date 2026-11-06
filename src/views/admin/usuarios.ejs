@@ -27,7 +27,7 @@
     <section class="card pad">
       <div class="table-wrap">
       <table class="table">
-        <thead><tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Estado</th><th>Acción</th></tr></thead>
+        <thead><tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead>
         <tbody>
           <% users.forEach(function(u) { %>
           <tr>
@@ -36,16 +36,18 @@
             <td><span class="badge <%= u.role %>"><%= u.role %></span></td>
             <td><span class="badge <%= u.isActive ? '' : 'off' %>"><%= u.isActive ? 'activo' : 'inactivo' %></span></td>
             <td>
-              <% if (u.isActive) { %>
-              <form method="post" action="/admin/usuarios/<%= u.id %>/desactivar">
-                <button type="submit" class="btn danger">Desactivar</button>
-              </form>
-              <% } %>
-              <% if (u.id !== user.id) { %>
-              <form method="post" action="/admin/usuarios/<%= u.id %>/eliminar"
-                    onsubmit="return confirm('Eliminar a <%= u.name %> permanentemente?');">
-                <button type="submit" class="btn danger">Eliminar</button>
-              </form>
+              <% if (u.isActive || u.id !== user.id) { %>
+              <div class="kebab">
+                <button type="button" class="btn-icon" aria-label="Más acciones para <%= u.name %>" onclick="this.nextElementSibling.classList.toggle('open')">&#8942;</button>
+                <div class="row-menu">
+                  <% if (u.isActive) { %>
+                  <form method="post" action="/admin/usuarios/<%= u.id %>/desactivar"><button type="submit" class="row-menu-item">Desactivar</button></form>
+                  <% } %>
+                  <% if (u.id !== user.id) { %>
+                  <button type="button" class="row-menu-item row-menu-item-danger" data-user-id="<%= u.id %>" data-user-name="<%= u.name %>" onclick="openDeleteModal(this)">Eliminar</button>
+                  <% } %>
+                </div>
+              </div>
               <% } %>
             </td>
           </tr>
@@ -54,7 +56,40 @@
       </table>
       </div>
     </section>
+
+    <div class="modal" id="confirm-delete-modal">
+      <div class="modal-backdrop" onclick="closeDeleteModal()"></div>
+      <div class="modal-panel">
+        <h3>Eliminar usuario</h3>
+        <p id="confirm-delete-text"></p>
+        <form method="post" id="confirm-delete-form">
+          <div class="foot-actions">
+            <button type="button" class="btn" onclick="closeDeleteModal()">Cancelar</button>
+            <button type="submit" class="btn danger">Eliminar definitivamente</button>
+          </div>
+        </form>
+      </div>
+    </div>
   </main>
 </div>
+<script>
+function openDeleteModal(btn) {
+  var name = btn.getAttribute('data-user-name');
+  var id = btn.getAttribute('data-user-id');
+  document.getElementById('confirm-delete-text').textContent =
+    'Esta acción no se puede deshacer. ¿Eliminar a ' + name + ' permanentemente?';
+  document.getElementById('confirm-delete-form').setAttribute('action', '/admin/usuarios/' + id + '/eliminar');
+  document.getElementById('confirm-delete-modal').classList.add('open');
+  document.querySelectorAll('.row-menu.open').forEach(function (m) { m.classList.remove('open'); });
+}
+function closeDeleteModal() {
+  document.getElementById('confirm-delete-modal').classList.remove('open');
+}
+document.addEventListener('click', function (e) {
+  document.querySelectorAll('.row-menu.open').forEach(function (menu) {
+    if (!menu.parentElement.contains(e.target)) menu.classList.remove('open');
+  });
+});
+</script>
 </body>
 </html>

@@ -17,6 +17,26 @@ function toDateString(d: Date): string {
   return d.toLocaleDateString("en-CA");
 }
 
+const WEEKDAY_LABELS = ["Lun", "Mar", "Mié", "Jue", "Vie"];
+const MONTH_LABELS = [
+  "ene",
+  "feb",
+  "mar",
+  "abr",
+  "may",
+  "jun",
+  "jul",
+  "ago",
+  "sep",
+  "oct",
+  "nov",
+  "dic",
+];
+
+function dayLabel(d: Date, index: number): string {
+  return `${WEEKDAY_LABELS[index]} ${d.getDate()} ${MONTH_LABELS[d.getMonth()]}`;
+}
+
 plannerRouter.get("/planeacion", async (req, res) => {
   if (!req.user) {
     res.redirect("/login");
@@ -26,10 +46,10 @@ plannerRouter.get("/planeacion", async (req, res) => {
   const weekOffset = Number.parseInt(String(req.query.semana ?? "0"), 10) || 0;
   const monday = mondayOf(new Date());
   monday.setDate(monday.getDate() + weekOffset * 7);
-  const days = Array.from({ length: 5 }, (_, i) => {
+  const dayDates = Array.from({ length: 5 }, (_, i) => {
     const d = new Date(monday);
     d.setDate(d.getDate() + i);
-    return toDateString(d);
+    return d;
   });
 
   const projects = await listProjects();
@@ -47,13 +67,19 @@ plannerRouter.get("/planeacion", async (req, res) => {
   );
   const allTasks = taskLists.flat();
 
-  const byDay = days.map((day) => ({
-    day,
-    tasks: allTasks.filter(
-      (t) =>
-        t.due === day && t.status !== "cancelada" && t.status !== "completada",
-    ),
-  }));
+  const byDay = dayDates.map((d, i) => {
+    const day = toDateString(d);
+    return {
+      day,
+      label: dayLabel(d, i),
+      tasks: allTasks.filter(
+        (t) =>
+          t.due === day &&
+          t.status !== "cancelada" &&
+          t.status !== "completada",
+      ),
+    };
+  });
 
   const capacity = await listAllActiveUsers();
 
@@ -63,6 +89,7 @@ plannerRouter.get("/planeacion", async (req, res) => {
     projectFilter,
     weekOffset,
     byDay,
+    today: toDateString(new Date()),
     capacity,
   });
 });

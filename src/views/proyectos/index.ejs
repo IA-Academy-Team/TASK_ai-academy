@@ -25,15 +25,30 @@
     <% } else { %>
     <div class="project-grid">
       <% items.forEach(function(p) { %>
-      <a class="card project-card" href="/proyectos/<%= p.id %>">
-        <span class="flag"><%= p.code %></span>
+      <% var pct = p.taskCount ? Math.round((p.doneCount / p.taskCount) * 100) : 0; %>
+      <a class="card project-card risk-<%= p.risk.level %>" href="/proyectos/<%= p.id %>">
+        <div class="project-card-top">
+          <span class="flag"><%= p.code %></span>
+          <% if (p.risk.level === 'risk') { %>
+          <span class="badge <%= p.risk.daysLeft < 0 ? 'bloqueada' : 'alta' %>"><%= p.risk.daysLeft < 0 ? 'Venció' : 'Vence en ' + p.risk.daysLeft + 'd' %></span>
+          <% } %>
+        </div>
         <h2><%= p.name %></h2>
         <p><%= p.objective %></p>
         <div class="meta">
           <span>Vence <%= p.due %></span>
           <span><%= p.doneCount %>/<%= p.taskCount %> tareas completadas</span>
         </div>
-        <div class="bar"><span style="width: <%= p.taskCount ? Math.round((p.doneCount / p.taskCount) * 100) : 0 %>%"></span></div>
+        <div class="bar-row">
+          <div class="bar"><span style="width: <%= pct %>%"></span></div>
+          <span class="bar-pct"><%= pct %>%</span>
+        </div>
+        <div class="avatar-stack">
+          <% p.members.slice(0, 4).forEach(function(m) { %>
+          <span class="avatar-chip" title="<%= m.name %>"><%= (m.name || '?').charAt(0).toUpperCase() %></span>
+          <% }) %>
+          <% if (p.members.length > 4) { %><span class="avatar-chip avatar-more">+<%= p.members.length - 4 %></span><% } %>
+        </div>
       </a>
       <% }) %>
     </div>

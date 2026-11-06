@@ -1,6 +1,7 @@
 import path from "node:path";
 import { toNodeHandler } from "better-auth/node";
 import express from "express";
+import { getSidebarCounts } from "./db/sidebar-repo.ts";
 import { auth } from "./lib/auth.ts";
 import { errorHandler } from "./middleware/error-handler.ts";
 import { attachSession } from "./middleware/session.ts";
@@ -52,6 +53,20 @@ export function createApp() {
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
   app.use(attachSession);
+
+  // Contadores del sidebar (Notificaciones, Solicitudes de apoyo) en un solo
+  // lugar: así cada ruta no tiene que repetir las mismas cuatro queries.
+  app.use(async (req, res, next) => {
+    if (!req.user) {
+      next();
+      return;
+    }
+    res.locals.sidebarCounts = await getSidebarCounts(
+      req.user.id,
+      req.user.role,
+    );
+    next();
+  });
 
   app.get("/login", (req, res) => {
     if (req.user) {

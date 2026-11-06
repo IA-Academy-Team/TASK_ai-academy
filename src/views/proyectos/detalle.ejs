@@ -18,54 +18,89 @@
         <h1 class="page-title"><%= project.name %></h1>
         <p class="subtitle"><%= project.objective %></p>
       </div>
-      <div class="muted small">
-        Activas: <%= activeCount %>/<%= project.limitActive %> ·
-        En revisión: <%= reviewCount %>/<%= project.limitReview %> ·
-        Vence <%= project.due %>
+      <div class="topbar-side">
+        <div class="muted small">
+          Activas: <%= activeCount %>/<%= project.limitActive %> ·
+          En revisión: <%= reviewCount %>/<%= project.limitReview %> ·
+          Vence <%= project.due %>
+        </div>
+        <button type="button" class="btn primary" onclick="document.getElementById('drawer-nueva-tarea').classList.add('open')">+ Nueva tarea</button>
       </div>
     </div>
 
     <% if (error) { %><div class="error"><%= error %></div><% } %>
 
-    <section class="card pad">
-      <div class="sectiontitle"><h2>Nueva tarea</h2></div>
-      <form method="post" action="/tareas" class="form-grid">
-        <input type="hidden" name="projectId" value="<%= project.id %>" />
-        <div class="field full"><label>Título *</label><input name="title" maxlength="200" required /></div>
-        <div class="field full"><label>Entregable esperado *</label><input name="deliverable" maxlength="300" required /></div>
-        <div class="field full"><label>Descripción</label><textarea name="description" maxlength="2000"></textarea></div>
-        <div class="field"><label>Responsable *</label>
-          <select name="ownerId" required>
-            <% allUsers.forEach(function(u) { %><option value="<%= u.id %>"><%= u.name %></option><% }) %>
-          </select>
+    <div class="drawer" id="drawer-nueva-tarea">
+      <div class="drawer-backdrop" onclick="document.getElementById('drawer-nueva-tarea').classList.remove('open')"></div>
+      <div class="drawer-panel">
+        <div class="drawer-header">
+          <h2>Nueva tarea</h2>
+          <button type="button" class="drawer-close" aria-label="Cerrar" onclick="document.getElementById('drawer-nueva-tarea').classList.remove('open')">&times;</button>
         </div>
-        <div class="field"><label>Apoyo</label>
-          <select name="support" multiple>
-            <% allUsers.forEach(function(u) { %><option value="<%= u.id %>"><%= u.name %></option><% }) %>
-          </select>
-        </div>
-        <div class="field"><label>Prioridad *</label>
-          <select name="priority" required>
-            <option value="baja">Baja</option>
-            <option value="media" selected>Media</option>
-            <option value="alta">Alta</option>
-            <option value="critica">Crítica</option>
-          </select>
-        </div>
-        <div class="field"><label>Peso del avance</label><input type="number" name="weight" min="1" max="10" value="1" required /></div>
-        <div class="field"><label>Horas estimadas *</label><input type="number" name="estimate" min="0.5" step="0.5" required /></div>
-        <div class="field"><label>Fecha límite *</label><input type="date" name="due" required /></div>
-        <div class="field full"><label>Depende de</label>
-          <select name="dependencyId">
-            <option value="">Ninguna</option>
-            <% allTasks.forEach(function(t) { %><option value="<%= t.id %>">#<%= t.order %> <%= t.title %></option><% }) %>
-          </select>
-        </div>
-        <div class="foot-actions full">
-          <button type="submit" class="btn primary">Crear tarea</button>
-        </div>
-      </form>
-    </section>
+        <form method="post" action="/tareas" class="drawer-body">
+          <input type="hidden" name="projectId" value="<%= project.id %>" />
+
+          <div class="drawer-section">
+            <h3>Información</h3>
+            <div class="form-grid">
+              <div class="field full"><label>Título *</label><input name="title" maxlength="200" required /></div>
+              <div class="field full"><label>Entregable esperado *</label><input name="deliverable" maxlength="300" required /></div>
+              <div class="field full"><label>Descripción</label><textarea name="description" maxlength="2000"></textarea></div>
+            </div>
+          </div>
+
+          <div class="drawer-section">
+            <h3>Asignación</h3>
+            <div class="form-grid">
+              <div class="field full"><label>Responsable *</label>
+                <select name="ownerId" required>
+                  <% allUsers.forEach(function(u) { %><option value="<%= u.id %>"><%= u.name %></option><% }) %>
+                </select>
+              </div>
+              <div class="field full"><label>Apoyo</label>
+                <div class="people-grid">
+                  <% allUsers.forEach(function(u) { %>
+                  <label class="person-chip">
+                    <input type="checkbox" name="support" value="<%= u.id %>" />
+                    <span class="chip-avatar"><%= (u.name || '?').charAt(0).toUpperCase() %></span>
+                    <%= u.name %>
+                  </label>
+                  <% }) %>
+                </div>
+              </div>
+              <div class="field full"><label>Prioridad *</label>
+                <select name="priority" required>
+                  <option value="baja">Baja</option>
+                  <option value="media" selected>Media</option>
+                  <option value="alta">Alta</option>
+                  <option value="critica">Crítica</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="drawer-section">
+            <h3>Planificación</h3>
+            <div class="form-grid">
+              <div class="field"><label>Peso del avance</label><input type="number" name="weight" min="1" max="10" value="1" required /></div>
+              <div class="field"><label>Horas estimadas *</label><input type="number" name="estimate" min="0.5" step="0.5" required /></div>
+              <div class="field full"><label>Fecha límite *</label><input type="date" name="due" required /></div>
+              <div class="field full"><label>Depende de</label>
+                <select name="dependencyId">
+                  <option value="">Ninguna</option>
+                  <% allTasks.forEach(function(t) { %><option value="<%= t.id %>">#<%= t.order %> <%= t.title %></option><% }) %>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="foot-actions">
+            <button type="button" class="btn" onclick="document.getElementById('drawer-nueva-tarea').classList.remove('open')">Cancelar</button>
+            <button type="submit" class="btn primary">Crear tarea</button>
+          </div>
+        </form>
+      </div>
+    </div>
 
     <div class="filters">
       <a href="/proyectos/<%= project.id %>" class="<%= !estado ? 'on' : '' %>">Todas</a>

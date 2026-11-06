@@ -29,21 +29,21 @@
       <a href="/planeacion?semana=<%= weekOffset + 1 %>&proyecto=<%= projectFilter || '' %>" class="btn subtle">Semana siguiente &rarr;</a>
     </form>
 
-    <div class="form-grid">
+    <div class="week-board">
       <% byDay.forEach(function(d) { %>
-      <section class="card pad">
-        <div class="sectiontitle"><h2><%= d.day %></h2></div>
+      <div class="week-day <%= d.day === today ? 'is-today' : '' %> <%= d.tasks.length === 0 ? 'is-empty' : '' %>">
+        <div class="week-day-head"><%= d.label %></div>
         <% if (d.tasks.length === 0) { %>
-        <div class="empty">Sin tareas.</div>
+        <p class="week-day-empty">Sin tareas</p>
         <% } else { %>
         <% d.tasks.forEach(function(t) { %>
-        <div class="detail-row">
-          <span><a href="/tareas/<%= t.id %>"><%= t.title %></a></span>
-          <strong><span class="badge <%= t.priority %>"><%= t.priority %></span></strong>
-        </div>
+        <a class="week-task" href="/tareas/<%= t.id %>">
+          <span class="week-task-dot <%= t.priority %>"></span>
+          <span class="week-task-title"><%= t.title %></span>
+        </a>
         <% }) %>
         <% } %>
-      </section>
+      </div>
       <% }) %>
     </div>
 

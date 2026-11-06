@@ -21,19 +21,22 @@
 
     <div class="kpi-row">
       <div class="card kpi">
+        <span class="kpi-icon"><%- include('partials/icon', { kind: 'folder', size: 18 }) %></span>
         <small>Proyectos activos</small>
         <strong><%= activeProjects %></strong>
         <p>En toda la organización</p>
       </div>
       <div class="card kpi">
+        <span class="kpi-icon"><%- include('partials/icon', { kind: 'check', size: 18 }) %></span>
         <small>Mis tareas activas</small>
         <strong><%= myActiveTasks %></strong>
         <p>Activas o en revisión, a tu cargo</p>
       </div>
-      <div class="card kpi">
+      <div class="card kpi <%= myOverdueTasks === 0 ? 'kpi-positive' : '' %>">
+        <span class="kpi-icon"><%- include('partials/icon', { kind: 'clock', size: 18 }) %></span>
         <small>Mis tareas vencidas</small>
         <strong><%= myOverdueTasks %></strong>
-        <p>Pasaron la fecha de vencimiento</p>
+        <p><%= myOverdueTasks === 0 ? 'Todo al día' : 'Pasaron la fecha de vencimiento' %></p>
       </div>
     </div>
 
@@ -44,7 +47,7 @@
       <% } else { %>
       <% activity.forEach(function(a) { %>
       <div class="feed">
-        <span class="dot"><%- include('partials/activity-icon', { kind: a.icon }) %></span>
+        <span class="dot"><%- include('partials/icon', { kind: a.icon }) %></span>
         <div>
           <strong><%= a.text %></strong>
           <p><%= a.when %></p>

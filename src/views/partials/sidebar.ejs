@@ -4,17 +4,42 @@
     <img class="brandmark" src="/static/brand/logo.png" alt="AI Academy" />
     <h2>AI Academy</h2>
   </div>
-  <a class="navbtn <%= active === 'inicio' ? 'on' : '' %>" href="/">Inicio</a>
-  <a class="navbtn <%= active === 'proyectos' ? 'on' : '' %>" href="/proyectos">Proyectos</a>
-  <a class="navbtn <%= active === 'crear-tarea' ? 'on' : '' %>" href="/tareas/nueva">Crear tarea</a>
-  <a class="navbtn <%= active === 'plan-semanal' ? 'on' : '' %>" href="/planeacion">Plan semanal</a>
-  <a class="navbtn <%= active === 'mis-tareas' ? 'on' : '' %>" href="/mis-tareas">Mis tareas</a>
-  <a class="navbtn <%= active === 'equipo' ? 'on' : '' %>" href="/equipo">Equipo y cargas</a>
-  <a class="navbtn <%= active === 'solicitudes' ? 'on' : '' %>" href="/solicitudes">Solicitudes de apoyo</a>
-  <a class="navbtn <%= active === 'productividad' ? 'on' : '' %>" href="/productividad">Productividad</a>
-  <a class="navbtn <%= active === 'notificaciones' ? 'on' : '' %>" href="/notificaciones">Notificaciones</a>
-  <% if (user.role === "admin") { %><a class="navbtn <%= active === 'usuarios' ? 'on' : '' %>" href="/admin/usuarios">Usuarios</a><% } %>
+
+  <div class="navgroup">
+    <span class="navlabel">Trabajo</span>
+    <a class="navbtn <%= active === 'inicio' ? 'on' : '' %>" href="/"><%- include('./icon', { kind: 'home', size: 16 }) %>Inicio</a>
+    <a class="navbtn <%= active === 'proyectos' ? 'on' : '' %>" href="/proyectos"><%- include('./icon', { kind: 'folder', size: 16 }) %>Proyectos</a>
+    <a class="navbtn <%= active === 'crear-tarea' ? 'on' : '' %>" href="/tareas/nueva"><%- include('./icon', { kind: 'plus', size: 16 }) %>Crear tarea</a>
+    <a class="navbtn <%= active === 'plan-semanal' ? 'on' : '' %>" href="/planeacion"><%- include('./icon', { kind: 'calendar', size: 16 }) %>Plan semanal</a>
+    <a class="navbtn <%= active === 'mis-tareas' ? 'on' : '' %>" href="/mis-tareas"><%- include('./icon', { kind: 'check', size: 16 }) %>Mis tareas</a>
+  </div>
+
+  <div class="navgroup">
+    <span class="navlabel">Equipo</span>
+    <a class="navbtn <%= active === 'equipo' ? 'on' : '' %>" href="/equipo"><%- include('./icon', { kind: 'users', size: 16 }) %>Equipo y cargas</a>
+    <a class="navbtn <%= active === 'solicitudes' ? 'on' : '' %>" href="/solicitudes">
+      <%- include('./icon', { kind: 'handshake', size: 16 }) %>Solicitudes de apoyo
+      <% if (typeof sidebarCounts !== 'undefined' && sidebarCounts && sidebarCounts.supports > 0) { %><span class="navcount"><%= sidebarCounts.supports %></span><% } %>
+    </a>
+    <a class="navbtn <%= active === 'productividad' ? 'on' : '' %>" href="/productividad"><%- include('./icon', { kind: 'chart', size: 16 }) %>Productividad</a>
+    <a class="navbtn <%= active === 'notificaciones' ? 'on' : '' %>" href="/notificaciones">
+      <%- include('./icon', { kind: 'bell', size: 16 }) %>Notificaciones
+      <% if (typeof sidebarCounts !== 'undefined' && sidebarCounts && sidebarCounts.notifications > 0) { %><span class="navcount"><%= sidebarCounts.notifications %></span><% } %>
+    </a>
+  </div>
+
+  <% if (user.role === "admin") { %>
+  <div class="navgroup">
+    <span class="navlabel">Admin</span>
+    <a class="navbtn <%= active === 'usuarios' ? 'on' : '' %>" href="/admin/usuarios"><%- include('./icon', { kind: 'shield', size: 16 }) %>Usuarios</a>
+  </div>
+  <% } %>
+
   <div class="sidebar-bottom">
+    <div class="sidebar-user">
+      <span class="sidebar-avatar"><%= (user.name || user.email || "?").charAt(0).toUpperCase() %></span>
+      <span class="sidebar-user-name"><%= user.name || user.email %></span>
+    </div>
     <button type="button" class="navbtn" onclick="(function(){var h=document.documentElement;var next=h.getAttribute('data-theme')==='dark'?'light':'dark';h.setAttribute('data-theme',next);try{localStorage.setItem('aiacademy-theme',next)}catch(e){}})()">Cambiar tema</button>
     <button type="button" class="navbtn" onclick="fetch('/api/auth/sign-out',{method:'POST'}).then(()=>location.href='/login')">Salir</button>
   </div>

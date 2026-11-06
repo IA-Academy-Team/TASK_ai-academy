@@ -45,11 +45,25 @@ export async function listProjects() {
     .from(projects)
     .orderBy(desc(projects.createdAt));
   const allTasks = await db.select().from(tasks);
+  const allMembers = await db
+    .select({
+      projectId: projectMembers.projectId,
+      userId: user.id,
+      name: user.name,
+    })
+    .from(projectMembers)
+    .innerJoin(user, eq(user.id, projectMembers.userId));
 
   return rows.map((p) => {
     const projectTasks = allTasks.filter((t) => t.projectId === p.id);
     const done = projectTasks.filter((t) => t.status === "completada").length;
-    return { ...p, taskCount: projectTasks.length, doneCount: done };
+    const members = allMembers.filter((m) => m.projectId === p.id);
+    return {
+      ...p,
+      taskCount: projectTasks.length,
+      doneCount: done,
+      members,
+    };
   });
 }
 
