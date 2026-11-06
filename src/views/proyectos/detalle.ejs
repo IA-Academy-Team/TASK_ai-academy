@@ -24,11 +24,35 @@
           En revisión: <%= reviewCount %>/<%= project.limitReview %> ·
           Vence <%= project.due %>
         </div>
-        <button type="button" class="btn primary" onclick="document.getElementById('drawer-nueva-tarea').classList.add('open')">+ Nueva tarea</button>
+        <div style="display:flex;gap:8px">
+          <button type="button" class="btn" onclick="document.getElementById('modal-carga-masiva').classList.add('open')"><%- include('../partials/icon', { kind: 'upload', size: 14 }) %>Carga masiva</button>
+          <button type="button" class="btn primary" onclick="document.getElementById('drawer-nueva-tarea').classList.add('open')">+ Nueva tarea</button>
+        </div>
       </div>
     </div>
 
     <% if (error) { %><div class="error"><%= error %></div><% } %>
+
+    <div class="modal" id="modal-carga-masiva">
+      <div class="modal-backdrop" onclick="document.getElementById('modal-carga-masiva').classList.remove('open')"></div>
+      <div class="modal-panel modal-panel-wide">
+        <div class="drawer-header" style="padding:0 0 16px">
+          <h2>Carga masiva de tareas</h2>
+          <button type="button" class="drawer-close" aria-label="Cerrar" onclick="document.getElementById('modal-carga-masiva').classList.remove('open')"><%- include('../partials/icon', { kind: 'x', size: 18 }) %></button>
+        </div>
+        <p class="subtitle">
+          Subí un archivo .xlsx con una tarea por fila. El responsable y el apoyo se identifican por email.
+          <a href="/proyectos/<%= project.id %>/tareas/plantilla.xlsx">Descargar plantilla</a>.
+        </p>
+        <form method="post" action="/proyectos/<%= project.id %>/tareas/importar" enctype="multipart/form-data" class="form-grid">
+          <div class="field full"><label>Archivo .xlsx *</label><input type="file" name="file" accept=".xlsx" required /></div>
+          <div class="foot-actions full">
+            <button type="button" class="btn" onclick="document.getElementById('modal-carga-masiva').classList.remove('open')">Cancelar</button>
+            <button type="submit" class="btn primary">Importar</button>
+          </div>
+        </form>
+      </div>
+    </div>
 
     <div class="drawer" id="drawer-nueva-tarea">
       <div class="drawer-backdrop" onclick="document.getElementById('drawer-nueva-tarea').classList.remove('open')"></div>

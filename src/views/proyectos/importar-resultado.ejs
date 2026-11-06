@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<link rel="icon" type="image/png" href="/static/brand/favicon.png" />
+<title>AI Academy · Centro de control — Importar tareas</title>
+<%- include('../partials/theme-init') %>
+<%- include('../partials/styles') %>
+</head>
+<body>
+<div class="app">
+  <%- include('../partials/sidebar', { active: 'proyectos', user }) %>
+  <main class="content">
+    <div class="topbar">
+      <div>
+        <p class="subtitle"><a href="/proyectos/<%= project.id %>">&larr; <%= project.name %></a></p>
+        <h1 class="page-title">Resultado de la carga masiva</h1>
+        <p class="subtitle"><%= created %> tarea<%= created === 1 ? '' : 's' %> creada<%= created === 1 ? '' : 's' %><% if (failed > 0) { %> · <%= failed %> con error<%= failed === 1 ? '' : 'es' %><% } %></p>
+      </div>
+      <a class="btn primary" href="/proyectos/<%= project.id %>">Volver al proyecto</a>
+    </div>
+
+    <section class="card pad">
+      <% if (results.length === 0) { %>
+      <%- include('../partials/empty-state', { text: 'El archivo no tenía filas con datos.' }) %>
+      <% } else { %>
+      <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>Fila</th><th>Resultado</th><th>Detalle</th></tr></thead>
+        <tbody>
+          <% results.forEach(function(r) { %>
+          <tr>
+            <td><%= r.row %></td>
+            <td><span class="badge <%= r.ok ? 'completada' : 'bloqueada' %>"><%= r.ok ? 'Creada' : 'Error' %></span></td>
+            <td><%= r.ok ? r.title : r.message %></td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+      </div>
+      <% } %>
+    </section>
+  </main>
+</div>
+</body>
+</html>

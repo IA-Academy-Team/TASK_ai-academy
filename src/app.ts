@@ -20,6 +20,7 @@ import { tasksAuditRouter } from "./routes/tasks-audit.ts";
 import { tasksCreateRouter } from "./routes/tasks-create.ts";
 import { tasksDeliveryRouter } from "./routes/tasks-delivery.ts";
 import { tasksEditRouter } from "./routes/tasks-edit.ts";
+import { tasksImportRouter } from "./routes/tasks-import.ts";
 import { teamRouter } from "./routes/team.ts";
 
 export function createApp() {
@@ -82,6 +83,7 @@ export function createApp() {
   app.use(tasksCreateRouter);
   app.use(tasksEditRouter);
   app.use(tasksDeliveryRouter);
+  app.use(tasksImportRouter);
   app.use(supportsRouter);
   app.use(tasksAuditRouter);
   app.use(tasksRouter);
