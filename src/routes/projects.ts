@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   createProject,
+  deleteProject,
   generateProjectCode,
   getProject,
   listAllActiveUsers,
@@ -61,6 +62,19 @@ projectsRouter.post("/proyectos", authorize("admin"), async (req, res) => {
 
   res.redirect(303, `/proyectos/${project.id}`);
 });
+
+projectsRouter.post(
+  "/proyectos/:id/eliminar",
+  authorize("admin"),
+  async (req, res) => {
+    const project = await getProject(String(req.params.id));
+    if (!project) {
+      throw new HttpError(404, "proyecto no encontrado");
+    }
+    await deleteProject(project.id);
+    res.redirect(303, "/proyectos");
+  },
+);
 
 projectsRouter.get("/proyectos/:id", async (req, res) => {
   if (!req.user) {

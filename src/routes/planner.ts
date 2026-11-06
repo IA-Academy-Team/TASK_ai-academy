@@ -5,13 +5,6 @@ import { layoutDayBlocks } from "../domain/week-calendar.ts";
 
 export const plannerRouter = Router();
 
-const CALENDAR_START_HOUR = 8;
-const CALENDAR_END_HOUR = 18;
-const CALENDAR_HOURS = Array.from(
-  { length: CALENDAR_END_HOUR - CALENDAR_START_HOUR },
-  (_, i) => CALENDAR_START_HOUR + i,
-);
-
 function mondayOf(date: Date): Date {
   const d = new Date(date);
   const day = d.getDay();
@@ -75,6 +68,9 @@ plannerRouter.get("/planeacion", async (req, res) => {
   );
   const allTasks = taskLists.flat();
 
+  const capacity = await listAllActiveUsers();
+  const ownerNameById = new Map(capacity.map((u) => [u.id, u.name]));
+
   const byDayRaw = dayDates.map((d, i) => {
     const day = toDateString(d);
     const dayTasks = allTasks.filter(
@@ -86,6 +82,7 @@ plannerRouter.get("/planeacion", async (req, res) => {
       title: t.title,
       priority: t.priority,
       estimate: Number(t.estimate),
+      ownerName: ownerNameById.get(t.ownerId) ?? "",
     }));
     return {
       day,
@@ -96,16 +93,10 @@ plannerRouter.get("/planeacion", async (req, res) => {
     };
   });
   const maxEstimate = Math.max(...byDayRaw.map((d) => d.totalEstimate), 1);
-  const calendarHours = Math.max(
-    CALENDAR_HOURS.length,
-    ...byDayRaw.map((d) => d.totalEstimate),
-  );
   const byDay = byDayRaw.map((d) => ({
     ...d,
     loadPct: Math.round((d.totalEstimate / maxEstimate) * 100),
   }));
-
-  const capacity = await listAllActiveUsers();
 
   res.render("planeacion", {
     user: req.user,
@@ -115,7 +106,5 @@ plannerRouter.get("/planeacion", async (req, res) => {
     byDay,
     today: toDateString(new Date()),
     capacity,
-    calendarHourLabels: CALENDAR_HOURS,
-    calendarHeight: calendarHours,
   });
 });

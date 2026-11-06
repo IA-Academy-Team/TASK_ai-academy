@@ -4,12 +4,15 @@ import { user } from "../../src/db/auth-schema.ts";
 import { db } from "../../src/db/client.ts";
 import {
   createProject,
+  deleteProject,
   generateProjectCode,
+  getProject,
   listMembers,
   listProjects,
   setMembers,
   updateSettings,
 } from "../../src/db/projects-repo.ts";
+import { createTask } from "../../src/db/tasks-repo.ts";
 import { auth } from "../../src/lib/auth.ts";
 
 async function makeUser(email: string) {
@@ -133,5 +136,40 @@ describe("projects-repo", () => {
 
     const code = await generateProjectCode("Equipo Alfa Beta");
     expect(code).toBe("EAB-002");
+  });
+
+  it("deleteProject borra el proyecto y sus tareas en cascada", async () => {
+    const leader = await makeUser("leader-delete@test.local");
+    const project = await createProject({
+      name: "Proyecto a borrar",
+      code: "PAB-001",
+      objective: "Objetivo",
+      leaderId: leader.id,
+      start: "2026-01-01",
+      due: "2026-02-01",
+      limitActive: 2,
+      limitReview: 2,
+      memberIds: [],
+    });
+    await createTask({
+      projectId: project.id,
+      title: "Tarea",
+      deliverable: "Entregable",
+      description: "",
+      ownerId: leader.id,
+      priority: "media",
+      weight: 1,
+      estimate: "2",
+      dependencyId: null,
+      due: "2026-01-15",
+      supportIds: [],
+      actorId: leader.id,
+    });
+
+    await deleteProject(project.id);
+
+    expect(await getProject(project.id)).toBeUndefined();
+    const remaining = await listProjects();
+    expect(remaining.map((p) => p.id)).not.toContain(project.id);
   });
 });

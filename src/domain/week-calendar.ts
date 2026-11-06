@@ -3,6 +3,7 @@ export interface CalendarTask {
   title: string;
   priority: string;
   estimate: number;
+  ownerName?: string;
 }
 
 export interface CalendarBlock extends CalendarTask {

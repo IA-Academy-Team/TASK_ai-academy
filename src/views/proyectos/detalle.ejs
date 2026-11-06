@@ -27,6 +27,11 @@
         <div style="display:flex;gap:8px">
           <button type="button" class="btn" onclick="document.getElementById('modal-carga-masiva').classList.add('open')"><%- include('../partials/icon', { kind: 'upload', size: 14 }) %>Carga masiva</button>
           <button type="button" class="btn primary" onclick="document.getElementById('drawer-nueva-tarea').classList.add('open')">+ Nueva tarea</button>
+          <% if (user.role === "admin") { %>
+          <form method="post" action="/proyectos/<%= project.id %>/eliminar" data-project-name="<%= project.name %>" onsubmit="return confirmDeleteProject(this)">
+            <button type="submit" class="btn danger">Eliminar proyecto</button>
+          </form>
+          <% } %>
         </div>
       </div>
     </div>
@@ -172,5 +177,11 @@
     <% } %>
   </main>
 </div>
+<script>
+function confirmDeleteProject(form) {
+  var name = form.getAttribute('data-project-name') || '';
+  return confirm('¿Eliminar el proyecto "' + name + '"? Se borran también sus tareas y registros. Esta acción no se puede deshacer.');
+}
+</script>
 </body>
 </html>

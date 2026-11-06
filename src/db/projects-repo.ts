@@ -163,6 +163,10 @@ export async function updateSettings(
   return row;
 }
 
+export async function deleteProject(id: string) {
+  await db.delete(projects).where(eq(projects.id, id));
+}
+
 export async function setMembers(projectId: string, memberIds: string[]) {
   await db.transaction(async (tx) => {
     await tx
