@@ -29,9 +29,12 @@
       <a class="card project-card risk-<%= p.risk.level %>" href="/proyectos/<%= p.id %>">
         <div class="project-card-top">
           <span class="flag"><%= p.code %></span>
-          <% if (p.risk.level === 'risk') { %>
-          <span class="badge <%= p.risk.daysLeft < 0 ? 'bloqueada' : 'alta' %>"><%= p.risk.daysLeft < 0 ? 'Venció' : 'Vence en ' + p.risk.daysLeft + 'd' %></span>
-          <% } %>
+          <div class="project-card-top-right">
+            <% if (p.risk.level === 'risk') { %>
+            <span class="badge <%= p.risk.daysLeft < 0 ? 'bloqueada' : 'alta' %>"><%= p.risk.daysLeft < 0 ? 'Venció' : 'Vence en ' + p.risk.daysLeft + 'd' %></span>
+            <% } %>
+            <%- include('../partials/progress-ring', { pct: pct, size: 32 }) %>
+          </div>
         </div>
         <h2><%= p.name %></h2>
         <p><%= p.objective %></p>

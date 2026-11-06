@@ -4,6 +4,7 @@ import {
   listTasksForOwner,
   listTasksForSupport,
 } from "../db/tasks-repo.ts";
+import { bucketTasksByUrgency } from "../domain/chart-data.ts";
 import {
   compareTasks,
   matchTaskState,
@@ -107,5 +108,9 @@ mytasksRouter.get("/mis-tareas", async (req, res) => {
     orden,
     showing: filtered.length,
     of: owned.filter((r) => r.task.status !== "cancelada").length,
+    urgencyBuckets: bucketTasksByUrgency(
+      owned.map((r) => r.task),
+      today,
+    ),
   });
 });

@@ -129,6 +129,18 @@ export async function countByStatus(projectId: string, status: string) {
   return value;
 }
 
+export async function countAllByStatus() {
+  const rows = await db
+    .select({ status: tasks.status, value: count() })
+    .from(tasks)
+    .groupBy(tasks.status);
+  const byStatus: Record<string, number> = {};
+  for (const row of rows) {
+    byStatus[row.status] = row.value;
+  }
+  return byStatus;
+}
+
 export async function transitionTask(
   id: string,
   nextStatus: string,
@@ -563,6 +575,7 @@ export async function teamLoad() {
       support: supportCount,
       openHours: declaredHours(openLogs),
       confirmedMonthHours: declaredHours(monthLogs),
+      weeklyCapacityHours: u.weeklyCapacityHours,
     });
   }
   return rows;
@@ -624,6 +637,52 @@ export async function topTasksByHours(range: DateRange, limit: number) {
   return Array.from(byTask.values())
     .sort((a, b) => b.hours - a.hours)
     .slice(0, limit);
+}
+
+export async function hoursByDay(range: DateRange) {
+  const rows = await db
+    .select({ date: taskLogs.date, hours: taskLogs.hours })
+    .from(taskLogs)
+    .where(and(gte(taskLogs.date, range.from), lte(taskLogs.date, range.to)));
+
+  const byDay = new Map<string, number>();
+  for (const row of rows) {
+    byDay.set(row.date, (byDay.get(row.date) ?? 0) + Number(row.hours));
+  }
+  return Array.from(byDay.entries()).map(([date, hours]) => ({
+    date,
+    hours,
+  }));
+}
+
+export async function hoursByPersonAndDay(range: DateRange) {
+  const rows = await db
+    .select({
+      userId: taskLogs.userId,
+      name: user.name,
+      date: taskLogs.date,
+      hours: taskLogs.hours,
+    })
+    .from(taskLogs)
+    .innerJoin(user, eq(user.id, taskLogs.userId))
+    .where(and(gte(taskLogs.date, range.from), lte(taskLogs.date, range.to)));
+
+  const byPersonDay = new Map<
+    string,
+    { userId: string; name: string; date: string; hours: number }
+  >();
+  for (const row of rows) {
+    const key = `${row.userId}|${row.date}`;
+    const existing = byPersonDay.get(key) ?? {
+      userId: row.userId,
+      name: row.name,
+      date: row.date,
+      hours: 0,
+    };
+    existing.hours += Number(row.hours);
+    byPersonDay.set(key, existing);
+  }
+  return Array.from(byPersonDay.values());
 }
 
 export async function hoursByCollaborator(range: DateRange) {

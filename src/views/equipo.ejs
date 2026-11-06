@@ -25,7 +25,7 @@
       <% } else { %>
       <div class="table-wrap">
       <table class="table">
-        <thead><tr><th>Persona</th><th>Pendientes</th><th>En ejecución</th><th>Apoyo</th><th>Horas abiertas</th><th>Horas confirmadas del mes</th></tr></thead>
+        <thead><tr><th>Persona</th><th>Pendientes</th><th>En ejecución</th><th>Apoyo</th><th>Horas abiertas</th><th>Carga vs. capacidad</th><th>Horas confirmadas del mes</th></tr></thead>
         <tbody>
           <% rows.forEach(function(r) { %>
           <tr>
@@ -34,6 +34,12 @@
             <td><%= r.active %></td>
             <td><%= r.support %></td>
             <td><%= r.openHours %> h</td>
+            <td>
+              <div class="load-bar" title="<%= r.openHours %> h de <%= r.weeklyCapacityHours %> h/semana">
+                <div class="bar"><span class="threshold-<%= r.threshold %>" style="width: <%= r.loadPct %>%"></span></div>
+                <small><%= r.openHours %>/<%= r.weeklyCapacityHours %> h</small>
+              </div>
+            </td>
             <td><%= r.confirmedMonthHours %> h</td>
           </tr>
           <% }) %>

@@ -34,10 +34,20 @@
     </div>
 
     <section class="card pad">
+      <div class="sectiontitle"><h2>Horas por día</h2></div>
+      <% if (!dailyChart.values.some(function(v) { return v > 0; })) { %>
+      <%- include('partials/empty-state', { text: 'Sin horas registradas en el período.' }) %>
+      <% } else { %>
+      <div class="chart-wrap"><canvas id="chart-daily" role="img" aria-label="Horas registradas por día"></canvas></div>
+      <% } %>
+    </section>
+
+    <section class="card pad">
       <div class="sectiontitle"><h2>Horas por proyecto</h2></div>
       <% if (byProject.length === 0) { %>
       <%- include('partials/empty-state', { text: 'Sin horas registradas en el período.' }) %>
       <% } else { %>
+      <div class="chart-wrap"><canvas id="chart-byproject" role="img" aria-label="Horas registradas por proyecto"></canvas></div>
       <div class="table-wrap">
       <table class="table">
         <thead><tr><th>Proyecto</th><th>Horas</th></tr></thead>
@@ -56,15 +66,15 @@
       <% if (topTasks.length === 0) { %>
       <%- include('partials/empty-state', { text: 'Sin tareas con horas en el período.' }) %>
       <% } else { %>
-      <div class="table-wrap">
-      <table class="table">
-        <thead><tr><th>Tarea</th><th>Horas</th></tr></thead>
-        <tbody>
-          <% topTasks.forEach(function(t) { %>
-          <tr><td><a href="/tareas/<%= t.taskId %>"><%= t.title %></a></td><td><%= t.hours %></td></tr>
-          <% }) %>
-        </tbody>
-      </table>
+      <% var maxTaskHours = Math.max.apply(null, topTasks.map(function (t) { return t.hours; })); %>
+      <div class="hbar-list">
+        <% topTasks.forEach(function(t) { %>
+        <div class="hbar-row">
+          <a class="hbar-label" href="/tareas/<%= t.taskId %>"><%= t.title %></a>
+          <div class="hbar-track"><span style="width: <%= maxTaskHours ? Math.round(t.hours / maxTaskHours * 100) : 0 %>%"></span></div>
+          <span class="hbar-value"><%= t.hours %> h</span>
+        </div>
+        <% }) %>
       </div>
       <% } %>
     </section>
@@ -80,6 +90,30 @@
         <tbody>
           <% byCollaborator.forEach(function(c) { %>
           <tr><td><%= c.name %></td><td><%= c.hours %></td></tr>
+          <% }) %>
+        </tbody>
+      </table>
+      </div>
+      <% } %>
+    </section>
+
+    <section class="card pad">
+      <div class="sectiontitle"><h2>Carga por persona y día</h2></div>
+      <% if (heatmap.rows.length === 0) { %>
+      <%- include('partials/empty-state', { text: 'Sin horas registradas en el período.' }) %>
+      <% } else { %>
+      <div class="table-wrap">
+      <table class="table heatmap-table">
+        <thead><tr><th>Persona</th><% heatmap.days.forEach(function(d) { %><th><%= d.slice(5) %></th><% }) %></tr></thead>
+        <tbody>
+          <% heatmap.rows.forEach(function(r) { %>
+          <tr>
+            <td><%= r.name %></td>
+            <% r.cells.forEach(function(h) { %>
+            <% var heat = heatmap.maxHours > 0 ? Math.round(h / heatmap.maxHours * 100) : 0; %>
+            <td class="heatmap-cell" style="--heat: <%= heat %>%" title="<%= h %> h"><%= h > 0 ? h : '' %></td>
+            <% }) %>
+          </tr>
           <% }) %>
         </tbody>
       </table>
@@ -111,5 +145,28 @@
     </section>
   </main>
 </div>
+<script src="/static/vendor/chart.js"></script>
+<script src="/static/js/charts.js"></script>
+<script>
+(function () {
+  if (!window.AIAcademyCharts) return;
+  var dailyCanvas = document.getElementById('chart-daily');
+  if (dailyCanvas) {
+    window.AIAcademyCharts.areaSeries(
+      dailyCanvas,
+      <%- JSON.stringify(dailyChart.labels) %>,
+      <%- JSON.stringify(dailyChart.values) %>
+    );
+  }
+  var byProjectCanvas = document.getElementById('chart-byproject');
+  if (byProjectCanvas) {
+    window.AIAcademyCharts.barByCategory(
+      byProjectCanvas,
+      <%- JSON.stringify(byProject.map(function(p) { return p.projectName; })) %>,
+      <%- JSON.stringify(byProject.map(function(p) { return p.hours; })) %>
+    );
+  }
+})();
+</script>
 </body>
 </html>

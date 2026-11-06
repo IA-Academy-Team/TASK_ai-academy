@@ -3,9 +3,12 @@ import {
   type DateRange,
   estimateVsActual,
   hoursByCollaborator,
+  hoursByDay,
+  hoursByPersonAndDay,
   hoursByProject,
   topTasksByHours,
 } from "../db/tasks-repo.ts";
+import { enumerateDays, seriesForDays } from "../domain/chart-data.ts";
 import { toCsv } from "../lib/csv.ts";
 
 export const reportsRouter = Router();
@@ -31,15 +34,51 @@ async function loadReport(rango: Rango) {
   const today = new Date().toLocaleDateString("en-CA");
   const range = rangeFor(rango, today);
 
-  const [byProject, allTasks, byCollaborator, estimateVsReal] =
-    await Promise.all([
-      hoursByProject(range),
-      topTasksByHours(range, 1000),
-      hoursByCollaborator(range),
-      estimateVsActual(),
-    ]);
+  const [
+    byProject,
+    allTasks,
+    byCollaborator,
+    estimateVsReal,
+    daily,
+    byPersonDay,
+  ] = await Promise.all([
+    hoursByProject(range),
+    topTasksByHours(range, 1000),
+    hoursByCollaborator(range),
+    estimateVsActual(),
+    hoursByDay(range),
+    hoursByPersonAndDay(range),
+  ]);
 
   const totalHours = byProject.reduce((sum, p) => sum + p.hours, 0);
+
+  const days = enumerateDays(range.from, range.to);
+  const dailyChart = {
+    labels: days.map((d) => d.slice(5)),
+    values: seriesForDays(days, daily),
+  };
+
+  const maxPersonDayHours = byPersonDay.reduce(
+    (max, p) => Math.max(max, p.hours),
+    0,
+  );
+  const heatmap = {
+    days,
+    maxHours: maxPersonDayHours,
+    rows: Array.from(new Set(byPersonDay.map((p) => p.userId))).map(
+      (userId) => {
+        const name = byPersonDay.find((p) => p.userId === userId)?.name ?? "";
+        return {
+          name,
+          cells: days.map(
+            (day) =>
+              byPersonDay.find((p) => p.userId === userId && p.date === day)
+                ?.hours ?? 0,
+          ),
+        };
+      },
+    ),
+  };
 
   return {
     range,
@@ -49,6 +88,8 @@ async function loadReport(rango: Rango) {
     tasksWithHours: allTasks.length,
     byCollaborator,
     estimateVsReal,
+    dailyChart,
+    heatmap,
   };
 }
 

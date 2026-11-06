@@ -40,6 +40,25 @@
       </div>
     </div>
 
+    <div class="chart-row">
+      <section class="card pad">
+        <div class="sectiontitle"><h2>Tareas por estado</h2></div>
+        <% if (Object.keys(statusCounts).length === 0) { %>
+        <%- include('partials/empty-state', { text: 'Todavía no hay tareas registradas.' }) %>
+        <% } else { %>
+        <div class="chart-wrap chart-wrap-donut"><canvas id="chart-status" role="img" aria-label="Distribución de tareas por estado"></canvas></div>
+        <% } %>
+      </section>
+      <section class="card pad">
+        <div class="sectiontitle"><h2>Horas registradas (14 días)</h2></div>
+        <% if (!hoursChart.values.some(function(v) { return v > 0; })) { %>
+        <%- include('partials/empty-state', { text: 'Sin horas registradas en este período.' }) %>
+        <% } else { %>
+        <div class="chart-wrap"><canvas id="chart-hours" role="img" aria-label="Horas registradas por día en los últimos 14 días"></canvas></div>
+        <% } %>
+      </section>
+    </div>
+
     <section class="card pad">
       <div class="sectiontitle"><h2>Actividad reciente</h2></div>
       <% if (activity.length === 0) { %>
@@ -58,5 +77,23 @@
     </section>
   </main>
 </div>
+<script src="/static/vendor/chart.js"></script>
+<script src="/static/js/charts.js"></script>
+<script>
+(function () {
+  var statusCanvas = document.getElementById('chart-status');
+  if (statusCanvas && window.AIAcademyCharts) {
+    window.AIAcademyCharts.doughnutByStatus(statusCanvas, <%- JSON.stringify(statusCounts) %>);
+  }
+  var hoursCanvas = document.getElementById('chart-hours');
+  if (hoursCanvas && window.AIAcademyCharts) {
+    window.AIAcademyCharts.areaSeries(
+      hoursCanvas,
+      <%- JSON.stringify(hoursChart.labels) %>,
+      <%- JSON.stringify(hoursChart.values) %>
+    );
+  }
+})();
+</script>
 </body>
 </html>

@@ -40,7 +40,7 @@
       <span class="sidebar-avatar"><%= (user.name || user.email || "?").charAt(0).toUpperCase() %></span>
       <span class="sidebar-user-name"><%= user.name || user.email %></span>
     </div>
-    <button type="button" class="navbtn" onclick="(function(){var h=document.documentElement;var next=h.getAttribute('data-theme')==='dark'?'light':'dark';h.setAttribute('data-theme',next);try{localStorage.setItem('aiacademy-theme',next)}catch(e){}})()">Cambiar tema</button>
+    <button type="button" class="navbtn" onclick="(function(){var h=document.documentElement;var next=h.getAttribute('data-theme')==='dark'?'light':'dark';h.setAttribute('data-theme',next);try{localStorage.setItem('aiacademy-theme',next)}catch(e){}if(document.querySelector('canvas')){location.reload()}})()">Cambiar tema</button>
     <button type="button" class="navbtn" onclick="fetch('/api/auth/sign-out',{method:'POST'}).then(()=>location.href='/login')">Salir</button>
   </div>
 </nav>

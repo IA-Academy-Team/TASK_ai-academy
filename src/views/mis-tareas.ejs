@@ -26,6 +26,22 @@
       <div class="card kpi"><small>Completadas</small><strong><%= completadas %></strong></div>
     </div>
 
+    <% var urgTotal = urgencyBuckets.vencidas + urgencyBuckets.urgentes + urgencyBuckets.enCurso + urgencyBuckets.completadas; %>
+    <% if (urgTotal > 0) { %>
+    <div class="stacked-bar" title="Vencidas <%= urgencyBuckets.vencidas %> · Urgentes <%= urgencyBuckets.urgentes %> · En curso <%= urgencyBuckets.enCurso %> · Completadas <%= urgencyBuckets.completadas %>">
+      <% if (urgencyBuckets.vencidas) { %><span class="seg seg-red" style="width: <%= (urgencyBuckets.vencidas / urgTotal * 100).toFixed(2) %>%"></span><% } %>
+      <% if (urgencyBuckets.urgentes) { %><span class="seg seg-orange" style="width: <%= (urgencyBuckets.urgentes / urgTotal * 100).toFixed(2) %>%"></span><% } %>
+      <% if (urgencyBuckets.enCurso) { %><span class="seg seg-primary" style="width: <%= (urgencyBuckets.enCurso / urgTotal * 100).toFixed(2) %>%"></span><% } %>
+      <% if (urgencyBuckets.completadas) { %><span class="seg seg-green" style="width: <%= (urgencyBuckets.completadas / urgTotal * 100).toFixed(2) %>%"></span><% } %>
+    </div>
+    <div class="stacked-bar-legend">
+      <span><i class="dot dot-red"></i>Vencidas <%= urgencyBuckets.vencidas %></span>
+      <span><i class="dot dot-orange"></i>Urgentes <%= urgencyBuckets.urgentes %></span>
+      <span><i class="dot dot-primary"></i>En curso <%= urgencyBuckets.enCurso %></span>
+      <span><i class="dot dot-green"></i>Completadas <%= urgencyBuckets.completadas %></span>
+    </div>
+    <% } %>
+
     <div class="filters">
       <% ['todas','vencidas','urgentes','pendiente','activa','revision','bloqueada','completada','cancelada'].forEach(function(f) { %>
       <a href="/mis-tareas?estado=<%= f %>&orden=<%= orden %>" class="<%= estado === f ? 'on' : '' %>"><%= f %></a>

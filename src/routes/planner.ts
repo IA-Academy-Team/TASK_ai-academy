@@ -67,19 +67,24 @@ plannerRouter.get("/planeacion", async (req, res) => {
   );
   const allTasks = taskLists.flat();
 
-  const byDay = dayDates.map((d, i) => {
+  const byDayRaw = dayDates.map((d, i) => {
     const day = toDateString(d);
+    const dayTasks = allTasks.filter(
+      (t) =>
+        t.due === day && t.status !== "cancelada" && t.status !== "completada",
+    );
     return {
       day,
       label: dayLabel(d, i),
-      tasks: allTasks.filter(
-        (t) =>
-          t.due === day &&
-          t.status !== "cancelada" &&
-          t.status !== "completada",
-      ),
+      tasks: dayTasks,
+      totalEstimate: dayTasks.reduce((sum, t) => sum + Number(t.estimate), 0),
     };
   });
+  const maxEstimate = Math.max(...byDayRaw.map((d) => d.totalEstimate), 1);
+  const byDay = byDayRaw.map((d) => ({
+    ...d,
+    loadPct: Math.round((d.totalEstimate / maxEstimate) * 100),
+  }));
 
   const capacity = await listAllActiveUsers();
 

@@ -21,10 +21,12 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx --env-file=.env src/db/seed.ts",
-    "auth:generate": "auth generate --config src/lib/auth.ts --output src/db/auth-schema.ts -y"
+    "auth:generate": "auth generate --config src/lib/auth.ts --output src/db/auth-schema.ts -y",
+    "postinstall": "node scripts/copy-vendor.mjs"
   },
   "dependencies": {
     "better-auth": "1.7.17",
+    "chart.js": "4.6.1",
     "drizzle-orm": "0.45.4",
     "ejs": "7.0.2",
     "express": "5.3.0",
