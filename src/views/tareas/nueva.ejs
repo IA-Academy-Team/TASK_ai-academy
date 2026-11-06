@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<link rel="icon" type="image/png" href="/static/brand/favicon.png" />
+<title>AI Academy · Centro de control — Crear tarea</title>
+<%- include('../partials/theme-init') %>
+<%- include('../partials/styles') %>
+</head>
+<body>
+<div class="app">
+  <%- include('../partials/sidebar', { active: 'crear-tarea', user }) %>
+  <main class="content">
+    <div class="topbar">
+      <div>
+        <h1 class="page-title">Crear tarea</h1>
+        <p class="subtitle">Elegí el proyecto y completá los datos de la tarea.</p>
+      </div>
+    </div>
+
+    <% if (error) { %><div class="error">Revisá los campos obligatorios de la tarea.</div><% } %>
+
+    <% if (!project) { %>
+    <section class="card pad">
+      <div class="sectiontitle"><h2>Proyecto</h2></div>
+      <form method="get" action="/tareas/nueva" class="form-grid">
+        <div class="field full"><label>Proyecto *</label>
+          <select name="project" required>
+            <option value="">Elegí un proyecto</option>
+            <% projects.forEach(function(p) { %><option value="<%= p.id %>"><%= p.code %> — <%= p.name %></option><% }) %>
+          </select>
+        </div>
+        <div class="foot-actions full"><button type="submit" class="btn primary">Continuar</button></div>
+      </form>
+    </section>
+    <% } else { %>
+    <section class="card pad">
+      <div class="sectiontitle"><h2><%= project.code %> — <%= project.name %></h2></div>
+      <form method="post" action="/tareas" class="form-grid">
+        <input type="hidden" name="projectId" value="<%= project.id %>" />
+        <div class="field full"><label>Título *</label><input name="title" maxlength="200" required /></div>
+        <div class="field full"><label>Entregable esperado *</label><input name="deliverable" maxlength="300" required /></div>
+        <div class="field full"><label>Descripción</label><textarea name="description" maxlength="2000"></textarea></div>
+        <div class="field"><label>Responsable *</label>
+          <select name="ownerId" required>
+            <% allUsers.forEach(function(u) { %><option value="<%= u.id %>"><%= u.name %></option><% }) %>
+          </select>
+        </div>
+        <div class="field"><label>Apoyo</label>
+          <select name="support" multiple>
+            <% allUsers.forEach(function(u) { %><option value="<%= u.id %>"><%= u.name %></option><% }) %>
+          </select>
+        </div>
+        <div class="field"><label>Prioridad *</label>
+          <select name="priority" required>
+            <option value="baja">Baja</option>
+            <option value="media" selected>Media</option>
+            <option value="alta">Alta</option>
+            <option value="critica">Crítica</option>
+          </select>
+        </div>
+        <div class="field"><label>Peso del avance</label><input type="number" name="weight" min="1" max="10" value="1" required /></div>
+        <div class="field"><label>Horas estimadas *</label><input type="number" name="estimate" min="0.5" step="0.5" required /></div>
+        <div class="field"><label>Fecha límite *</label><input type="date" name="due" required /></div>
+        <div class="field full"><label>Depende de</label>
+          <select name="dependencyId">
+            <option value="">Ninguna</option>
+            <% allTasks.forEach(function(t) { %><option value="<%= t.id %>">#<%= t.order %> <%= t.title %></option><% }) %>
+          </select>
+        </div>
+        <div class="foot-actions full">
+          <a href="/tareas/nueva" class="btn subtle">Elegir otro proyecto</a>
+          <button type="submit" class="btn primary">Crear tarea</button>
+        </div>
+      </form>
+    </section>
+    <% } %>
+  </main>
+</div>
+</body>
+</html>

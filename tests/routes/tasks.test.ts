@@ -82,11 +82,17 @@ describe("GET/POST /tareas/:id", () => {
       .send({ status: "activa" });
     expect(r1.status).toBe(303);
 
+    await supertest(app)
+      .post(`/tareas/${task.id}/horas`)
+      .set("Cookie", cookie)
+      .type("form")
+      .send({ date: "2026-01-05", hours: "2" });
+
     const r2 = await supertest(app)
       .post(`/tareas/${task.id}/estado`)
       .set("Cookie", cookie)
       .type("form")
-      .send({ status: "revision" });
+      .send({ status: "revision", evidence: "avance parcial" });
     expect(r2.status).toBe(303);
 
     const r3 = await supertest(app)
@@ -131,6 +137,56 @@ describe("GET/POST /tareas/:id", () => {
       .type("form")
       .send({ status: "completada", evidence: "listo" });
     expect(res.status).toBe(403);
+  });
+
+  it("POST /tareas/:id/estado a bloqueada sin motivo responde 400", async () => {
+    const { app, cookie, me, project } = await setup("task6@test.local");
+    const task = await createTask({
+      projectId: project.id,
+      title: "T",
+      deliverable: "E",
+      description: "",
+      ownerId: me.id,
+      priority: "media",
+      weight: 1,
+      estimate: "4",
+      dependencyId: null,
+      due: "2026-01-10",
+      supportIds: [],
+      actorId: me.id,
+    });
+
+    const res = await supertest(app)
+      .post(`/tareas/${task.id}/estado`)
+      .set("Cookie", cookie)
+      .type("form")
+      .send({ status: "bloqueada" });
+    expect(res.status).toBe(400);
+  });
+
+  it("POST /tareas/:id/estado a bloqueada con motivo funciona", async () => {
+    const { app, cookie, me, project } = await setup("task7@test.local");
+    const task = await createTask({
+      projectId: project.id,
+      title: "T",
+      deliverable: "E",
+      description: "",
+      ownerId: me.id,
+      priority: "media",
+      weight: 1,
+      estimate: "4",
+      dependencyId: null,
+      due: "2026-01-10",
+      supportIds: [],
+      actorId: me.id,
+    });
+
+    const res = await supertest(app)
+      .post(`/tareas/${task.id}/estado`)
+      .set("Cookie", cookie)
+      .type("form")
+      .send({ status: "bloqueada", note: "Esperando insumos" });
+    expect(res.status).toBe(303);
   });
 
   it("POST /tareas/:id/horas registra horas para el responsable", async () => {

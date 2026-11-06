@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<link rel="icon" type="image/png" href="/static/brand/favicon.png" />
+<title>AI Academy · Centro de control — Productividad</title>
+<%- include('partials/theme-init') %>
+<%- include('partials/styles') %>
+</head>
+<body>
+<div class="app">
+  <%- include('partials/sidebar', { active: 'productividad', user }) %>
+  <main class="content">
+    <div class="topbar">
+      <div>
+        <h1 class="page-title">Productividad</h1>
+        <p class="subtitle"><%= range.from %> a <%= range.to %></p>
+      </div>
+    </div>
+
+    <div class="filters">
+      <% ['dia','semana','mes'].forEach(function(r) { %>
+      <a href="/productividad?rango=<%= r %>" class="<%= rango === r ? 'on' : '' %>"><%= r %></a>
+      <% }) %>
+      <a href="/productividad/export.csv?rango=<%= rango %>" class="btn subtle">Exportar CSV</a>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi"><small>Horas registradas</small><strong><%= totalHours %></strong></div>
+      <div class="kpi"><small>Proyectos con actividad</small><strong><%= byProject.length %></strong></div>
+      <div class="kpi"><small>Tareas con registro</small><strong><%= tasksWithHours %></strong></div>
+      <div class="kpi"><small>Colaboradores con horas</small><strong><%= byCollaborator.length %></strong></div>
+    </div>
+
+    <section class="card pad">
+      <div class="sectiontitle"><h2>Horas por proyecto</h2></div>
+      <% if (byProject.length === 0) { %>
+      <div class="empty">Sin horas registradas en el período.</div>
+      <% } else { %>
+      <table class="table">
+        <thead><tr><th>Proyecto</th><th>Horas</th></tr></thead>
+        <tbody>
+          <% byProject.forEach(function(p) { %>
+          <tr><td><%= p.projectName %></td><td><%= p.hours %></td></tr>
+          <% }) %>
+        </tbody>
+      </table>
+      <% } %>
+    </section>
+
+    <section class="card pad">
+      <div class="sectiontitle"><h2>Top 10 tareas por horas</h2></div>
+      <% if (topTasks.length === 0) { %>
+      <div class="empty">Sin tareas con horas en el período.</div>
+      <% } else { %>
+      <table class="table">
+        <thead><tr><th>Tarea</th><th>Horas</th></tr></thead>
+        <tbody>
+          <% topTasks.forEach(function(t) { %>
+          <tr><td><a href="/tareas/<%= t.taskId %>"><%= t.title %></a></td><td><%= t.hours %></td></tr>
+          <% }) %>
+        </tbody>
+      </table>
+      <% } %>
+    </section>
+
+    <section class="card pad">
+      <div class="sectiontitle"><h2>Horas por colaborador</h2></div>
+      <% if (byCollaborator.length === 0) { %>
+      <div class="empty">Sin horas registradas en el período.</div>
+      <% } else { %>
+      <table class="table">
+        <thead><tr><th>Colaborador</th><th>Horas</th></tr></thead>
+        <tbody>
+          <% byCollaborator.forEach(function(c) { %>
+          <tr><td><%= c.name %></td><td><%= c.hours %></td></tr>
+          <% }) %>
+        </tbody>
+      </table>
+      <% } %>
+    </section>
+
+    <section class="card pad">
+      <div class="sectiontitle"><h2>Estimado vs. real (tareas aprobadas)</h2></div>
+      <% if (estimateVsReal.length === 0) { %>
+      <div class="empty">Todavía no hay tareas aprobadas.</div>
+      <% } else { %>
+      <table class="table">
+        <thead><tr><th>Tarea</th><th>Estimado</th><th>Real</th><th>Desvío</th></tr></thead>
+        <tbody>
+          <% estimateVsReal.forEach(function(t) { %>
+          <tr>
+            <td><a href="/tareas/<%= t.taskId %>"><%= t.title %></a></td>
+            <td><%= t.estimate %></td>
+            <td><%= t.actual %></td>
+            <td><%= (t.actual - t.estimate).toFixed(1) %></td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+      <% } %>
+    </section>
+  </main>
+</div>
+</body>
+</html>

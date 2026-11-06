@@ -7,8 +7,19 @@ import { attachSession } from "./middleware/session.ts";
 import { adminRouter } from "./routes/admin.ts";
 import { dashboardRouter } from "./routes/dashboard.ts";
 import { healthRouter } from "./routes/health.ts";
+import { mytasksRouter } from "./routes/mytasks.ts";
+import { notificationsRouter } from "./routes/notifications.ts";
+import { plannerRouter } from "./routes/planner.ts";
+import { projectSettingsRouter } from "./routes/project-settings.ts";
 import { projectsRouter } from "./routes/projects.ts";
+import { reportsRouter } from "./routes/reports.ts";
+import { supportsRouter } from "./routes/supports.ts";
 import { tasksRouter } from "./routes/tasks.ts";
+import { tasksAuditRouter } from "./routes/tasks-audit.ts";
+import { tasksCreateRouter } from "./routes/tasks-create.ts";
+import { tasksDeliveryRouter } from "./routes/tasks-delivery.ts";
+import { tasksEditRouter } from "./routes/tasks-edit.ts";
+import { teamRouter } from "./routes/team.ts";
 
 export function createApp() {
   const app = express();
@@ -42,7 +53,18 @@ export function createApp() {
 
   app.use(dashboardRouter);
   app.use(projectsRouter);
+  app.use(projectSettingsRouter);
+  app.use(tasksCreateRouter);
+  app.use(tasksEditRouter);
+  app.use(tasksDeliveryRouter);
+  app.use(supportsRouter);
+  app.use(tasksAuditRouter);
   app.use(tasksRouter);
+  app.use(mytasksRouter);
+  app.use(plannerRouter);
+  app.use(teamRouter);
+  app.use(notificationsRouter);
+  app.use(reportsRouter);
   app.use(adminRouter);
 
   app.use(errorHandler);

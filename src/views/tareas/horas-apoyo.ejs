@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<link rel="icon" type="image/png" href="/static/brand/favicon.png" />
+<title>AI Academy · Centro de control — Horas de apoyo</title>
+<%- include('../partials/theme-init') %>
+<%- include('../partials/styles') %>
+</head>
+<body>
+<div class="app">
+  <%- include('../partials/sidebar', { active: 'solicitudes', user }) %>
+  <main class="content">
+    <div class="topbar">
+      <div>
+        <p class="subtitle"><a href="/tareas/<%= task.id %>">&larr; <%= task.title %></a></p>
+        <h1 class="page-title">Registrar horas de apoyo</h1>
+      </div>
+    </div>
+
+    <% if (error) { %><div class="error"><%= error %></div><% } %>
+
+    <section class="card pad">
+      <form method="post" action="/tareas/<%= task.id %>/horas" class="form-grid">
+        <div class="field"><label>Fecha *</label><input type="date" name="date" required /></div>
+        <div class="field"><label>Horas *</label><input type="number" name="hours" min="0.5" step="0.5" max="24" required /></div>
+        <div class="foot-actions full"><button type="submit" class="btn primary">Registrar horas de apoyo</button></div>
+      </form>
+    </section>
+  </main>
+</div>
+</body>
+</html>

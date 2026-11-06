@@ -402,7 +402,7 @@ async function main() {
     mode: "apply",
     reason: "Puedo ayudar con el QA de las actividades.",
   });
-  await resolveRequest(fmSupportRequest.id, "aceptada");
+  await resolveRequest(fmSupportRequest.id, "aceptada", jorge.id);
 
   console.log(
     `seed: created admin ${ADMIN_EMAIL} (${ADMIN_PASSWORD}), ${DEMO_USERS.length} demo users (${DEMO_PASSWORD}), and 3 projects (NEB-001, FM-002, COM-003)`,

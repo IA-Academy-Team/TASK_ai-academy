@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { user } from "../../src/db/auth-schema.ts";
 import { db } from "../../src/db/client.ts";
 import { createProject } from "../../src/db/projects-repo.ts";
+import { tasks } from "../../src/db/schema.ts";
 import {
   createTask,
   listTasksByProject,
@@ -112,7 +113,16 @@ describe("tasks-repo", () => {
     );
 
     await transitionTask(dep.id, "activa", leader.id, {});
-    await transitionTask(dep.id, "revision", leader.id, {});
+    await logHours({
+      taskId: dep.id,
+      userId: leader.id,
+      role: "owner",
+      date: "2026-01-04",
+      hours: "1",
+    });
+    await transitionTask(dep.id, "revision", leader.id, {
+      evidence: "avance",
+    });
     await transitionTask(dep.id, "completada", leader.id, {
       evidence: "listo",
     });
@@ -178,7 +188,18 @@ describe("tasks-repo", () => {
       actorId: leader.id,
     });
     await transitionTask(t.id, "activa", leader.id, {});
-    await transitionTask(t.id, "revision", leader.id, {});
+    await logHours({
+      taskId: t.id,
+      userId: leader.id,
+      role: "owner",
+      date: "2026-01-04",
+      hours: "1",
+    });
+    await transitionTask(t.id, "revision", leader.id, { evidence: "avance" });
+    // Un registro sin evidencia no puede llegar normalmente a "revision" (el
+    // guard de arriba lo exige), así que se simula el caso borde a mano para
+    // seguir cubriendo el guard de "completada".
+    await db.update(tasks).set({ evidence: null }).where(eq(tasks.id, t.id));
 
     await expect(
       transitionTask(t.id, "completada", leader.id, {}),

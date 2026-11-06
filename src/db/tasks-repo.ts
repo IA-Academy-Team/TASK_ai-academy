@@ -1,6 +1,18 @@
-import { and, asc, count, eq, inArray, lt, notInArray } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  eq,
+  gte,
+  inArray,
+  lt,
+  lte,
+  notInArray,
+} from "drizzle-orm";
+import { declaredHours } from "../domain/hours.ts";
 import { HttpError } from "../lib/http-error.ts";
 import { recordChange } from "./audit-repo.ts";
+import { user } from "./auth-schema.ts";
 import { db } from "./client.ts";
 import { projects, taskLogs, taskSupport, tasks } from "./schema.ts";
 
@@ -121,7 +133,7 @@ export async function transitionTask(
   id: string,
   nextStatus: string,
   actorId: string,
-  input: { evidence?: string },
+  input: { evidence?: string; note?: string },
 ) {
   const task = await getTask(id);
   if (!task) return undefined;
@@ -139,6 +151,22 @@ export async function transitionTask(
       400,
       "hace falta registrar la evidencia antes de aprobar",
     );
+  }
+
+  if (nextStatus === "revision") {
+    if (!task.evidence && !input.evidence) {
+      throw new HttpError(
+        400,
+        "hace falta registrar la evidencia antes de enviar a revisión",
+      );
+    }
+    const existingLogs = await listLogs(id);
+    if (declaredHours(existingLogs) <= 0) {
+      throw new HttpError(
+        400,
+        "hace falta registrar horas antes de enviar a revisión",
+      );
+    }
   }
 
   const row = await db.transaction(async (tx) => {
@@ -222,7 +250,9 @@ export async function transitionTask(
     taskId: id,
     actorId,
     action: "task_status_changed",
-    note: `${task.status} → ${nextStatus}`,
+    note: input.note
+      ? `${task.status} → ${nextStatus}: ${input.note}`
+      : `${task.status} → ${nextStatus}`,
   });
 
   return row;
@@ -279,4 +309,361 @@ export async function countOverdueForOwner(ownerId: string, today: string) {
       ),
     );
   return value;
+}
+
+export async function listOverdueForOwner(ownerId: string, today: string) {
+  return db
+    .select({ task: tasks, projectName: projects.name })
+    .from(tasks)
+    .innerJoin(projects, eq(projects.id, tasks.projectId))
+    .where(
+      and(
+        eq(tasks.ownerId, ownerId),
+        lt(tasks.due, today),
+        notInArray(tasks.status, ["completada", "cancelada"]),
+      ),
+    )
+    .orderBy(asc(tasks.due));
+}
+
+export async function listReviewPendingForLeader(leaderId: string | null) {
+  return db
+    .select({ task: tasks, projectName: projects.name })
+    .from(tasks)
+    .innerJoin(projects, eq(projects.id, tasks.projectId))
+    .where(
+      leaderId
+        ? and(eq(tasks.status, "revision"), eq(projects.leaderId, leaderId))
+        : eq(tasks.status, "revision"),
+    )
+    .orderBy(asc(tasks.due));
+}
+
+export async function moveTask(
+  id: string,
+  direction: "subir" | "bajar",
+  actorId: string,
+) {
+  const task = await getTask(id);
+  if (!task) return undefined;
+
+  await db.transaction(async (tx) => {
+    await tx
+      .select()
+      .from(projects)
+      .where(eq(projects.id, task.projectId))
+      .for("update");
+
+    const siblings = await tx
+      .select()
+      .from(tasks)
+      .where(eq(tasks.projectId, task.projectId))
+      .orderBy(asc(tasks.order));
+
+    const index = siblings.findIndex((t) => t.id === id);
+    const neighborIndex = direction === "subir" ? index - 1 : index + 1;
+    if (neighborIndex < 0 || neighborIndex >= siblings.length) {
+      throw new HttpError(400, "la tarea ya está en el extremo del orden");
+    }
+    const neighbor = siblings[neighborIndex];
+
+    const ordersAfter = new Map(siblings.map((s) => [s.id, s.order]));
+    ordersAfter.set(task.id, neighbor.order);
+    ordersAfter.set(neighbor.id, task.order);
+
+    const dependencyOrderOk = (t: (typeof siblings)[number]) => {
+      if (!t.dependencyId) return true;
+      const depOrder = ordersAfter.get(t.dependencyId);
+      if (depOrder === undefined) return true;
+      const myOrder = ordersAfter.get(t.id);
+      return depOrder < (myOrder ?? 0);
+    };
+
+    if (!dependencyOrderOk(task) || !dependencyOrderOk(neighbor)) {
+      throw new HttpError(
+        400,
+        "ese movimiento deja una dependencia después de la tarea que depende de ella",
+      );
+    }
+
+    await tx
+      .update(tasks)
+      .set({ order: neighbor.order, updatedAt: new Date() })
+      .where(eq(tasks.id, task.id));
+    await tx
+      .update(tasks)
+      .set({ order: task.order, updatedAt: new Date() })
+      .where(eq(tasks.id, neighbor.id));
+  });
+
+  await recordChange({
+    projectId: task.projectId,
+    taskId: id,
+    actorId,
+    action: "task_order_changed",
+    note: `tarea "${task.title}" se movió ${direction === "subir" ? "arriba" : "abajo"}`,
+  });
+
+  return getTask(id);
+}
+
+export interface UpdateTaskPatch {
+  title?: string;
+  deliverable?: string;
+  description?: string;
+  estimate?: string;
+  weight?: number;
+  priority?: string;
+  dependencyId?: string | null;
+  due?: string;
+  ownerId?: string;
+}
+
+export async function updateTask(
+  id: string,
+  patch: UpdateTaskPatch,
+  actorId: string,
+  motivo: string,
+) {
+  const task = await getTask(id);
+  if (!task) return undefined;
+
+  if (task.status === "completada" || task.status === "cancelada") {
+    throw new HttpError(
+      400,
+      "no se puede editar una tarea completada o cancelada",
+    );
+  }
+
+  if (patch.dependencyId) {
+    if (patch.dependencyId === id) {
+      throw new HttpError(400, "una tarea no puede depender de sí misma");
+    }
+    const [dep] = await db
+      .select()
+      .from(tasks)
+      .where(eq(tasks.id, patch.dependencyId));
+    if (!dep || dep.projectId !== task.projectId) {
+      throw new HttpError(
+        400,
+        "la dependencia debe ser una tarea del mismo proyecto",
+      );
+    }
+  }
+
+  const keys = Object.keys(patch) as (keyof UpdateTaskPatch)[];
+  const before: Record<string, unknown> = {};
+  const after: Record<string, unknown> = {};
+  for (const key of keys) {
+    before[key] = task[key];
+    after[key] = patch[key];
+  }
+
+  const [updated] = await db
+    .update(tasks)
+    .set({ ...patch, updatedAt: new Date() })
+    .where(eq(tasks.id, id))
+    .returning();
+
+  await recordChange({
+    projectId: task.projectId,
+    taskId: id,
+    actorId,
+    action: "task_updated",
+    note: `${motivo} — antes: ${JSON.stringify(before)} → después: ${JSON.stringify(after)}`,
+  });
+
+  return updated;
+}
+
+export async function listTasksForOwner(ownerId: string) {
+  return db
+    .select({
+      task: tasks,
+      projectName: projects.name,
+      projectCode: projects.code,
+    })
+    .from(tasks)
+    .innerJoin(projects, eq(projects.id, tasks.projectId))
+    .where(eq(tasks.ownerId, ownerId))
+    .orderBy(asc(tasks.due));
+}
+
+export async function listTasksForSupport(userId: string) {
+  return db
+    .select({
+      task: tasks,
+      projectName: projects.name,
+      projectCode: projects.code,
+    })
+    .from(taskSupport)
+    .innerJoin(tasks, eq(tasks.id, taskSupport.taskId))
+    .innerJoin(projects, eq(projects.id, tasks.projectId))
+    .where(eq(taskSupport.userId, userId))
+    .orderBy(asc(tasks.due));
+}
+
+export async function teamLoad() {
+  const activeUsers = await db
+    .select()
+    .from(user)
+    .where(eq(user.isActive, true));
+
+  const now = new Date();
+  const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+
+  const rows = [];
+  for (const u of activeUsers) {
+    const [{ value: pending }] = await db
+      .select({ value: count() })
+      .from(tasks)
+      .where(and(eq(tasks.ownerId, u.id), eq(tasks.status, "pendiente")));
+    const [{ value: active }] = await db
+      .select({ value: count() })
+      .from(tasks)
+      .where(and(eq(tasks.ownerId, u.id), eq(tasks.status, "activa")));
+    const [{ value: supportCount }] = await db
+      .select({ value: count() })
+      .from(taskSupport)
+      .innerJoin(tasks, eq(tasks.id, taskSupport.taskId))
+      .where(
+        and(
+          eq(taskSupport.userId, u.id),
+          notInArray(tasks.status, ["completada", "cancelada"]),
+        ),
+      );
+
+    const openLogs = await db
+      .select({ hours: taskLogs.hours })
+      .from(taskLogs)
+      .innerJoin(tasks, eq(tasks.id, taskLogs.taskId))
+      .where(
+        and(
+          eq(taskLogs.userId, u.id),
+          notInArray(tasks.status, ["completada", "cancelada"]),
+        ),
+      );
+    const monthLogs = await db
+      .select({ hours: taskLogs.hours })
+      .from(taskLogs)
+      .innerJoin(tasks, eq(tasks.id, taskLogs.taskId))
+      .where(
+        and(
+          eq(taskLogs.userId, u.id),
+          eq(tasks.status, "completada"),
+          gte(taskLogs.date, monthStart),
+        ),
+      );
+
+    rows.push({
+      userId: u.id,
+      name: u.name,
+      pending,
+      active,
+      support: supportCount,
+      openHours: declaredHours(openLogs),
+      confirmedMonthHours: declaredHours(monthLogs),
+    });
+  }
+  return rows;
+}
+
+export interface DateRange {
+  from: string;
+  to: string;
+}
+
+export async function hoursByProject(range: DateRange) {
+  const rows = await db
+    .select({
+      projectId: tasks.projectId,
+      projectName: projects.name,
+      hours: taskLogs.hours,
+    })
+    .from(taskLogs)
+    .innerJoin(tasks, eq(tasks.id, taskLogs.taskId))
+    .innerJoin(projects, eq(projects.id, tasks.projectId))
+    .where(and(gte(taskLogs.date, range.from), lte(taskLogs.date, range.to)));
+
+  const byProject = new Map<
+    string,
+    { projectId: string; projectName: string; hours: number }
+  >();
+  for (const row of rows) {
+    const existing = byProject.get(row.projectId) ?? {
+      projectId: row.projectId,
+      projectName: row.projectName,
+      hours: 0,
+    };
+    existing.hours += Number(row.hours);
+    byProject.set(row.projectId, existing);
+  }
+  return Array.from(byProject.values());
+}
+
+export async function topTasksByHours(range: DateRange, limit: number) {
+  const rows = await db
+    .select({ taskId: tasks.id, title: tasks.title, hours: taskLogs.hours })
+    .from(taskLogs)
+    .innerJoin(tasks, eq(tasks.id, taskLogs.taskId))
+    .where(and(gte(taskLogs.date, range.from), lte(taskLogs.date, range.to)));
+
+  const byTask = new Map<
+    string,
+    { taskId: string; title: string; hours: number }
+  >();
+  for (const row of rows) {
+    const existing = byTask.get(row.taskId) ?? {
+      taskId: row.taskId,
+      title: row.title,
+      hours: 0,
+    };
+    existing.hours += Number(row.hours);
+    byTask.set(row.taskId, existing);
+  }
+  return Array.from(byTask.values())
+    .sort((a, b) => b.hours - a.hours)
+    .slice(0, limit);
+}
+
+export async function hoursByCollaborator(range: DateRange) {
+  const rows = await db
+    .select({ userId: taskLogs.userId, name: user.name, hours: taskLogs.hours })
+    .from(taskLogs)
+    .innerJoin(user, eq(user.id, taskLogs.userId))
+    .where(and(gte(taskLogs.date, range.from), lte(taskLogs.date, range.to)));
+
+  const byUser = new Map<
+    string,
+    { userId: string; name: string; hours: number }
+  >();
+  for (const row of rows) {
+    const existing = byUser.get(row.userId) ?? {
+      userId: row.userId,
+      name: row.name,
+      hours: 0,
+    };
+    existing.hours += Number(row.hours);
+    byUser.set(row.userId, existing);
+  }
+  return Array.from(byUser.values()).sort((a, b) => b.hours - a.hours);
+}
+
+export async function estimateVsActual() {
+  const doneTasks = await db
+    .select()
+    .from(tasks)
+    .where(eq(tasks.status, "completada"));
+
+  const results = [];
+  for (const t of doneTasks) {
+    const logs = await listLogs(t.id);
+    results.push({
+      taskId: t.id,
+      title: t.title,
+      estimate: Number(t.estimate),
+      actual: declaredHours(logs),
+    });
+  }
+  return results;
 }

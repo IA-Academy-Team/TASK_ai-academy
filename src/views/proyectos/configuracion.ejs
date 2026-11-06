@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<link rel="icon" type="image/png" href="/static/brand/favicon.png" />
+<title>AI Academy · Centro de control — Configuración de <%= project.name %></title>
+<%- include('../partials/theme-init') %>
+<%- include('../partials/styles') %>
+</head>
+<body>
+<div class="app">
+  <%- include('../partials/sidebar', { active: 'proyectos', user }) %>
+  <main class="content">
+    <div class="topbar">
+      <div>
+        <p class="subtitle"><a href="/proyectos/<%= project.id %>">&larr; <%= project.name %></a></p>
+        <h1 class="page-title">Configuración</h1>
+      </div>
+    </div>
+
+    <% if (error) { %><div class="error"><%= error %></div><% } %>
+
+    <section class="card pad">
+      <div class="sectiontitle"><h2>Límites y fecha</h2></div>
+      <form method="post" action="/proyectos/<%= project.id %>/config" class="form-grid">
+        <div class="field"><label>Máximo de tareas activas</label><input type="number" name="limitActive" min="1" max="20" value="<%= project.limitActive %>" required /></div>
+        <div class="field"><label>Máximo de tareas en revisión</label><input type="number" name="limitReview" min="1" max="20" value="<%= project.limitReview %>" required /></div>
+        <div class="field full"><label>Fecha límite del proyecto</label><input type="date" name="due" value="<%= project.due %>" required /></div>
+        <div class="field full">
+          <label>Integrantes</label>
+          <div class="usergrid">
+            <% allUsers.forEach(function(u) { %>
+            <label class="usercheck">
+              <input type="checkbox" name="members" value="<%= u.id %>" <%= members.some(function(m){return m.id===u.id}) ? 'checked' : '' %> />
+              <%= u.name %>
+            </label>
+            <% }) %>
+          </div>
+        </div>
+        <div class="foot-actions full"><button type="submit" class="btn primary">Guardar configuración</button></div>
+      </form>
+    </section>
+
+    <section class="card pad">
+      <div class="sectiontitle"><h2>Orden de las tareas</h2></div>
+      <table class="table">
+        <thead><tr><th>#</th><th>Tarea</th><th>Estado</th><th></th></tr></thead>
+        <tbody>
+          <% tasks.forEach(function(t, i) { %>
+          <tr>
+            <td><%= t.order %></td>
+            <td><%= t.title %></td>
+            <td><span class="badge <%= t.status %>"><%= t.status %></span></td>
+            <td style="display:flex;gap:6px">
+              <% if (i > 0) { %>
+              <form method="post" action="/proyectos/<%= project.id %>/tareas/<%= t.id %>/mover"><input type="hidden" name="direction" value="subir" /><button class="btn subtle" type="submit">↑</button></form>
+              <% } %>
+              <% if (i < tasks.length - 1) { %>
+              <form method="post" action="/proyectos/<%= project.id %>/tareas/<%= t.id %>/mover"><input type="hidden" name="direction" value="bajar" /><button class="btn subtle" type="submit">↓</button></form>
+              <% } %>
+              <a class="btn subtle" href="/tareas/<%= t.id %>/editar">Editar</a>
+            </td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </section>
+  </main>
+</div>
+</body>
+</html>

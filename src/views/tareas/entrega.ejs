@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<link rel="icon" type="image/png" href="/static/brand/favicon.png" />
+<title>AI Academy · Centro de control — Entregar <%= task.title %></title>
+<%- include('../partials/theme-init') %>
+<%- include('../partials/styles') %>
+</head>
+<body>
+<div class="app">
+  <%- include('../partials/sidebar', { active: 'proyectos', user }) %>
+  <main class="content">
+    <div class="topbar">
+      <div>
+        <p class="subtitle"><a href="/tareas/<%= task.id %>">&larr; <%= task.title %></a></p>
+        <h1 class="page-title">Entregar tarea</h1>
+        <p class="subtitle"><%= task.deliverable %></p>
+      </div>
+    </div>
+
+    <% if (error) { %><div class="error"><%= error %></div><% } %>
+
+    <div class="form-grid">
+      <section class="card pad">
+        <div class="sectiontitle"><h2>Horas registradas</h2></div>
+        <% if (logs.length === 0) { %><div class="empty">Todavía no registraste horas.</div><% } %>
+        <% logs.forEach(function(l) { %>
+        <div class="detail-row"><span><%= l.date %></span><strong><%= l.hours %> h</strong></div>
+        <% }) %>
+      </section>
+
+      <section class="card pad">
+        <div class="sectiontitle"><h2>Registrar horas y entregar</h2></div>
+        <form method="post" action="/tareas/<%= task.id %>/entrega" class="form-grid">
+          <div class="field"><label>Fecha *</label><input type="date" name="date" required /></div>
+          <div class="field"><label>Horas *</label><input type="number" name="hours" min="0.5" step="0.5" max="24" required /></div>
+          <div class="field full"><label>Evidencia *</label><textarea name="evidence" maxlength="2000" required placeholder="Qué se entrega, dónde está, qué se validó"></textarea></div>
+          <div class="foot-actions full"><button type="submit" class="btn primary">Entregar y enviar a revisión</button></div>
+        </form>
+      </section>
+    </div>
+  </main>
+</div>
+</body>
+</html>

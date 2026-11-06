@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<link rel="icon" type="image/png" href="/static/brand/favicon.png" />
+<title>AI Academy · Centro de control — Solicitudes de apoyo</title>
+<%- include('../partials/theme-init') %>
+<%- include('../partials/styles') %>
+</head>
+<body>
+<div class="app">
+  <%- include('../partials/sidebar', { active: 'solicitudes', user }) %>
+  <main class="content">
+    <div class="topbar">
+      <div>
+        <h1 class="page-title">Solicitudes de apoyo</h1>
+        <p class="subtitle">Pendientes para vos: <%= forMe.length %><% if (forLeader.length) { %> · Pendientes de resolver como líder: <%= forLeader.length %><% } %></p>
+      </div>
+    </div>
+
+    <% if (error) { %><div class="error"><%= error %></div><% } %>
+
+    <section class="card pad">
+      <div class="sectiontitle"><h2>Para vos</h2></div>
+      <% if (forMe.length === 0) { %>
+      <div class="empty">No tenés solicitudes pendientes.</div>
+      <% } else { %>
+      <table class="table">
+        <thead><tr><th>Tarea</th><th>Proyecto</th><th>Pide</th><th>Motivo</th><th></th></tr></thead>
+        <tbody>
+          <% forMe.forEach(function(row) { %>
+          <tr>
+            <td><a href="/tareas/<%= row.request.taskId %>"><%= row.taskTitle %></a></td>
+            <td><%= row.projectName %></td>
+            <td><%= row.requestedByName || row.request.requestedBy %></td>
+            <td><%= row.request.reason %></td>
+            <td style="display:flex;gap:6px">
+              <form method="post" action="/solicitudes/<%= row.request.id %>/aceptar"><button class="btn primary" type="submit">Aceptar</button></form>
+              <form method="post" action="/solicitudes/<%= row.request.id %>/rechazar"><button class="btn danger" type="submit">Rechazar</button></form>
+            </td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+      <% } %>
+    </section>
+
+    <% if (forLeader.length > 0) { %>
+    <section class="card pad">
+      <div class="sectiontitle"><h2>Para resolver como líder</h2></div>
+      <table class="table">
+        <thead><tr><th>Tarea</th><th>Proyecto</th><th>Pide</th><th>Motivo</th><th></th></tr></thead>
+        <tbody>
+          <% forLeader.forEach(function(row) { %>
+          <tr>
+            <td><a href="/tareas/<%= row.request.taskId %>"><%= row.taskTitle %></a></td>
+            <td><%= row.projectName %></td>
+            <td><%= row.requestedByName || row.request.requestedBy %></td>
+            <td><%= row.request.reason %></td>
+            <td style="display:flex;gap:6px">
+              <form method="post" action="/solicitudes/<%= row.request.id %>/aceptar"><button class="btn primary" type="submit">Aceptar</button></form>
+              <form method="post" action="/solicitudes/<%= row.request.id %>/rechazar"><button class="btn danger" type="submit">Rechazar</button></form>
+            </td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </section>
+    <% } %>
+  </main>
+</div>
+</body>
+</html>

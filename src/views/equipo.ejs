@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<link rel="icon" type="image/png" href="/static/brand/favicon.png" />
+<title>AI Academy · Centro de control — Equipo y cargas</title>
+<%- include('partials/theme-init') %>
+<%- include('partials/styles') %>
+</head>
+<body>
+<div class="app">
+  <%- include('partials/sidebar', { active: 'equipo', user }) %>
+  <main class="content">
+    <div class="topbar">
+      <div>
+        <h1 class="page-title">Equipo y cargas</h1>
+        <p class="subtitle">Capacidad de referencia: 40 h/semana por persona.</p>
+      </div>
+    </div>
+
+    <section class="card pad">
+      <% if (rows.length === 0) { %>
+      <div class="empty">Sin usuarios activos.</div>
+      <% } else { %>
+      <table class="table">
+        <thead><tr><th>Persona</th><th>Pendientes</th><th>En ejecución</th><th>Apoyo</th><th>Horas abiertas</th><th>Horas confirmadas del mes</th></tr></thead>
+        <tbody>
+          <% rows.forEach(function(r) { %>
+          <tr>
+            <td><%= r.name %></td>
+            <td><%= r.pending %></td>
+            <td><%= r.active %></td>
+            <td><%= r.support %></td>
+            <td><%= r.openHours %> h</td>
+            <td><%= r.confirmedMonthHours %> h</td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+      <% } %>
+    </section>
+  </main>
+</div>
+</body>
+</html>

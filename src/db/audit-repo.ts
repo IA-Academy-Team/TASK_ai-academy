@@ -39,6 +39,21 @@ export async function listByTask(taskId: string) {
     .orderBy(desc(auditLog.createdAt));
 }
 
+export async function listByTaskEnriched(taskId: string) {
+  return db
+    .select({
+      id: auditLog.id,
+      action: auditLog.action,
+      note: auditLog.note,
+      createdAt: auditLog.createdAt,
+      actorName: user.name,
+    })
+    .from(auditLog)
+    .leftJoin(user, eq(user.id, auditLog.actorId))
+    .where(eq(auditLog.taskId, taskId))
+    .orderBy(desc(auditLog.createdAt));
+}
+
 export async function listRecent(limit: number) {
   return db
     .select({

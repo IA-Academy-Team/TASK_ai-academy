@@ -20,6 +20,9 @@
       <div>
         <span class="badge <%= task.priority %>"><%= task.priority %></span>
         <span class="badge <%= task.status %>"><%= task.status %></span>
+        <% if (isLeaderOrAdmin && task.status !== 'completada' && task.status !== 'cancelada') { %>
+        <a class="btn subtle" href="/tareas/<%= task.id %>/editar">Editar</a>
+        <% } %>
       </div>
     </div>
 
@@ -43,13 +46,15 @@
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <% if (task.status === 'pendiente') { %>
           <form method="post" action="/tareas/<%= task.id %>/estado"><input type="hidden" name="status" value="activa" /><button class="btn primary" type="submit">Iniciar</button></form>
-          <form method="post" action="/tareas/<%= task.id %>/estado"><input type="hidden" name="status" value="bloqueada" /><button class="btn" type="submit">Bloquear</button></form>
-          <form method="post" action="/tareas/<%= task.id %>/estado"><input type="hidden" name="status" value="cancelada" /><button class="btn danger" type="submit">Cancelar</button></form>
+          <form method="post" action="/tareas/<%= task.id %>/estado" style="display:flex;gap:6px"><input type="hidden" name="status" value="bloqueada" /><input name="note" placeholder="Motivo" required style="padding:8px;border:1px solid var(--line);border-radius:8px" /><button class="btn" type="submit">Bloquear</button></form>
+          <form method="post" action="/tareas/<%= task.id %>/estado" style="display:flex;gap:6px"><input type="hidden" name="status" value="cancelada" /><input name="note" placeholder="Motivo" required style="padding:8px;border:1px solid var(--line);border-radius:8px" /><button class="btn danger" type="submit">Cancelar</button></form>
+          <% } %>
+          <% if (task.status === 'activa' && user.id === task.ownerId) { %>
+          <a class="btn primary" href="/tareas/<%= task.id %>/entrega">Entregar</a>
           <% } %>
           <% if (task.status === 'activa') { %>
-          <form method="post" action="/tareas/<%= task.id %>/estado"><input type="hidden" name="status" value="revision" /><button class="btn primary" type="submit">Enviar a revisión</button></form>
-          <form method="post" action="/tareas/<%= task.id %>/estado"><input type="hidden" name="status" value="bloqueada" /><button class="btn" type="submit">Bloquear</button></form>
-          <form method="post" action="/tareas/<%= task.id %>/estado"><input type="hidden" name="status" value="cancelada" /><button class="btn danger" type="submit">Cancelar</button></form>
+          <form method="post" action="/tareas/<%= task.id %>/estado" style="display:flex;gap:6px"><input type="hidden" name="status" value="bloqueada" /><input name="note" placeholder="Motivo" required style="padding:8px;border:1px solid var(--line);border-radius:8px" /><button class="btn" type="submit">Bloquear</button></form>
+          <form method="post" action="/tareas/<%= task.id %>/estado" style="display:flex;gap:6px"><input type="hidden" name="status" value="cancelada" /><input name="note" placeholder="Motivo" required style="padding:8px;border:1px solid var(--line);border-radius:8px" /><button class="btn danger" type="submit">Cancelar</button></form>
           <% } %>
           <% if (task.status === 'revision') { %>
             <% if (isLeaderOrAdmin) { %>
@@ -58,15 +63,36 @@
               <% if (!task.evidence) { %><input name="evidence" placeholder="Evidencia" required style="padding:8px;border:1px solid var(--line);border-radius:8px" />&nbsp;<% } %>
               <button class="btn primary" type="submit">Aprobar</button>
             </form>
+            <form method="post" action="/tareas/<%= task.id %>/estado" style="display:flex;gap:6px"><input type="hidden" name="status" value="activa" /><input name="note" placeholder="Observaciones" required style="padding:8px;border:1px solid var(--line);border-radius:8px" /><button class="btn" type="submit">Devolver a activa</button></form>
             <% } %>
-            <form method="post" action="/tareas/<%= task.id %>/estado"><input type="hidden" name="status" value="activa" /><button class="btn" type="submit">Devolver a activa</button></form>
           <% } %>
           <% if (task.status === 'bloqueada') { %>
           <form method="post" action="/tareas/<%= task.id %>/estado"><input type="hidden" name="status" value="pendiente" /><button class="btn" type="submit">Desbloquear</button></form>
-          <form method="post" action="/tareas/<%= task.id %>/estado"><input type="hidden" name="status" value="cancelada" /><button class="btn danger" type="submit">Cancelar</button></form>
+          <form method="post" action="/tareas/<%= task.id %>/estado" style="display:flex;gap:6px"><input type="hidden" name="status" value="cancelada" /><input name="note" placeholder="Motivo" required style="padding:8px;border:1px solid var(--line);border-radius:8px" /><button class="btn danger" type="submit">Cancelar</button></form>
           <% } %>
         </div>
       </section>
+
+      <% if (canRequestSupport) { %>
+      <section class="card pad">
+        <div class="sectiontitle"><h2>Solicitar apoyo</h2></div>
+        <form method="post" action="/tareas/<%= task.id %>/apoyo" class="form-grid">
+          <div class="field"><label>Persona *</label>
+            <select name="targetUserId" required>
+              <% users.filter(function(u){return u.id !== task.ownerId}).forEach(function(u) { %><option value="<%= u.id %>"><%= u.name %></option><% }) %>
+            </select>
+          </div>
+          <div class="field"><label>Modalidad *</label>
+            <select name="mode" required>
+              <option value="invite">Invitar (la persona acepta)</option>
+              <option value="apply">Pedir que el líder la asigne</option>
+            </select>
+          </div>
+          <div class="field full"><label>Motivo</label><input name="reason" maxlength="1000" /></div>
+          <div class="foot-actions full"><button type="submit" class="btn primary">Pedir apoyo</button></div>
+        </form>
+      </section>
+      <% } %>
 
       <section class="card pad">
         <div class="sectiontitle"><h2>Registro de horas</h2></div>
@@ -82,6 +108,20 @@
         <% } %>
       </section>
     </div>
+
+    <section class="card pad">
+      <div class="sectiontitle"><h2>Últimos cambios</h2></div>
+      <% if (recentChanges.length === 0) { %>
+      <div class="empty">Sin cambios registrados.</div>
+      <% } else { %>
+      <div class="feed">
+        <% recentChanges.forEach(function(c) { %>
+        <div class="detail-row"><span><%= c.actorName %> · <%= c.action %><% if (c.note) { %> · <%= c.note %><% } %></span><strong><%= c.createdAt %></strong></div>
+        <% }) %>
+      </div>
+      <% } %>
+      <a class="btn subtle" href="/tareas/<%= task.id %>/auditoria" style="margin-top:10px;display:inline-block">Ver todo</a>
+    </section>
   </main>
 </div>
 </body>

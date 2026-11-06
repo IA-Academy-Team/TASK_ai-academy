@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<link rel="icon" type="image/png" href="/static/brand/favicon.png" />
+<title>AI Academy · Centro de control — Plan semanal</title>
+<%- include('partials/theme-init') %>
+<%- include('partials/styles') %>
+</head>
+<body>
+<div class="app">
+  <%- include('partials/sidebar', { active: 'plan-semanal', user }) %>
+  <main class="content">
+    <div class="topbar">
+      <div>
+        <h1 class="page-title">Plan semanal</h1>
+        <p class="subtitle">Lunes a viernes, por fecha límite.</p>
+      </div>
+    </div>
+
+    <form method="get" action="/planeacion" class="filters" style="gap:12px">
+      <select name="proyecto" onchange="this.form.submit()">
+        <option value="">Todos los proyectos</option>
+        <% projects.forEach(function(p) { %><option value="<%= p.id %>" <%= projectFilter === p.id ? 'selected' : '' %>><%= p.code %> — <%= p.name %></option><% }) %>
+      </select>
+      <input type="hidden" name="semana" value="<%= weekOffset %>" />
+      <a href="/planeacion?semana=<%= weekOffset - 1 %>&proyecto=<%= projectFilter || '' %>" class="btn subtle">&larr; Semana anterior</a>
+      <a href="/planeacion?semana=<%= weekOffset + 1 %>&proyecto=<%= projectFilter || '' %>" class="btn subtle">Semana siguiente &rarr;</a>
+    </form>
+
+    <div class="form-grid">
+      <% byDay.forEach(function(d) { %>
+      <section class="card pad">
+        <div class="sectiontitle"><h2><%= d.day %></h2></div>
+        <% if (d.tasks.length === 0) { %>
+        <div class="empty">Sin tareas.</div>
+        <% } else { %>
+        <% d.tasks.forEach(function(t) { %>
+        <div class="detail-row">
+          <span><a href="/tareas/<%= t.id %>"><%= t.title %></a></span>
+          <strong><span class="badge <%= t.priority %>"><%= t.priority %></span></strong>
+        </div>
+        <% }) %>
+        <% } %>
+      </section>
+      <% }) %>
+    </div>
+
+    <section class="card pad">
+      <div class="sectiontitle"><h2>Capacidad de referencia</h2></div>
+      <table class="table">
+        <thead><tr><th>Persona</th><th>Capacidad semanal</th></tr></thead>
+        <tbody>
+          <% capacity.forEach(function(u) { %>
+          <tr><td><%= u.name %></td><td><%= u.weeklyCapacityHours %> h</td></tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </section>
+  </main>
+</div>
+</body>
+</html>

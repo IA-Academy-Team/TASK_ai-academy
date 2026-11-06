@@ -5,6 +5,13 @@
   </div>
   <a class="navbtn <%= active === 'inicio' ? 'on' : '' %>" href="/">Inicio</a>
   <a class="navbtn <%= active === 'proyectos' ? 'on' : '' %>" href="/proyectos">Proyectos</a>
+  <a class="navbtn <%= active === 'crear-tarea' ? 'on' : '' %>" href="/tareas/nueva">Crear tarea</a>
+  <a class="navbtn <%= active === 'plan-semanal' ? 'on' : '' %>" href="/planeacion">Plan semanal</a>
+  <a class="navbtn <%= active === 'mis-tareas' ? 'on' : '' %>" href="/mis-tareas">Mis tareas</a>
+  <a class="navbtn <%= active === 'equipo' ? 'on' : '' %>" href="/equipo">Equipo y cargas</a>
+  <a class="navbtn <%= active === 'solicitudes' ? 'on' : '' %>" href="/solicitudes">Solicitudes de apoyo</a>
+  <a class="navbtn <%= active === 'productividad' ? 'on' : '' %>" href="/productividad">Productividad</a>
+  <a class="navbtn <%= active === 'notificaciones' ? 'on' : '' %>" href="/notificaciones">Notificaciones</a>
   <% if (user.role === "admin") { %><a class="navbtn <%= active === 'usuarios' ? 'on' : '' %>" href="/admin/usuarios">Usuarios</a><% } %>
   <div class="sidebar-bottom">
     <button type="button" class="navbtn" onclick="(function(){var h=document.documentElement;var next=h.getAttribute('data-theme')==='dark'?'light':'dark';h.setAttribute('data-theme',next);try{localStorage.setItem('aiacademy-theme',next)}catch(e){}})()">Cambiar tema</button>

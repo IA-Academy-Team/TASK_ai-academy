@@ -1,7 +1,10 @@
 import { and, desc, eq } from "drizzle-orm";
 import { HttpError } from "../lib/http-error.ts";
+import { recordChange } from "./audit-repo.ts";
+import { user } from "./auth-schema.ts";
 import { db } from "./client.ts";
-import { supportRequests, taskSupport } from "./schema.ts";
+import { projects, supportRequests, taskSupport, tasks } from "./schema.ts";
+import { getTask } from "./tasks-repo.ts";
 
 export async function createRequest(input: {
   taskId: string;
@@ -44,6 +47,49 @@ export async function listPendingForUser(userId: string) {
     .orderBy(desc(supportRequests.createdAt));
 }
 
+export async function listPendingForUserEnriched(userId: string) {
+  return db
+    .select({
+      request: supportRequests,
+      taskTitle: tasks.title,
+      projectName: projects.name,
+      requestedByName: user.name,
+    })
+    .from(supportRequests)
+    .innerJoin(tasks, eq(tasks.id, supportRequests.taskId))
+    .innerJoin(projects, eq(projects.id, tasks.projectId))
+    .leftJoin(user, eq(user.id, supportRequests.requestedBy))
+    .where(
+      and(
+        eq(supportRequests.targetUserId, userId),
+        eq(supportRequests.status, "pendiente"),
+      ),
+    )
+    .orderBy(desc(supportRequests.createdAt));
+}
+
+export async function listPendingApplyForLeader(leaderId: string) {
+  return db
+    .select({
+      request: supportRequests,
+      taskTitle: tasks.title,
+      projectName: projects.name,
+      requestedByName: user.name,
+    })
+    .from(supportRequests)
+    .innerJoin(tasks, eq(tasks.id, supportRequests.taskId))
+    .innerJoin(projects, eq(projects.id, tasks.projectId))
+    .leftJoin(user, eq(user.id, supportRequests.requestedBy))
+    .where(
+      and(
+        eq(supportRequests.status, "pendiente"),
+        eq(supportRequests.mode, "apply"),
+        eq(projects.leaderId, leaderId),
+      ),
+    )
+    .orderBy(desc(supportRequests.createdAt));
+}
+
 export async function getRequest(id: string) {
   const [row] = await db
     .select()
@@ -55,6 +101,7 @@ export async function getRequest(id: string) {
 export async function resolveRequest(
   id: string,
   status: "aceptada" | "rechazada",
+  actorId: string,
 ) {
   const request = await getRequest(id);
   if (!request) return undefined;
@@ -83,6 +130,17 @@ export async function resolveRequest(
         .insert(taskSupport)
         .values({ taskId: request.taskId, userId: request.targetUserId });
     }
+  }
+
+  const task = await getTask(request.taskId);
+  if (task) {
+    await recordChange({
+      projectId: task.projectId,
+      taskId: task.id,
+      actorId,
+      action: "support_request_resolved",
+      note: `solicitud de apoyo ${status}`,
+    });
   }
 
   return row;

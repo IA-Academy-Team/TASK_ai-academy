@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<link rel="icon" type="image/png" href="/static/brand/favicon.png" />
+<title>AI Academy · Centro de control — Mis tareas</title>
+<%- include('partials/theme-init') %>
+<%- include('partials/styles') %>
+</head>
+<body>
+<div class="app">
+  <%- include('partials/sidebar', { active: 'mis-tareas', user }) %>
+  <main class="content">
+    <div class="topbar">
+      <div>
+        <h1 class="page-title">Mis tareas</h1>
+        <p class="subtitle">Mostrando <%= showing %> de <%= of %> tareas vigentes</p>
+      </div>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi"><small>Total</small><strong><%= total %></strong></div>
+      <div class="kpi"><small>Vencidas</small><strong><%= vencidas %></strong></div>
+      <div class="kpi"><small>Urgentes</small><strong><%= urgentes %></strong></div>
+      <div class="kpi"><small>Completadas</small><strong><%= completadas %></strong></div>
+    </div>
+
+    <div class="filters">
+      <% ['todas','vencidas','urgentes','pendiente','activa','revision','bloqueada','completada','cancelada'].forEach(function(f) { %>
+      <a href="/mis-tareas?estado=<%= f %>&orden=<%= orden %>" class="<%= estado === f ? 'on' : '' %>"><%= f %></a>
+      <% }) %>
+    </div>
+    <div class="filters">
+      <% ['sequence','due','priority'].forEach(function(o) { %>
+      <a href="/mis-tareas?estado=<%= estado %>&orden=<%= o %>" class="<%= orden === o ? 'on' : '' %>">orden: <%= o %></a>
+      <% }) %>
+    </div>
+
+    <section class="card pad">
+      <% if (tasks.length === 0) { %>
+      <div class="empty">Sin tareas en esta vista.</div>
+      <% } else { %>
+      <table class="table">
+        <thead><tr><th>Tarea</th><th>Proyecto</th><th>Prioridad</th><th>Estado</th><th>Vence</th></tr></thead>
+        <tbody>
+          <% tasks.forEach(function(r) { %>
+          <tr onclick="location.href='/tareas/<%= r.task.id %>'" style="cursor:pointer">
+            <td><%= r.task.title %></td>
+            <td><%= r.projectName %></td>
+            <td><span class="badge <%= r.task.priority %>"><%= r.task.priority %></span></td>
+            <td><span class="badge <%= r.task.status %>"><%= r.task.status %></span></td>
+            <td><%= r.task.due %></td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+      <% } %>
+    </section>
+
+    <section class="card pad">
+      <div class="sectiontitle"><h2>Tareas donde soy apoyo</h2></div>
+      <% if (support.length === 0) { %>
+      <div class="empty">No sos apoyo de ninguna tarea.</div>
+      <% } else { %>
+      <table class="table">
+        <thead><tr><th>Tarea</th><th>Proyecto</th><th>Estado</th><th>Vence</th></tr></thead>
+        <tbody>
+          <% support.forEach(function(r) { %>
+          <tr onclick="location.href='/tareas/<%= r.task.id %>'" style="cursor:pointer">
+            <td><%= r.task.title %></td>
+            <td><%= r.projectName %></td>
+            <td><span class="badge <%= r.task.status %>"><%= r.task.status %></span></td>
+            <td><%= r.task.due %></td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+      <% } %>
+    </section>
+  </main>
+</div>
+</body>
+</html>

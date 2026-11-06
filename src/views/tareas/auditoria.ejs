@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<link rel="icon" type="image/png" href="/static/brand/favicon.png" />
+<title>AI Academy · Centro de control — Auditoría de <%= task.title %></title>
+<%- include('../partials/theme-init') %>
+<%- include('../partials/styles') %>
+</head>
+<body>
+<div class="app">
+  <%- include('../partials/sidebar', { active: 'proyectos', user }) %>
+  <main class="content">
+    <div class="topbar">
+      <div>
+        <p class="subtitle"><a href="/tareas/<%= task.id %>">&larr; <%= task.title %></a></p>
+        <h1 class="page-title">Historial de cambios</h1>
+      </div>
+    </div>
+
+    <section class="card pad">
+      <% if (changes.length === 0) { %>
+      <div class="empty">Sin cambios registrados.</div>
+      <% } else { %>
+      <div class="feed">
+        <% changes.forEach(function(c) { %>
+        <div class="detail-row">
+          <span><%= c.actorName %> · <%= c.action %></span>
+          <strong><%= c.createdAt %></strong>
+        </div>
+        <% if (c.note) { %><p class="small muted"><%= c.note %></p><% } %>
+        <% }) %>
+      </div>
+      <% } %>
+    </section>
+  </main>
+</div>
+</body>
+</html>

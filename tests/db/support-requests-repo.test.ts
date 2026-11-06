@@ -79,7 +79,7 @@ describe("support-requests-repo", () => {
       reason: "Necesito apoyo",
     });
 
-    const resolved = await resolveRequest(request.id, "aceptada");
+    const resolved = await resolveRequest(request.id, "aceptada", leader.id);
     expect(resolved?.status).toBe("aceptada");
 
     const support = await listSupport(task.id);
@@ -98,10 +98,10 @@ describe("support-requests-repo", () => {
       mode: "invite",
       reason: "Necesito apoyo",
     });
-    await resolveRequest(request.id, "rechazada");
+    await resolveRequest(request.id, "rechazada", leader.id);
 
-    await expect(resolveRequest(request.id, "aceptada")).rejects.toThrow(
-      /ya fue resuelta/,
-    );
+    await expect(
+      resolveRequest(request.id, "aceptada", leader.id),
+    ).rejects.toThrow(/ya fue resuelta/);
   });
 });

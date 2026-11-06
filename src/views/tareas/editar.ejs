@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<link rel="icon" type="image/png" href="/static/brand/favicon.png" />
+<title>AI Academy · Centro de control — Editar <%= task.title %></title>
+<%- include('../partials/theme-init') %>
+<%- include('../partials/styles') %>
+</head>
+<body>
+<div class="app">
+  <%- include('../partials/sidebar', { active: 'proyectos', user }) %>
+  <main class="content">
+    <div class="topbar">
+      <div>
+        <p class="subtitle"><a href="/tareas/<%= task.id %>">&larr; <%= task.title %></a></p>
+        <h1 class="page-title">Editar tarea</h1>
+      </div>
+    </div>
+
+    <% if (error) { %><div class="error"><%= error %></div><% } %>
+
+    <section class="card pad">
+      <form method="post" action="/tareas/<%= task.id %>/editar" class="form-grid"
+        onsubmit="return '<%= task.ownerId %>' === this.ownerId.value || <%= task.status !== 'activa' %> || confirm('Esta tarea está activa: reasignarla no traspasa el trabajo ya registrado. ¿Continuar?');">
+        <div class="field full"><label>Motivo de la edición *</label><input name="motivo" maxlength="500" required /></div>
+        <div class="field full"><label>Título *</label><input name="title" value="<%= task.title %>" maxlength="200" required /></div>
+        <div class="field full"><label>Entregable esperado *</label><input name="deliverable" value="<%= task.deliverable %>" maxlength="300" required /></div>
+        <div class="field full"><label>Descripción</label><textarea name="description" maxlength="2000"><%= task.description %></textarea></div>
+        <div class="field"><label>Responsable *</label>
+          <select name="ownerId" required>
+            <% allUsers.forEach(function(u) { %><option value="<%= u.id %>" <%= u.id === task.ownerId ? 'selected' : '' %>><%= u.name %></option><% }) %>
+          </select>
+        </div>
+        <div class="field"><label>Prioridad *</label>
+          <select name="priority" required>
+            <% ['baja','media','alta','critica'].forEach(function(p) { %>
+            <option value="<%= p %>" <%= p === task.priority ? 'selected' : '' %>><%= p %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="field"><label>Peso del avance</label><input type="number" name="weight" min="1" max="10" value="<%= task.weight %>" required /></div>
+        <div class="field"><label>Horas estimadas *</label><input type="number" name="estimate" min="0.5" step="0.5" value="<%= task.estimate %>" required /></div>
+        <div class="field"><label>Fecha límite *</label><input type="date" name="due" value="<%= task.due %>" required /></div>
+        <div class="field full"><label>Depende de</label>
+          <select name="dependencyId">
+            <option value="">Ninguna</option>
+            <% allTasks.forEach(function(t) { %><option value="<%= t.id %>" <%= t.id === task.dependencyId ? 'selected' : '' %>>#<%= t.order %> <%= t.title %></option><% }) %>
+          </select>
+        </div>
+        <div class="foot-actions full">
+          <a href="/tareas/<%= task.id %>" class="btn subtle">Cancelar</a>
+          <button type="submit" class="btn primary">Guardar cambios</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="card pad">
+      <div class="sectiontitle"><h2>Cancelar tarea</h2></div>
+      <form method="post" action="/tareas/<%= task.id %>/estado" style="display:flex;gap:8px"
+        onsubmit="return confirm('¿Cancelar esta tarea? No se puede reabrir.');">
+        <input type="hidden" name="status" value="cancelada" />
+        <input name="note" placeholder="Motivo de la cancelación" required style="flex:1;padding:8px;border:1px solid var(--line);border-radius:8px" />
+        <button type="submit" class="btn danger">Cancelar tarea</button>
+      </form>
+    </section>
+  </main>
+</div>
+</body>
+</html>

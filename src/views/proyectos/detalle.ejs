@@ -28,7 +28,8 @@
 
     <section class="card pad">
       <div class="sectiontitle"><h2>Nueva tarea</h2></div>
-      <form method="post" action="/proyectos/<%= project.id %>/tareas" class="form-grid">
+      <form method="post" action="/tareas" class="form-grid">
+        <input type="hidden" name="projectId" value="<%= project.id %>" />
         <div class="field full"><label>Título *</label><input name="title" maxlength="200" required /></div>
         <div class="field full"><label>Entregable esperado *</label><input name="deliverable" maxlength="300" required /></div>
         <div class="field full"><label>Descripción</label><textarea name="description" maxlength="2000"></textarea></div>
@@ -105,24 +106,7 @@
 
     <% if (isLeaderOrAdmin) { %>
     <section class="card pad">
-      <div class="sectiontitle"><h2>Configuración del proyecto</h2></div>
-      <form method="post" action="/proyectos/<%= project.id %>/config" class="form-grid">
-        <div class="field"><label>Máximo de tareas activas</label><input type="number" name="limitActive" min="1" max="20" value="<%= project.limitActive %>" required /></div>
-        <div class="field"><label>Máximo de tareas en revisión</label><input type="number" name="limitReview" min="1" max="20" value="<%= project.limitReview %>" required /></div>
-        <div class="field full"><label>Fecha límite del proyecto</label><input type="date" name="due" value="<%= project.due %>" required /></div>
-        <div class="field full">
-          <label>Integrantes</label>
-          <div class="usergrid">
-            <% allUsers.forEach(function(u) { %>
-            <label class="usercheck">
-              <input type="checkbox" name="members" value="<%= u.id %>" <%= members.some(function(m){return m.id===u.id}) ? 'checked' : '' %> />
-              <%= u.name %>
-            </label>
-            <% }) %>
-          </div>
-        </div>
-        <div class="foot-actions full"><button type="submit" class="btn primary">Guardar configuración</button></div>
-      </form>
+      <a class="btn subtle" href="/proyectos/<%= project.id %>/configuracion">Configuración del proyecto</a>
     </section>
     <% } %>
   </main>

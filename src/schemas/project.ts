@@ -19,6 +19,10 @@ export const updateSettingsSchema = z.object({
   members: z.union([z.string(), z.array(z.string())]).optional(),
 });
 
+export const moveTaskSchema = z.object({
+  direction: z.enum(["subir", "bajar"]),
+});
+
 export function toArray(value: string | string[] | undefined): string[] {
   if (!value) return [];
   return Array.isArray(value) ? value : [value];

@@ -108,7 +108,8 @@ export const taskLogs = pgTable("task_logs", {
 });
 
 // action: task_created | task_status_changed | task_hours_logged |
-//         project_settings_updated | support_request_resolved
+//         task_updated | task_order_changed | project_settings_updated |
+//         support_request_resolved
 export const auditLog = pgTable("audit_log", {
   id: uuid("id").primaryKey().defaultRandom(),
   projectId: uuid("project_id")

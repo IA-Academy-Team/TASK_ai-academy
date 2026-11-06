@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { listByTaskEnriched } from "../db/audit-repo.ts";
 import { getProject, listAllActiveUsers } from "../db/projects-repo.ts";
 import {
   getTask,
@@ -31,6 +32,11 @@ tasksRouter.get("/tareas/:id", async (req, res) => {
     ? await getTask(task.dependencyId)
     : null;
   const totalHours = logs.reduce((sum, l) => sum + Number(l.hours), 0);
+  const recentChanges = (await listByTaskEnriched(task.id)).slice(0, 3);
+
+  const isLeaderOrAdmin =
+    req.user.role === "admin" ||
+    (!!project && req.user.id === project.leaderId);
 
   res.render("tareas/detalle", {
     task,
@@ -40,13 +46,15 @@ tasksRouter.get("/tareas/:id", async (req, res) => {
     users,
     dependency,
     totalHours,
+    recentChanges,
     user: req.user,
-    isLeaderOrAdmin:
-      req.user.role === "admin" ||
-      (project && req.user.id === project.leaderId),
+    isLeaderOrAdmin,
     isOwnerOrSupport:
       req.user.id === task.ownerId ||
       support.some((s) => s.userId === req.user?.id),
+    canRequestSupport:
+      (req.user.id === task.ownerId || isLeaderOrAdmin) &&
+      ["pendiente", "activa", "bloqueada"].includes(task.status),
     error: null,
   });
 });
@@ -62,12 +70,21 @@ tasksRouter.post("/tareas/:id/estado", async (req, res) => {
     throw new HttpError(400, "transición inválida");
   }
 
+  const current = await getTask(req.params.id);
+  if (!current) {
+    throw new HttpError(404, "tarea no encontrada");
+  }
+
+  const motivoObligatorio =
+    parsed.data.status === "cancelada" ||
+    parsed.data.status === "bloqueada" ||
+    (current.status === "revision" && parsed.data.status === "activa");
+  if (motivoObligatorio && !parsed.data.note) {
+    throw new HttpError(400, "hace falta un motivo para esta transición");
+  }
+
   if (parsed.data.status === "completada") {
-    const task = await getTask(req.params.id);
-    if (!task) {
-      throw new HttpError(404, "tarea no encontrada");
-    }
-    const project = await getProject(task.projectId);
+    const project = await getProject(current.projectId);
     const isLeaderOrAdmin =
       req.user.role === "admin" ||
       (project && req.user.id === project.leaderId);
@@ -85,6 +102,7 @@ tasksRouter.post("/tareas/:id/estado", async (req, res) => {
     req.user.id,
     {
       evidence: parsed.data.evidence,
+      note: parsed.data.note,
     },
   );
   if (!updated) {
