@@ -1,9 +1,9 @@
 <button type="button" class="navtoggle" aria-label="Abrir menú" onclick="document.querySelector('.sidebar').classList.toggle('open')">&#9776;</button>
 <nav class="sidebar">
-  <div class="brand">
+  <button type="button" class="brand" aria-label="Expandir o contraer el menú" onclick="(function(){var s=document.querySelector('.sidebar');if(window.matchMedia('(max-width:750px)').matches){s.classList.toggle('open');return}var h=document.documentElement;var next=h.getAttribute('data-sidebar')==='expanded'?'collapsed':'expanded';h.setAttribute('data-sidebar',next);try{localStorage.setItem('aiacademy-sidebar',next)}catch(e){}})()">
     <img class="brandmark" src="/static/brand/logo.png" alt="AI Academy" />
     <h2>AI Academy</h2>
-  </div>
+  </button>
 
   <div class="navgroup">
     <span class="navlabel">Trabajo</span>

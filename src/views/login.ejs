@@ -12,9 +12,9 @@
   .splash{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:21px;z-index:2;pointer-events:none;transition:opacity .65s ease,visibility .65s ease}
   .logo-glow{position:absolute;width:260px;height:260px;border-radius:50%;background:color-mix(in srgb,var(--accent) 22%,transparent);filter:blur(80px);z-index:-1}
   .splash-logo{width:clamp(96px,22vw,140px);height:auto;border-radius:16px;filter:drop-shadow(0 0 28px color-mix(in srgb,var(--accent) 55%,transparent));opacity:0;will-change:transform,opacity}
-  .splash-name{font-size:clamp(24px,6vw,40px);font-weight:800;letter-spacing:.03em;opacity:0;transform:translateY(14px);white-space:nowrap;color:#fff}
+  .splash-name{font-size:clamp(24px,6vw,40px);font-weight:800;letter-spacing:.03em;opacity:0;transform:translateY(14px);white-space:nowrap;color:var(--primary-text)}
   .splash-name span{color:var(--accent)}
-  .splash-subtitle{color:#C6D6D7;letter-spacing:.27em;text-transform:uppercase;font-size:10px;opacity:0}
+  .splash-subtitle{color:color-mix(in srgb, var(--accent) 45%, var(--primary-text));letter-spacing:.27em;text-transform:uppercase;font-size:10px;opacity:0}
   .play .splash-logo{animation:logoIntro .55s ease-out both,spinZ 2.5s .55s linear both}
   .play .splash-name{animation:reveal .7s 3.1s ease-out both}
   .play .splash-subtitle{animation:reveal .7s 3.4s ease-out both}
@@ -39,7 +39,7 @@
   .login-bottom{margin-top:20px;text-align:center;color:var(--muted);font-size:11px}
   .replay{display:block;margin:13px auto 0;border:0;background:transparent;color:var(--primary);text-decoration:underline;text-underline-offset:3px;cursor:pointer;font-size:11px}
   .notice{min-height:16px;margin:13px 0 0;text-align:center;font-size:12px}
-  .skip{position:fixed;top:18px;right:18px;z-index:5;color:#fff;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);border-radius:22px;padding:9px 15px;cursor:pointer;font-size:12px}
+  .skip{position:fixed;top:18px;right:18px;z-index:5;color:var(--primary-text);background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);border-radius:22px;padding:9px 15px;cursor:pointer;font-size:12px}
   .skip.hide{display:none}
 </style>
 </head>

@@ -83,24 +83,24 @@ tareas del proyecto + formulario de nueva tarea + configuración si sos líder/a
 
 ## Sistema de diseño
 
-Adoptado de `~/Downloads/DESIGN.md` (Sistema de Diseño Universal v1.0, preset `dashboard` /
-`enterprise`) — paleta teal/petrol, modo claro + oscuro. Única fuente de tokens:
+Paleta de marca: negro carbón / blanco / morado profundo / morado eléctrico (gradiente
+`#6030AD → #9636FF`), modo claro + oscuro. Única fuente de tokens:
 `src/views/partials/styles.ejs` — reusar estas variables, nunca un hex crudo en una vista.
 
 | Rol | Claro | Oscuro | Uso |
 |---|---|---|---|
-| Primario (acción) | `#055B5C` | `#6EC6CA` | Botones primarios, estado activo del sidebar |
-| Primario hover | `#044748` | `#8BD7D9` | Hover de primario |
-| Acento | `#08979D` | `#6EC6CA` | Enlaces, foco, badge "activa" |
-| Fondo de nav | `#0B2628` | `#0E1E27` | Sidebar |
-| Fondo de nav claro | `#15393B` | `#1C323D` | Hover en sidebar |
-| Acento sutil | `#E3F3F4` | `rgba(110,198,202,.14)` | Fondos sutiles de acento |
-| Fondo de página | `#F5F7FA` | `#111C25` | Fondo general |
-| Superficie | `#FFFFFF` | `#1A2B35` | Tarjetas, paneles |
-| Borde | `#D9E3E7` | `#38505A` | Divisores, inputs |
-| Texto (ink) | `#172B38` | `#F1F6F7` | Texto principal |
-| Texto (muted) | `#526674` | `#C4D5DB` | Texto secundario |
-| Texto (faint) | `#61727C` | `#9FB4BC` | Placeholders |
+| Primario (acción) | `#6030AD` morado profundo | `#9636FF` morado eléctrico | Botones primarios, estado activo del sidebar |
+| Primario hover | `#4D2689` | `#AD5CFF` | Hover de primario |
+| Acento | `#9636FF` morado eléctrico | `#9636FF` | Enlaces, foco, badge "activa" |
+| Fondo de nav | `#1D1D1B` negro carbón | `#0F0E11` | Sidebar |
+| Fondo de nav claro | `#2E2438` | `#221B2E` | Hover en sidebar |
+| Acento sutil | `#F2EAFC` | `rgba(150,54,255,.16)` | Fondos sutiles de acento |
+| Fondo de página | `#F6F5F9` | `#141316` | Fondo general |
+| Superficie | `#FFFFFF` blanco | `#201E24` | Tarjetas, paneles |
+| Borde | `#E3DFEA` | `#3A3640` | Divisores, inputs |
+| Texto (ink) | `#1D1D1B` negro carbón | `#F3F1F6` | Texto principal |
+| Texto (muted) | `#55525C` | `#C7C3CE` | Texto secundario |
+| Texto (faint) | `#6B6872` | `#9C98A3` | Placeholders |
 | Éxito | `#18794E` sobre `#E6F4EC` | `#3DDC9A` sobre `rgba(24,121,78,.25)` | Estado "completada", prioridad "baja" |
 | Advertencia | `#986100` sobre `#FCF1E3` | `#F2A93B` sobre `rgba(152,97,0,.28)` | Estado "revisión", prioridad "alta" |
 | Destructivo | `#B42318` sobre `#FBE7E5` | `#F2777A` sobre `rgba(180,35,24,.28)` | Errores, estado "bloqueada", prioridad "crítica" |
@@ -149,3 +149,14 @@ Convenciones diferidas — leer el archivo correspondiente antes de editar esa �
 5. Nunca marcar una tarea terminada con un comando de gate fallando.
 6. Nunca dejar que `blueprints/` quede sin excluir en una herramienta que camina el árbol — ver
    `biome.json` / `vitest.config.ts`.
+
+## graphify
+
+This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+
+Rules:
+- When graphify-out/graph.json exists, run `graphify query "<question>"` before your first grep, search or source-file read for a codebase question, and put this rule in every subagent prompt that explores code. Read raw files only for lines the graph or an earlier read already located. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
+- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
+- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
+- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+- A committed graphify-out/graph.json is rewritten whole on every build, so a large diff to it in a pull request is expected. Do not flag it as churn or suggest skipping the graph rebuild or its hooks.
