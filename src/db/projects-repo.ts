@@ -1,8 +1,42 @@
-import { count, desc, eq, inArray } from "drizzle-orm";
+import { count, desc, eq, inArray, like } from "drizzle-orm";
 import { recordChange } from "./audit-repo.ts";
 import { user } from "./auth-schema.ts";
 import { db } from "./client.ts";
 import { projectMembers, projects, tasks } from "./schema.ts";
+
+const GENERIC_CODE_PREFIX = "PRY";
+
+function codePrefixFromName(name: string): string {
+  const words = name
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toUpperCase()
+    .split(/[^A-Z0-9]+/)
+    .filter(Boolean);
+  if (words.length >= 2) {
+    return words
+      .slice(0, 3)
+      .map((w) => w[0])
+      .join("");
+  }
+  return (words[0] ?? GENERIC_CODE_PREFIX).slice(0, 3) || GENERIC_CODE_PREFIX;
+}
+
+export async function generateProjectCode(name: string): Promise<string> {
+  const prefix = codePrefixFromName(name);
+  const existing = await db
+    .select({ code: projects.code })
+    .from(projects)
+    .where(like(projects.code, `${prefix}-%`));
+
+  const numberPattern = new RegExp(`^${prefix}-(\\d+)$`);
+  const maxNumber = existing.reduce((max, row) => {
+    const match = row.code.match(numberPattern);
+    return match ? Math.max(max, Number(match[1])) : max;
+  }, 0);
+
+  return `${prefix}-${String(maxNumber + 1).padStart(3, "0")}`;
+}
 
 export async function createProject(input: {
   name: string;
@@ -30,10 +64,15 @@ export async function createProject(input: {
       })
       .returning();
 
-    const memberIds = Array.from(new Set([...input.memberIds, input.leaderId]));
-    await tx
-      .insert(projectMembers)
-      .values(memberIds.map((userId) => ({ projectId: row.id, userId })));
+    // El líder dirige el proyecto pero no cuenta como integrante.
+    const memberIds = Array.from(new Set(input.memberIds)).filter(
+      (id) => id !== input.leaderId,
+    );
+    if (memberIds.length > 0) {
+      await tx
+        .insert(projectMembers)
+        .values(memberIds.map((userId) => ({ projectId: row.id, userId })));
+    }
 
     return row;
   });

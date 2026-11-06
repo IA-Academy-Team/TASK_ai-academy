@@ -7,7 +7,7 @@
 
   <div class="navgroup">
     <span class="navlabel">Trabajo</span>
-    <a class="navbtn <%= active === 'inicio' ? 'on' : '' %>" href="/"><%- include('./icon', { kind: 'home', size: 16 }) %>Inicio</a>
+    <a class="navbtn <%= active === 'inicio' ? 'on' : '' %>" href="/"><%- include('./icon', { kind: 'home', size: 16 }) %>Dashboard</a>
     <a class="navbtn <%= active === 'proyectos' ? 'on' : '' %>" href="/proyectos"><%- include('./icon', { kind: 'folder', size: 16 }) %>Proyectos</a>
     <a class="navbtn <%= active === 'crear-tarea' ? 'on' : '' %>" href="/tareas/nueva"><%- include('./icon', { kind: 'plus', size: 16 }) %>Crear tarea</a>
     <a class="navbtn <%= active === 'plan-semanal' ? 'on' : '' %>" href="/planeacion"><%- include('./icon', { kind: 'calendar', size: 16 }) %>Plan semanal</a>

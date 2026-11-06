@@ -35,7 +35,7 @@
       <div class="drawer-panel">
         <div class="drawer-header">
           <h2>Nueva tarea</h2>
-          <button type="button" class="drawer-close" aria-label="Cerrar" onclick="document.getElementById('drawer-nueva-tarea').classList.remove('open')">&times;</button>
+          <button type="button" class="drawer-close" aria-label="Cerrar" onclick="document.getElementById('drawer-nueva-tarea').classList.remove('open')"><%- include('../partials/icon', { kind: 'x', size: 18 }) %></button>
         </div>
         <form method="post" action="/tareas" class="drawer-body">
           <input type="hidden" name="projectId" value="<%= project.id %>" />
@@ -137,7 +137,8 @@
 
     <section class="card pad">
       <div class="sectiontitle"><h2>Equipo del proyecto</h2></div>
-      <% members.forEach(function(m) { %><span class="badge <%= m.id === project.leaderId ? 'admin' : 'usuario' %>"><%= m.name %><%= m.id === project.leaderId ? ' · líder' : '' %></span> <% }) %>
+      <% if (leader) { %><span class="badge admin"><%= leader.name %> · líder</span> <% } %>
+      <% members.forEach(function(m) { %><span class="badge usuario"><%= m.name %></span> <% }) %>
     </section>
 
     <% if (isLeaderOrAdmin) { %>

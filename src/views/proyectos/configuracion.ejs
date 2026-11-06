@@ -28,9 +28,9 @@
         <div class="field"><label>Máximo de tareas en revisión</label><input type="number" name="limitReview" min="1" max="20" value="<%= project.limitReview %>" required /></div>
         <div class="field full"><label>Fecha límite del proyecto</label><input type="date" name="due" value="<%= project.due %>" required /></div>
         <div class="field full">
-          <label>Integrantes</label>
+          <label>Integrantes <span class="muted small">(el líder no cuenta como integrante)</span></label>
           <div class="usergrid">
-            <% allUsers.forEach(function(u) { %>
+            <% allUsers.filter(function(u) { return u.id !== project.leaderId; }).forEach(function(u) { %>
             <label class="usercheck">
               <input type="checkbox" name="members" value="<%= u.id %>" <%= members.some(function(m){return m.id===u.id}) ? 'checked' : '' %> />
               <%= u.name %>

@@ -175,6 +175,14 @@ main>*:nth-child(4){animation-delay:120ms}
 .person-chip input{position:absolute;opacity:0;width:0;height:0}
 .person-chip:has(input:checked){background:var(--lav);border-color:var(--primary)}
 .chip-avatar{width:22px;height:22px;border-radius:999px;background:var(--lav);color:var(--primary);display:grid;place-items:center;font-size:10px;font-weight:800;flex:0 0 auto}
+.person-chip.is-disabled{opacity:.45;cursor:not-allowed;background:var(--bg)}
+.dropdown-select{position:relative}
+.dropdown-select-trigger{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 13px;min-height:44px;border:1px solid var(--line);border-radius:var(--radius-control);background:var(--paper);color:var(--ink);font-size:12px;text-align:left}
+.dropdown-select-trigger:hover{background:var(--lav)}
+.dropdown-select-panel{display:none;margin-top:6px;max-height:220px;overflow-y:auto;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-control);box-shadow:var(--shadow-1);padding:10px;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.dropdown-select.open .dropdown-select-panel{display:grid}
+.dropdown-select.open .dropdown-select-trigger svg{transform:rotate(180deg)}
+.dropdown-select-trigger svg{transition:transform var(--t-fast) var(--ease)}
 .kebab{position:relative;display:inline-block}
 .btn-icon{background:transparent;border:1px solid transparent;color:var(--text);font-size:16px;line-height:1;padding:6px 10px;border-radius:var(--radius-control)}
 .btn-icon:hover{background:var(--lav);border-color:var(--line)}
@@ -187,8 +195,9 @@ main>*:nth-child(4){animation-delay:120ms}
 .modal.open{visibility:visible;pointer-events:auto}
 .modal-backdrop{position:absolute;inset:0;background:rgba(10,20,25,.5);opacity:0;transition:opacity var(--t-base) var(--ease)}
 .modal.open .modal-backdrop{opacity:1}
-.modal-panel{position:relative;background:var(--paper);border-radius:var(--radius-card);box-shadow:var(--shadow-2);padding:22px;width:100%;max-width:400px;transform:translateY(8px) scale(.98);opacity:0;transition:transform var(--t-base) var(--ease),opacity var(--t-base) var(--ease)}
+.modal-panel{position:relative;background:var(--paper);border-radius:var(--radius-card);box-shadow:var(--shadow-2);padding:22px;width:100%;max-width:400px;max-height:90vh;overflow-y:auto;transform:translateY(8px) scale(.98);opacity:0;transition:transform var(--t-base) var(--ease),opacity var(--t-base) var(--ease)}
 .modal.open .modal-panel{transform:translateY(0) scale(1);opacity:1}
+.modal-panel-wide{max-width:560px;text-align:left}
 .modal-panel h3{margin:0 0 10px;font-size:15px}
 .modal-panel p{margin:0;color:var(--muted);font-size:12px;line-height:1.6}
 .week-board{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;align-items:start;margin-bottom:20px}

@@ -17,7 +17,7 @@
         <h1 class="page-title">Proyectos</h1>
         <p class="subtitle">Centro de control de AI Academy — cada proyecto agrupa sus propias tareas.</p>
       </div>
-      <% if (user.role === "admin") { %><a class="btn primary" href="/proyectos/nuevo">+ Nuevo proyecto</a><% } %>
+      <% if (user.role === "admin") { %><button type="button" class="btn primary" onclick="document.getElementById('new-project-modal').classList.add('open')">+ Nuevo proyecto</button><% } %>
     </div>
 
     <% if (items.length === 0) { %>
@@ -28,13 +28,13 @@
       <% var pct = p.taskCount ? Math.round((p.doneCount / p.taskCount) * 100) : 0; %>
       <a class="card project-card risk-<%= p.risk.level %>" href="/proyectos/<%= p.id %>">
         <div class="project-card-top">
-          <span class="flag"><%= p.code %></span>
           <div class="project-card-top-right">
             <% if (p.risk.level === 'risk') { %>
             <span class="badge <%= p.risk.daysLeft < 0 ? 'bloqueada' : 'alta' %>"><%= p.risk.daysLeft < 0 ? 'Venció' : 'Vence en ' + p.risk.daysLeft + 'd' %></span>
             <% } %>
             <%- include('../partials/progress-ring', { pct: pct, size: 32 }) %>
           </div>
+          <span class="flag"><%= p.code %></span>
         </div>
         <h2><%= p.name %></h2>
         <p><%= p.objective %></p>
@@ -56,7 +56,85 @@
       <% }) %>
     </div>
     <% } %>
+
+    <% if (user.role === "admin") { %>
+    <div class="modal <%= openNewProjectModal ? 'open' : '' %>" id="new-project-modal">
+      <div class="modal-backdrop" onclick="document.getElementById('new-project-modal').classList.remove('open')"></div>
+      <div class="modal-panel modal-panel-wide">
+        <div class="drawer-header" style="padding:0 0 16px">
+          <h2>Nuevo proyecto</h2>
+          <button type="button" class="drawer-close" aria-label="Cerrar" onclick="document.getElementById('new-project-modal').classList.remove('open')"><%- include('../partials/icon', { kind: 'x', size: 18 }) %></button>
+        </div>
+        <% if (error) { %><div class="error"><%= error %></div><% } %>
+        <form method="post" action="/proyectos" class="form-grid">
+          <input type="hidden" name="limitActive" value="2" />
+          <input type="hidden" name="limitReview" value="2" />
+          <div class="field full"><label>Nombre del proyecto *</label><input name="name" required /></div>
+          <div class="field"><label>Fecha de inicio *</label><input type="date" name="start" required /></div>
+          <div class="field"><label>Fecha límite *</label><input type="date" name="due" required /></div>
+          <div class="field full"><label>Objetivo *</label><textarea name="objective" required></textarea></div>
+          <div class="field full"><label>Líder del proyecto *</label>
+            <select name="leaderId" required onchange="onNewProjectLeaderChange(this)">
+              <option value="">Selecciona un líder</option>
+              <% users.forEach(function(u) { %><option value="<%= u.id %>"><%= u.name %></option><% }) %>
+            </select>
+          </div>
+          <div class="field full">
+            <label>Integrantes <span class="muted small">(el líder no cuenta como integrante)</span></label>
+            <div class="dropdown-select" id="new-project-members-dropdown">
+              <button type="button" class="dropdown-select-trigger" onclick="document.getElementById('new-project-members-dropdown').classList.toggle('open')">
+                <span id="new-project-members-label">Selecciona integrantes</span>
+                <%- include('../partials/icon', { kind: 'chevron-down', size: 14 }) %>
+              </button>
+              <div class="dropdown-select-panel people-grid" id="new-project-members">
+                <% users.forEach(function(u) { %>
+                <label class="person-chip">
+                  <input type="checkbox" name="members" value="<%= u.id %>" onchange="updateNewProjectMembersLabel()" />
+                  <span class="chip-avatar"><%= (u.name || '?').charAt(0).toUpperCase() %></span>
+                  <%= u.name %>
+                </label>
+                <% }) %>
+              </div>
+            </div>
+          </div>
+          <div class="foot-actions full">
+            <button type="button" class="btn" onclick="document.getElementById('new-project-modal').classList.remove('open')">Cancelar</button>
+            <button type="submit" class="btn primary">Crear proyecto</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <% } %>
   </main>
 </div>
+<script>
+function onNewProjectLeaderChange(select) {
+  var leaderId = select.value;
+  document.querySelectorAll('#new-project-members input[type=checkbox]').forEach(function (cb) {
+    var chip = cb.closest('.person-chip');
+    if (cb.value === leaderId) {
+      cb.checked = false;
+      cb.disabled = true;
+      chip.classList.add('is-disabled');
+    } else {
+      cb.disabled = false;
+      chip.classList.remove('is-disabled');
+    }
+  });
+  updateNewProjectMembersLabel();
+}
+function updateNewProjectMembersLabel() {
+  var checked = document.querySelectorAll('#new-project-members input[type=checkbox]:checked');
+  var label = document.getElementById('new-project-members-label');
+  if (!label) return;
+  label.textContent = checked.length ? checked.length + ' seleccionados' : 'Selecciona integrantes';
+}
+document.addEventListener('click', function (e) {
+  var dd = document.getElementById('new-project-members-dropdown');
+  if (dd && dd.classList.contains('open') && !dd.contains(e.target)) {
+    dd.classList.remove('open');
+  }
+});
+</script>
 </body>
 </html>

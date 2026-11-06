@@ -2,7 +2,6 @@ import { z } from "zod";
 
 export const createProjectSchema = z.object({
   name: z.string().min(1).max(120),
-  code: z.string().min(1).max(30),
   objective: z.string().min(1).max(500),
   leaderId: z.string().min(1),
   start: z.string().min(1),

@@ -79,10 +79,11 @@ projectSettingsRouter.post("/proyectos/:id/config", async (req, res) => {
     due: parsed.data.due,
     actorId: req.user.id,
   });
-  await setMembers(project.id, [
-    ...toArray(parsed.data.members),
-    project.leaderId,
-  ]);
+  // El líder dirige el proyecto pero no cuenta como integrante.
+  await setMembers(
+    project.id,
+    toArray(parsed.data.members).filter((id) => id !== project.leaderId),
+  );
 
   res.redirect(303, `/proyectos/${project.id}/configuracion`);
 });

@@ -18,16 +18,20 @@ test("flujo completo: login, crear proyecto, crear tarea, workflow de estado, cr
   await page.click("button[type=submit]");
   await page.waitForURL("http://localhost:3100/");
 
-  // 2. crear proyecto
+  // 2. crear proyecto (el formulario vive en un modal, el código se asigna solo)
   await page.goto("/proyectos");
-  await page.click('a:has-text("Nuevo proyecto")');
-  await page.waitForURL("**/proyectos/nuevo");
-  await page.fill('input[name="name"]', projectName);
-  await page.fill('input[name="code"]', `E2E-${stamp}`);
-  await page.fill('textarea[name="objective"]', "Objetivo de prueba E2E");
-  await page.fill('input[name="start"]', "2026-01-01");
-  await page.fill('input[name="due"]', "2026-12-31");
-  await page.click('button:has-text("Crear proyecto")');
+  await page.click('button:has-text("Nuevo proyecto")');
+  await page.fill('#new-project-modal input[name="name"]', projectName);
+  await page.fill('#new-project-modal input[name="start"]', "2026-01-01");
+  await page.fill('#new-project-modal input[name="due"]', "2026-12-31");
+  await page.fill(
+    '#new-project-modal textarea[name="objective"]',
+    "Objetivo de prueba E2E",
+  );
+  await page.selectOption('#new-project-modal select[name="leaderId"]', {
+    label: "Admin",
+  });
+  await page.click('#new-project-modal button:has-text("Crear proyecto")');
   await page.waitForURL(/\/proyectos\/[0-9a-f-]+$/);
 
   // 3. crear tarea dentro del proyecto (el formulario vive en un drawer lateral)

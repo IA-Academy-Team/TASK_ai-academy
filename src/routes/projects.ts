@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   createProject,
+  generateProjectCode,
   getProject,
   listAllActiveUsers,
   listMembers,
@@ -21,31 +22,34 @@ projectsRouter.get("/proyectos", async (req, res) => {
     return;
   }
   const today = new Date().toLocaleDateString("en-CA");
-  const rows = await listProjects();
+  const [rows, users] = await Promise.all([
+    listProjects(),
+    listAllActiveUsers(),
+  ]);
   const items = rows.map((p) => ({ ...p, risk: projectRiskInfo(p, today) }));
-  res.render("proyectos/index", { items, user: req.user });
-});
-
-projectsRouter.get("/proyectos/nuevo", authorize("admin"), async (req, res) => {
-  const users = await listAllActiveUsers();
-  res.render("proyectos/nuevo", { users, user: req.user, error: null });
+  res.render("proyectos/index", {
+    items,
+    users,
+    user: req.user,
+    openNewProjectModal: req.query.error === "1",
+    error:
+      req.query.error === "1"
+        ? "Revisa los campos obligatorios del proyecto."
+        : null,
+  });
 });
 
 projectsRouter.post("/proyectos", authorize("admin"), async (req, res) => {
   const parsed = createProjectSchema.safeParse(req.body);
   if (!parsed.success) {
-    const users = await listAllActiveUsers();
-    res.status(400).render("proyectos/nuevo", {
-      users,
-      user: req.user,
-      error: "Revisa los campos obligatorios del proyecto.",
-    });
+    res.redirect(303, "/proyectos?error=1");
     return;
   }
 
+  const code = await generateProjectCode(parsed.data.name);
   const project = await createProject({
     name: parsed.data.name,
-    code: parsed.data.code,
+    code,
     objective: parsed.data.objective,
     leaderId: parsed.data.leaderId,
     start: parsed.data.start,
@@ -83,6 +87,7 @@ projectsRouter.get("/proyectos/:id", async (req, res) => {
 
   const members = await listMembers(project.id);
   const allUsers = await listAllActiveUsers();
+  const leader = allUsers.find((u) => u.id === project.leaderId) ?? null;
   const activeCount = await countByStatus(project.id, "activa");
   const reviewCount = await countByStatus(project.id, "revision");
 
@@ -91,6 +96,7 @@ projectsRouter.get("/proyectos/:id", async (req, res) => {
     tasks: tasksView,
     allTasks,
     members,
+    leader,
     allUsers,
     activeCount,
     reviewCount,

@@ -4,6 +4,7 @@ import { user } from "../../src/db/auth-schema.ts";
 import { db } from "../../src/db/client.ts";
 import {
   createProject,
+  generateProjectCode,
   listMembers,
   listProjects,
   setMembers,
@@ -20,7 +21,7 @@ async function makeUser(email: string) {
 }
 
 describe("projects-repo", () => {
-  it("createProject crea el proyecto con el líder como miembro", async () => {
+  it("createProject no agrega al líder como integrante", async () => {
     const leader = await makeUser("leader1@test.local");
     const project = await createProject({
       name: "Proyecto X",
@@ -36,7 +37,26 @@ describe("projects-repo", () => {
 
     expect(project.name).toBe("Proyecto X");
     const members = await listMembers(project.id);
-    expect(members.map((m) => m.id)).toContain(leader.id);
+    expect(members.map((m) => m.id)).not.toContain(leader.id);
+  });
+
+  it("createProject filtra al líder si viene incluido en memberIds", async () => {
+    const leader = await makeUser("leader1b@test.local");
+    const other = await makeUser("other1b@test.local");
+    const project = await createProject({
+      name: "Proyecto X2",
+      code: "PX2-1",
+      objective: "Objetivo",
+      leaderId: leader.id,
+      start: "2026-01-01",
+      due: "2026-02-01",
+      limitActive: 2,
+      limitReview: 2,
+      memberIds: [leader.id, other.id],
+    });
+
+    const members = await listMembers(project.id);
+    expect(members.map((m) => m.id).sort()).toEqual([other.id].sort());
   });
 
   it("listProjects incluye el conteo de tareas", async () => {
@@ -85,5 +105,33 @@ describe("projects-repo", () => {
     expect(members.map((m) => m.id).sort()).toEqual(
       [leader.id, member.id].sort(),
     );
+  });
+
+  it("generateProjectCode arma el prefijo con las iniciales del nombre", async () => {
+    const code = await generateProjectCode("Future Minds Labs");
+    expect(code).toBe("FML-001");
+  });
+
+  it("generateProjectCode usa las primeras letras cuando el nombre es una sola palabra", async () => {
+    const code = await generateProjectCode("Nébula");
+    expect(code).toBe("NEB-001");
+  });
+
+  it("generateProjectCode sigue la secuencia si el prefijo ya existe", async () => {
+    const leader = await makeUser("leader-code@test.local");
+    await createProject({
+      name: "Equipo Alfa Beta",
+      code: "EAB-001",
+      objective: "Objetivo",
+      leaderId: leader.id,
+      start: "2026-01-01",
+      due: "2026-02-01",
+      limitActive: 2,
+      limitReview: 2,
+      memberIds: [],
+    });
+
+    const code = await generateProjectCode("Equipo Alfa Beta");
+    expect(code).toBe("EAB-002");
   });
 });
