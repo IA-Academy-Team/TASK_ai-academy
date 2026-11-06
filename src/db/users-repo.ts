@@ -13,6 +13,11 @@ export async function listAllUsers() {
   return db.select().from(user);
 }
 
+export async function getUser(id: string) {
+  const [row] = await db.select().from(user).where(eq(user.id, id));
+  return row;
+}
+
 export async function deactivateUser(id: string) {
   await db.update(user).set({ isActive: false }).where(eq(user.id, id));
 }

@@ -8,6 +8,7 @@ import {
   lt,
   lte,
   notInArray,
+  or,
 } from "drizzle-orm";
 import { declaredHours } from "../domain/hours.ts";
 import { HttpError } from "../lib/http-error.ts";
@@ -24,6 +25,14 @@ const TRANSITIONS: Record<string, string[]> = {
   completada: [],
   cancelada: [],
 };
+
+// Estados de tarea en los que tiene sentido pedir apoyo — misma lista que
+// valida la ruta POST /tareas/:id/apoyo.
+export const REQUESTABLE_SUPPORT_STATUSES = [
+  "pendiente",
+  "activa",
+  "bloqueada",
+];
 
 export async function createTask(input: {
   projectId: string;
@@ -349,6 +358,38 @@ export async function listReviewPendingForLeader(leaderId: string | null) {
         : eq(tasks.status, "revision"),
     )
     .orderBy(asc(tasks.due));
+}
+
+// Tareas para las que el usuario puede pedir apoyo: admin ve todas, el resto
+// solo las que lidera (como líder del proyecto) o las que le pertenecen.
+export async function listRequestableTasksForUser(
+  userId: string,
+  role: string,
+) {
+  const statusFilter = inArray(tasks.status, REQUESTABLE_SUPPORT_STATUSES);
+  const scopeFilter =
+    role === "admin"
+      ? statusFilter
+      : and(
+          statusFilter,
+          or(eq(projects.leaderId, userId), eq(tasks.ownerId, userId)),
+        );
+
+  return db
+    .select({
+      id: tasks.id,
+      title: tasks.title,
+      ownerId: tasks.ownerId,
+      ownerName: user.name,
+      projectId: tasks.projectId,
+      projectCode: projects.code,
+      projectName: projects.name,
+    })
+    .from(tasks)
+    .innerJoin(projects, eq(projects.id, tasks.projectId))
+    .innerJoin(user, eq(user.id, tasks.ownerId))
+    .where(scopeFilter)
+    .orderBy(asc(projects.name), asc(tasks.order));
 }
 
 export async function moveTask(

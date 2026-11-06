@@ -1,13 +1,20 @@
 import { Router } from "express";
-import { getProject } from "../db/projects-repo.ts";
+import { getProject, listAllActiveUsers } from "../db/projects-repo.ts";
 import {
   createRequest,
   listPendingApplyForLeader,
   listPendingForUserEnriched,
   resolveRequest,
 } from "../db/support-requests-repo.ts";
-import { getTask, listSupport } from "../db/tasks-repo.ts";
+import {
+  getTask,
+  listRequestableTasksForUser,
+  listSupport,
+  REQUESTABLE_SUPPORT_STATUSES,
+} from "../db/tasks-repo.ts";
+import { getUser } from "../db/users-repo.ts";
 import { HttpError } from "../lib/http-error.ts";
+import { publish } from "../lib/sse-hub.ts";
 import { requestSupportSchema } from "../schemas/task.ts";
 
 export const supportsRouter = Router();
@@ -18,16 +25,21 @@ supportsRouter.get("/solicitudes", async (req, res) => {
     return;
   }
 
-  const forMe = await listPendingForUserEnriched(req.user.id);
-  const forLeader =
+  const [forMe, forLeader, requestable, allUsers] = await Promise.all([
+    listPendingForUserEnriched(req.user.id),
     req.user.role === "admin"
-      ? []
-      : await listPendingApplyForLeader(req.user.id);
+      ? Promise.resolve([])
+      : listPendingApplyForLeader(req.user.id),
+    listRequestableTasksForUser(req.user.id, req.user.role),
+    listAllActiveUsers(),
+  ]);
 
   res.render("solicitudes/index", {
     user: req.user,
     forMe,
     forLeader,
+    requestable,
+    allUsers,
     error: null,
   });
 });
@@ -80,7 +92,7 @@ supportsRouter.post("/tareas/:id/apoyo", async (req, res) => {
       "solo el responsable o el líder pueden solicitar apoyo",
     );
   }
-  if (!["pendiente", "activa", "bloqueada"].includes(task.status)) {
+  if (!REQUESTABLE_SUPPORT_STATUSES.includes(task.status)) {
     throw new HttpError(
       400,
       "solo se puede pedir apoyo en pendiente, activa o bloqueada",
@@ -98,6 +110,14 @@ supportsRouter.post("/tareas/:id/apoyo", async (req, res) => {
     targetUserId: parsed.data.targetUserId,
     mode: parsed.data.mode,
     reason: parsed.data.reason,
+  });
+
+  const requestedByUser = await getUser(req.user.id);
+  publish(parsed.data.targetUserId, "support-request", {
+    taskId: task.id,
+    taskTitle: task.title,
+    projectName: project?.name ?? "",
+    requestedByName: requestedByUser?.name ?? req.user.email,
   });
 
   res.redirect(303, `/tareas/${task.id}`);

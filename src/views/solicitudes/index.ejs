@@ -22,6 +22,120 @@
     <% if (error) { %><div class="error"><%= error %></div><% } %>
 
     <section class="card pad">
+      <div class="sectiontitle"><h2>Nueva solicitud</h2></div>
+      <% if (requestable.length === 0) { %>
+      <%- include('../partials/empty-state', { text: 'No tienes tareas para las que puedas pedir apoyo.' }) %>
+      <% } else { %>
+      <form method="post" id="nueva-solicitud-form" class="form-grid" onsubmit="return Boolean(document.getElementById('solicitud-task').value)">
+        <div class="field"><label>Proyecto *</label>
+          <select id="solicitud-project" required onchange="onSolicitudProjectChange()">
+            <option value="">Elige un proyecto</option>
+          </select>
+        </div>
+        <div class="field"><label>Tarea *</label>
+          <select id="solicitud-task" required onchange="onSolicitudTaskChange()" disabled>
+            <option value="">Elige primero un proyecto</option>
+          </select>
+        </div>
+        <div class="field"><label>Persona *</label>
+          <select name="targetUserId" id="solicitud-user" required disabled>
+            <option value="">Elige primero una tarea</option>
+          </select>
+        </div>
+        <div class="field"><label>Modalidad *</label>
+          <select name="mode" required>
+            <option value="invite">Invitar (la persona acepta)</option>
+            <option value="apply">Pedir que el líder la asigne</option>
+          </select>
+        </div>
+        <div class="field full"><label>Motivo</label><input name="reason" maxlength="1000" /></div>
+        <div class="foot-actions full"><button type="submit" class="btn primary">Pedir apoyo</button></div>
+      </form>
+      <script id="solicitud-requestable-data" type="application/json"><%- JSON.stringify(requestable).replace(/</g, '\\u003c') %></script>
+      <script id="solicitud-users-data" type="application/json"><%- JSON.stringify(allUsers.map(function(u){ return { id: u.id, name: u.name }; })).replace(/</g, '\\u003c') %></script>
+      <script>
+      (function () {
+        var requestable = JSON.parse(document.getElementById('solicitud-requestable-data').textContent);
+        var allUsers = JSON.parse(document.getElementById('solicitud-users-data').textContent);
+        var projectSelect = document.getElementById('solicitud-project');
+        var taskSelect = document.getElementById('solicitud-task');
+        var userSelect = document.getElementById('solicitud-user');
+        var form = document.getElementById('nueva-solicitud-form');
+
+        var projects = [];
+        var seen = {};
+        requestable.forEach(function (t) {
+          if (!seen[t.projectId]) {
+            seen[t.projectId] = true;
+            projects.push({ id: t.projectId, code: t.projectCode, name: t.projectName });
+          }
+        });
+        projects.forEach(function (p) {
+          var opt = document.createElement('option');
+          opt.value = p.id;
+          opt.textContent = p.code + ' — ' + p.name;
+          projectSelect.appendChild(opt);
+        });
+
+        window.onSolicitudProjectChange = function () {
+          taskSelect.innerHTML = '';
+          userSelect.innerHTML = '';
+          var placeholder = document.createElement('option');
+          placeholder.value = '';
+          var tasks = requestable.filter(function (t) { return t.projectId === projectSelect.value; });
+          if (!projectSelect.value || tasks.length === 0) {
+            placeholder.textContent = 'Elige primero un proyecto';
+            taskSelect.appendChild(placeholder);
+            taskSelect.disabled = true;
+            userSelect.innerHTML = '<option value="">Elige primero una tarea</option>';
+            userSelect.disabled = true;
+            form.action = '';
+            return;
+          }
+          placeholder.textContent = 'Elige una tarea';
+          taskSelect.appendChild(placeholder);
+          tasks.forEach(function (t) {
+            var opt = document.createElement('option');
+            opt.value = t.id;
+            opt.textContent = t.title + ' (responsable: ' + t.ownerName + ')';
+            opt.dataset.ownerId = t.ownerId;
+            taskSelect.appendChild(opt);
+          });
+          taskSelect.disabled = false;
+          userSelect.innerHTML = '<option value="">Elige primero una tarea</option>';
+          userSelect.disabled = true;
+          form.action = '';
+        };
+
+        window.onSolicitudTaskChange = function () {
+          var taskId = taskSelect.value;
+          userSelect.innerHTML = '';
+          if (!taskId) {
+            userSelect.innerHTML = '<option value="">Elige primero una tarea</option>';
+            userSelect.disabled = true;
+            form.action = '';
+            return;
+          }
+          var ownerId = taskSelect.options[taskSelect.selectedIndex].dataset.ownerId;
+          var placeholder = document.createElement('option');
+          placeholder.value = '';
+          placeholder.textContent = 'Elige una persona';
+          userSelect.appendChild(placeholder);
+          allUsers.filter(function (u) { return u.id !== ownerId; }).forEach(function (u) {
+            var opt = document.createElement('option');
+            opt.value = u.id;
+            opt.textContent = u.name;
+            userSelect.appendChild(opt);
+          });
+          userSelect.disabled = false;
+          form.action = '/tareas/' + taskId + '/apoyo';
+        };
+      })();
+      </script>
+      <% } %>
+    </section>
+
+    <section class="card pad">
       <div class="sectiontitle"><h2>Para ti</h2></div>
       <% if (forMe.length === 0) { %>
       <%- include('../partials/empty-state', { text: 'No tienes solicitudes pendientes.' }) %>

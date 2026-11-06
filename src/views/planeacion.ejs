@@ -29,35 +29,7 @@
       <a href="/planeacion?semana=<%= weekOffset + 1 %>&proyecto=<%= projectFilter || '' %>" class="btn subtle">Semana siguiente &rarr;</a>
     </form>
 
-    <div class="filters" style="margin-bottom:14px">
-      <a href="#" class="view-tab on" data-view="lista" onclick="return switchPlanView(this)">Lista</a>
-      <a href="#" class="view-tab" data-view="calendario" onclick="return switchPlanView(this)">Calendario</a>
-    </div>
-
-    <div id="plan-view-lista">
-      <div class="week-board">
-        <% byDay.forEach(function(d) { %>
-        <div class="week-day <%= d.day === today ? 'is-today' : '' %> <%= d.tasks.length === 0 ? 'is-empty' : '' %>">
-          <div class="week-day-head"><%= d.label %></div>
-          <% if (d.totalEstimate > 0) { %>
-          <div class="week-load" title="<%= d.totalEstimate %> h estimadas"><span style="width: <%= d.loadPct %>%"></span></div>
-          <% } %>
-          <% if (d.tasks.length === 0) { %>
-          <p class="week-day-empty">Sin tareas</p>
-          <% } else { %>
-          <% d.tasks.forEach(function(t) { %>
-          <a class="week-task" href="/tareas/<%= t.id %>">
-            <span class="week-task-dot <%= t.priority %>"></span>
-            <span class="week-task-title"><%= t.title %></span>
-          </a>
-          <% }) %>
-          <% } %>
-        </div>
-        <% }) %>
-      </div>
-    </div>
-
-    <div id="plan-view-calendario" style="display:none">
+    <div>
       <div class="week-calendar">
         <% byDay.forEach(function(d) { %>
         <div class="week-calendar-column">
@@ -96,14 +68,5 @@
     </section>
   </main>
 </div>
-<script>
-function switchPlanView(el) {
-  document.querySelectorAll('.view-tab').forEach(function (t) { t.classList.remove('on'); });
-  el.classList.add('on');
-  document.getElementById('plan-view-lista').style.display = el.dataset.view === 'lista' ? '' : 'none';
-  document.getElementById('plan-view-calendario').style.display = el.dataset.view === 'calendario' ? '' : 'none';
-  return false;
-}
-</script>
 </body>
 </html>

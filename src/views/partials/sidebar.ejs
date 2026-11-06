@@ -45,3 +45,54 @@
   </div>
 </nav>
 <div class="sidebar-backdrop" onclick="document.querySelector('.sidebar').classList.remove('open')"></div>
+<script>
+(function () {
+  if (!window.EventSource) return;
+
+  function getToastStack() {
+    var el = document.getElementById('toast-stack');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'toast-stack';
+      el.className = 'toast-stack';
+      document.body.appendChild(el);
+    }
+    return el;
+  }
+
+  function showSupportAlert(data) {
+    var toast = document.createElement('div');
+    toast.className = 'toast-alert';
+
+    var close = document.createElement('button');
+    close.type = 'button';
+    close.className = 'toast-alert-close';
+    close.setAttribute('aria-label', 'Cerrar');
+    close.textContent = '×';
+    close.onclick = function () { toast.remove(); };
+
+    var title = document.createElement('strong');
+    title.textContent = 'Nueva solicitud de apoyo';
+
+    var body = document.createElement('p');
+    body.textContent = (data.requestedByName || 'Alguien') + ' te pidió apoyo en "' + data.taskTitle + '" (' + data.projectName + ')';
+
+    var link = document.createElement('a');
+    link.className = 'toast-alert-link';
+    link.href = '/tareas/' + encodeURIComponent(data.taskId);
+    link.textContent = 'Ver tarea';
+
+    toast.appendChild(close);
+    toast.appendChild(title);
+    toast.appendChild(body);
+    toast.appendChild(link);
+    getToastStack().appendChild(toast);
+    setTimeout(function () { toast.remove(); }, 12000);
+  }
+
+  var stream = new EventSource('/notificaciones/stream');
+  stream.addEventListener('support-request', function (e) {
+    showSupportAlert(JSON.parse(e.data));
+  });
+})();
+</script>

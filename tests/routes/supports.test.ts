@@ -6,6 +6,7 @@ import { user } from "../../src/db/auth-schema.ts";
 import { db } from "../../src/db/client.ts";
 import { createProject } from "../../src/db/projects-repo.ts";
 import { createTask, listSupport } from "../../src/db/tasks-repo.ts";
+import { subscribe, unsubscribe } from "../../src/lib/sse-hub.ts";
 import { signUpAndGetCookie } from "../helpers/auth.ts";
 
 async function setup(email: string) {
@@ -64,6 +65,38 @@ describe("solicitudes de apoyo", () => {
       .get("/solicitudes")
       .set("Cookie", targetCookie);
     expect(list.status).toBe(200);
+  });
+
+  it("POST /tareas/:id/apoyo avisa en tiempo real al usuario destinatario", async () => {
+    const { app, cookie, task } = await setup("sup5-owner@test.local");
+    await signUpAndGetCookie("sup5-target@test.local");
+    const [targetRow] = await db
+      .select()
+      .from(user)
+      .where(eq(user.email, "sup5-target@test.local"));
+
+    const chunks: string[] = [];
+    const fakeRes = {
+      write(chunk: string) {
+        chunks.push(chunk);
+      },
+    } as unknown as import("express").Response;
+    subscribe(targetRow.id, fakeRes);
+
+    await supertest(app)
+      .post(`/tareas/${task.id}/apoyo`)
+      .set("Cookie", cookie)
+      .type("form")
+      .send({
+        targetUserId: targetRow.id,
+        mode: "invite",
+        reason: "Necesito ayuda",
+      });
+
+    unsubscribe(targetRow.id, fakeRes);
+    expect(chunks).toHaveLength(1);
+    expect(chunks[0]).toContain("event: support-request");
+    expect(chunks[0]).toContain(task.title);
   });
 
   it("POST /tareas/:id/apoyo responde 403 si no es responsable ni líder", async () => {

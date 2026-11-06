@@ -6,6 +6,7 @@ import { createProject } from "../../src/db/projects-repo.ts";
 import { tasks } from "../../src/db/schema.ts";
 import {
   createTask,
+  listRequestableTasksForUser,
   listTasksByProject,
   logHours,
   transitionTask,
@@ -272,5 +273,66 @@ describe("tasks-repo", () => {
       hours: "3",
     });
     expect(log.hours).toBe("3.0");
+  });
+
+  it("listRequestableTasksForUser solo trae las tareas del líder o propias", async () => {
+    const leader = await makeUser("tr-leader7@test.local");
+    const owner = await makeUser("tr-owner7@test.local");
+    const stranger = await makeUser("tr-stranger7@test.local");
+    const project = await makeProject(leader.id);
+    const task = await createTask({
+      projectId: project.id,
+      title: "Tarea del equipo",
+      deliverable: "E",
+      description: "",
+      ownerId: owner.id,
+      priority: "media",
+      weight: 1,
+      estimate: "2",
+      dependencyId: null,
+      due: "2026-01-10",
+      supportIds: [],
+      actorId: leader.id,
+    });
+
+    const forLeader = await listRequestableTasksForUser(leader.id, "usuario");
+    expect(forLeader.map((t) => t.id)).toContain(task.id);
+
+    const forOwner = await listRequestableTasksForUser(owner.id, "usuario");
+    expect(forOwner.map((t) => t.id)).toContain(task.id);
+
+    const forStranger = await listRequestableTasksForUser(
+      stranger.id,
+      "usuario",
+    );
+    expect(forStranger.map((t) => t.id)).not.toContain(task.id);
+
+    const forAdmin = await listRequestableTasksForUser(stranger.id, "admin");
+    expect(forAdmin.map((t) => t.id)).toContain(task.id);
+  });
+
+  it("listRequestableTasksForUser excluye tareas canceladas", async () => {
+    const leader = await makeUser("tr-leader8@test.local");
+    const project = await makeProject(leader.id);
+    const task = await createTask({
+      projectId: project.id,
+      title: "Tarea cancelada",
+      deliverable: "E",
+      description: "",
+      ownerId: leader.id,
+      priority: "media",
+      weight: 1,
+      estimate: "2",
+      dependencyId: null,
+      due: "2026-01-10",
+      supportIds: [],
+      actorId: leader.id,
+    });
+    await transitionTask(task.id, "cancelada", leader.id, {
+      note: "ya no aplica",
+    });
+
+    const result = await listRequestableTasksForUser(leader.id, "usuario");
+    expect(result.map((t) => t.id)).not.toContain(task.id);
   });
 });

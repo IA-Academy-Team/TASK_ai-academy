@@ -87,23 +87,16 @@ plannerRouter.get("/planeacion", async (req, res) => {
     return {
       day,
       label: dayLabel(d, i),
-      tasks: dayTasks,
-      totalEstimate: dayTasks.reduce((sum, t) => sum + Number(t.estimate), 0),
       blocks: layoutDayBlocks(calendarTasks),
     };
   });
-  const maxEstimate = Math.max(...byDayRaw.map((d) => d.totalEstimate), 1);
-  const byDay = byDayRaw.map((d) => ({
-    ...d,
-    loadPct: Math.round((d.totalEstimate / maxEstimate) * 100),
-  }));
 
   res.render("planeacion", {
     user: req.user,
     projects,
     projectFilter,
     weekOffset,
-    byDay,
+    byDay: byDayRaw,
     today: toDateString(new Date()),
     capacity,
   });
