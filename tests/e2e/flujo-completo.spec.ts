@@ -16,9 +16,10 @@ test("flujo completo: login, crear proyecto, crear tarea, workflow de estado, cr
   await page.fill("#email", ADMIN_EMAIL);
   await page.fill("#password", ADMIN_PASSWORD);
   await page.click("button[type=submit]");
-  await page.waitForURL("**/proyectos");
+  await page.waitForURL("http://localhost:3100/");
 
   // 2. crear proyecto
+  await page.goto("/proyectos");
   await page.click('a:has-text("Nuevo proyecto")');
   await page.waitForURL("**/proyectos/nuevo");
   await page.fill('input[name="name"]', projectName);
@@ -29,9 +30,11 @@ test("flujo completo: login, crear proyecto, crear tarea, workflow de estado, cr
   await page.click('button:has-text("Crear proyecto")');
   await page.waitForURL(/\/proyectos\/[0-9a-f-]+$/);
 
-  // 3. crear tarea dentro del proyecto
+  // 3. crear tarea dentro del proyecto (el formulario vive en un drawer lateral)
+  await page.click('button:has-text("Nueva tarea")');
   await page.fill('input[name="title"]', taskTitle);
   await page.fill('input[name="deliverable"]', "Entregable E2E");
+  await page.selectOption('select[name="ownerId"]', { label: "Admin" });
   await page.fill('input[name="estimate"]', "4");
   await page.fill('input[name="due"]', "2026-12-01");
   await page.click('button:has-text("Crear tarea")');
@@ -45,10 +48,15 @@ test("flujo completo: login, crear proyecto, crear tarea, workflow de estado, cr
   await page.click('button:has-text("Iniciar")');
   await expect(page.locator(".badge", { hasText: "activa" })).toBeVisible();
 
-  await page.click('button:has-text("Enviar a revisión")');
+  await page.click('a:has-text("Entregar")');
+  await page.waitForURL(/\/tareas\/[0-9a-f-]+\/entrega$/);
+  await page.fill('input[name="date"]', "2026-11-06");
+  await page.fill('input[name="hours"]', "2");
+  await page.fill('textarea[name="evidence"]', "Evidencia E2E");
+  await page.click('button:has-text("Entregar y enviar a revisión")');
+  await page.waitForURL(/\/tareas\/[0-9a-f-]+$/);
   await expect(page.locator(".badge", { hasText: "revision" })).toBeVisible();
 
-  await page.fill('input[name="evidence"]', "Evidencia E2E");
   await page.click('button:has-text("Aprobar")');
   await expect(page.locator(".badge", { hasText: "completada" })).toBeVisible();
 
