@@ -7,23 +7,23 @@
 
   <div class="navgroup">
     <span class="navlabel">Trabajo</span>
-    <a class="navbtn <%= active === 'inicio' ? 'on' : '' %>" href="/"><%- include('./icon', { kind: 'home', size: 16 }) %>Dashboard</a>
-    <a class="navbtn <%= active === 'proyectos' ? 'on' : '' %>" href="/proyectos"><%- include('./icon', { kind: 'folder', size: 16 }) %>Proyectos</a>
-    <a class="navbtn <%= active === 'crear-tarea' ? 'on' : '' %>" href="/tareas/nueva"><%- include('./icon', { kind: 'plus', size: 16 }) %>Crear tarea</a>
-    <a class="navbtn <%= active === 'plan-semanal' ? 'on' : '' %>" href="/planeacion"><%- include('./icon', { kind: 'calendar', size: 16 }) %>Plan semanal</a>
-    <a class="navbtn <%= active === 'mis-tareas' ? 'on' : '' %>" href="/mis-tareas"><%- include('./icon', { kind: 'check', size: 16 }) %>Mis tareas</a>
+    <a class="navbtn <%= active === 'inicio' ? 'on' : '' %>" href="/" aria-label="Dashboard"><%- include('./icon', { kind: 'home', size: 16 }) %><span class="navbtn-label">Dashboard</span></a>
+    <a class="navbtn <%= active === 'proyectos' ? 'on' : '' %>" href="/proyectos" aria-label="Proyectos"><%- include('./icon', { kind: 'folder', size: 16 }) %><span class="navbtn-label">Proyectos</span></a>
+    <a class="navbtn <%= active === 'crear-tarea' ? 'on' : '' %>" href="/tareas/nueva" aria-label="Crear tarea"><%- include('./icon', { kind: 'plus', size: 16 }) %><span class="navbtn-label">Crear tarea</span></a>
+    <a class="navbtn <%= active === 'plan-semanal' ? 'on' : '' %>" href="/planeacion" aria-label="Plan semanal"><%- include('./icon', { kind: 'calendar', size: 16 }) %><span class="navbtn-label">Plan semanal</span></a>
+    <a class="navbtn <%= active === 'mis-tareas' ? 'on' : '' %>" href="/mis-tareas" aria-label="Mis tareas"><%- include('./icon', { kind: 'check', size: 16 }) %><span class="navbtn-label">Mis tareas</span></a>
   </div>
 
   <div class="navgroup">
     <span class="navlabel">Equipo</span>
-    <a class="navbtn <%= active === 'equipo' ? 'on' : '' %>" href="/equipo"><%- include('./icon', { kind: 'users', size: 16 }) %>Equipo y cargas</a>
-    <a class="navbtn <%= active === 'solicitudes' ? 'on' : '' %>" href="/solicitudes">
-      <%- include('./icon', { kind: 'handshake', size: 16 }) %>Solicitudes de apoyo
+    <a class="navbtn <%= active === 'equipo' ? 'on' : '' %>" href="/equipo" aria-label="Equipo y cargas"><%- include('./icon', { kind: 'users', size: 16 }) %><span class="navbtn-label">Equipo y cargas</span></a>
+    <a class="navbtn <%= active === 'solicitudes' ? 'on' : '' %>" href="/solicitudes" aria-label="Solicitudes de apoyo">
+      <%- include('./icon', { kind: 'handshake', size: 16 }) %><span class="navbtn-label">Solicitudes de apoyo</span>
       <% if (typeof sidebarCounts !== 'undefined' && sidebarCounts && sidebarCounts.supports > 0) { %><span class="navcount"><%= sidebarCounts.supports %></span><% } %>
     </a>
-    <a class="navbtn <%= active === 'productividad' ? 'on' : '' %>" href="/productividad"><%- include('./icon', { kind: 'chart', size: 16 }) %>Productividad</a>
-    <a class="navbtn <%= active === 'notificaciones' ? 'on' : '' %>" href="/notificaciones">
-      <%- include('./icon', { kind: 'bell', size: 16 }) %>Notificaciones
+    <a class="navbtn <%= active === 'productividad' ? 'on' : '' %>" href="/productividad" aria-label="Productividad"><%- include('./icon', { kind: 'chart', size: 16 }) %><span class="navbtn-label">Productividad</span></a>
+    <a class="navbtn <%= active === 'notificaciones' ? 'on' : '' %>" href="/notificaciones" aria-label="Notificaciones">
+      <%- include('./icon', { kind: 'bell', size: 16 }) %><span class="navbtn-label">Notificaciones</span>
       <% if (typeof sidebarCounts !== 'undefined' && sidebarCounts && sidebarCounts.notifications > 0) { %><span class="navcount"><%= sidebarCounts.notifications %></span><% } %>
     </a>
   </div>
@@ -31,17 +31,17 @@
   <% if (user.role === "admin") { %>
   <div class="navgroup">
     <span class="navlabel">Admin</span>
-    <a class="navbtn <%= active === 'usuarios' ? 'on' : '' %>" href="/admin/usuarios"><%- include('./icon', { kind: 'shield', size: 16 }) %>Usuarios</a>
+    <a class="navbtn <%= active === 'usuarios' ? 'on' : '' %>" href="/admin/usuarios" aria-label="Usuarios"><%- include('./icon', { kind: 'shield', size: 16 }) %><span class="navbtn-label">Usuarios</span></a>
   </div>
   <% } %>
 
   <div class="sidebar-bottom">
-    <div class="sidebar-user">
+    <div class="sidebar-user" aria-label="<%= user.name || user.email %>">
       <span class="sidebar-avatar"><%= (user.name || user.email || "?").charAt(0).toUpperCase() %></span>
       <span class="sidebar-user-name"><%= user.name || user.email %></span>
     </div>
-    <button type="button" class="navbtn" onclick="(function(){var h=document.documentElement;var next=h.getAttribute('data-theme')==='dark'?'light':'dark';h.setAttribute('data-theme',next);try{localStorage.setItem('aiacademy-theme',next)}catch(e){}if(document.querySelector('canvas')){location.reload()}})()">Cambiar tema</button>
-    <button type="button" class="navbtn" onclick="fetch('/api/auth/sign-out',{method:'POST'}).then(()=>location.href='/login')">Salir</button>
+    <button type="button" class="navbtn" aria-label="Cambiar tema" onclick="(function(){var h=document.documentElement;var next=h.getAttribute('data-theme')==='dark'?'light':'dark';h.setAttribute('data-theme',next);try{localStorage.setItem('aiacademy-theme',next)}catch(e){}if(document.querySelector('canvas')){location.reload()}})()"><%- include('./icon', { kind: 'theme', size: 16 }) %><span class="navbtn-label">Cambiar tema</span></button>
+    <button type="button" class="navbtn" aria-label="Salir" onclick="fetch('/api/auth/sign-out',{method:'POST'}).then(()=>location.href='/login')"><%- include('./icon', { kind: 'logout', size: 16 }) %><span class="navbtn-label">Salir</span></button>
   </div>
 </nav>
 <div class="sidebar-backdrop" onclick="document.querySelector('.sidebar').classList.remove('open')"></div>
