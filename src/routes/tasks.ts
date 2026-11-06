@@ -55,6 +55,7 @@ tasksRouter.get("/tareas/:id", async (req, res) => {
     canRequestSupport:
       (req.user.id === task.ownerId || isLeaderOrAdmin) &&
       ["pendiente", "activa", "bloqueada"].includes(task.status),
+    justUpdated: req.query.updated === "1",
     error: null,
   });
 });
@@ -109,7 +110,7 @@ tasksRouter.post("/tareas/:id/estado", async (req, res) => {
     throw new HttpError(404, "tarea no encontrada");
   }
 
-  res.redirect(303, `/tareas/${req.params.id}`);
+  res.redirect(303, `/tareas/${req.params.id}?updated=1`);
 });
 
 tasksRouter.post("/tareas/:id/horas", async (req, res) => {

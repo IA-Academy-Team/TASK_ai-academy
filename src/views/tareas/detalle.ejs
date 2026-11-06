@@ -20,7 +20,9 @@
       </div>
       <div>
         <span class="badge <%= task.priority %>"><%= task.priority %></span>
-        <span class="badge <%= task.status %>"><%= task.status %></span>
+        <span class="badge <%= task.status %><%= justUpdated ? ' just-updated' : '' %>">
+          <% if (justUpdated && task.status === 'completada') { %><svg class="badge-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12l5 5L20 7" /></svg><% } %><%= task.status %>
+        </span>
         <% if (isLeaderOrAdmin && task.status !== 'completada' && task.status !== 'cancelada') { %>
         <a class="btn subtle" href="/tareas/<%= task.id %>/editar">Editar</a>
         <% } %>
