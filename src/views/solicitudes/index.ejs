@@ -25,6 +25,7 @@
       <% if (forMe.length === 0) { %>
       <div class="empty">No tenés solicitudes pendientes.</div>
       <% } else { %>
+      <div class="table-wrap">
       <table class="table">
         <thead><tr><th>Tarea</th><th>Proyecto</th><th>Pide</th><th>Motivo</th><th></th></tr></thead>
         <tbody>
@@ -42,12 +43,14 @@
           <% }) %>
         </tbody>
       </table>
+      </div>
       <% } %>
     </section>
 
     <% if (forLeader.length > 0) { %>
     <section class="card pad">
       <div class="sectiontitle"><h2>Para resolver como líder</h2></div>
+      <div class="table-wrap">
       <table class="table">
         <thead><tr><th>Tarea</th><th>Proyecto</th><th>Pide</th><th>Motivo</th><th></th></tr></thead>
         <tbody>
@@ -65,6 +68,7 @@
           <% }) %>
         </tbody>
       </table>
+      </div>
     </section>
     <% } %>
   </main>

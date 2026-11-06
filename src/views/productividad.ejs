@@ -37,6 +37,7 @@
       <% if (byProject.length === 0) { %>
       <div class="empty">Sin horas registradas en el período.</div>
       <% } else { %>
+      <div class="table-wrap">
       <table class="table">
         <thead><tr><th>Proyecto</th><th>Horas</th></tr></thead>
         <tbody>
@@ -45,6 +46,7 @@
           <% }) %>
         </tbody>
       </table>
+      </div>
       <% } %>
     </section>
 
@@ -53,6 +55,7 @@
       <% if (topTasks.length === 0) { %>
       <div class="empty">Sin tareas con horas en el período.</div>
       <% } else { %>
+      <div class="table-wrap">
       <table class="table">
         <thead><tr><th>Tarea</th><th>Horas</th></tr></thead>
         <tbody>
@@ -61,6 +64,7 @@
           <% }) %>
         </tbody>
       </table>
+      </div>
       <% } %>
     </section>
 
@@ -69,6 +73,7 @@
       <% if (byCollaborator.length === 0) { %>
       <div class="empty">Sin horas registradas en el período.</div>
       <% } else { %>
+      <div class="table-wrap">
       <table class="table">
         <thead><tr><th>Colaborador</th><th>Horas</th></tr></thead>
         <tbody>
@@ -77,6 +82,7 @@
           <% }) %>
         </tbody>
       </table>
+      </div>
       <% } %>
     </section>
 
@@ -85,6 +91,7 @@
       <% if (estimateVsReal.length === 0) { %>
       <div class="empty">Todavía no hay tareas aprobadas.</div>
       <% } else { %>
+      <div class="table-wrap">
       <table class="table">
         <thead><tr><th>Tarea</th><th>Estimado</th><th>Real</th><th>Desvío</th></tr></thead>
         <tbody>
@@ -98,6 +105,7 @@
           <% }) %>
         </tbody>
       </table>
+      </div>
       <% } %>
     </section>
   </main>

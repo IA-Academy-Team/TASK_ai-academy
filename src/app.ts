@@ -29,6 +29,16 @@ export function createApp() {
 
   app.use("/static", express.static(path.join(import.meta.dirname, "public")));
 
+  // Servidos en la raíz (no bajo /static) para que el service worker controle
+  // todo el origen por defecto, sin necesitar el header Service-Worker-Allowed.
+  app.get("/manifest.json", (_req, res) => {
+    res.sendFile(path.join(import.meta.dirname, "public", "manifest.json"));
+  });
+  app.get("/sw.js", (_req, res) => {
+    res.type("application/javascript");
+    res.sendFile(path.join(import.meta.dirname, "public", "sw.js"));
+  });
+
   app.use(healthRouter);
 
   // Las cuentas las crea un admin en /admin/usuarios (auth.api.signUpEmail server-side, no pasa

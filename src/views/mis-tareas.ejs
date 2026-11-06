@@ -40,6 +40,7 @@
       <% if (tasks.length === 0) { %>
       <div class="empty">Sin tareas en esta vista.</div>
       <% } else { %>
+      <div class="table-wrap">
       <table class="table">
         <thead><tr><th>Tarea</th><th>Proyecto</th><th>Prioridad</th><th>Estado</th><th>Vence</th></tr></thead>
         <tbody>
@@ -54,6 +55,7 @@
           <% }) %>
         </tbody>
       </table>
+      </div>
       <% } %>
     </section>
 
@@ -62,6 +64,7 @@
       <% if (support.length === 0) { %>
       <div class="empty">No sos apoyo de ninguna tarea.</div>
       <% } else { %>
+      <div class="table-wrap">
       <table class="table">
         <thead><tr><th>Tarea</th><th>Proyecto</th><th>Estado</th><th>Vence</th></tr></thead>
         <tbody>
@@ -75,6 +78,7 @@
           <% }) %>
         </tbody>
       </table>
+      </div>
       <% } %>
     </section>
   </main>
