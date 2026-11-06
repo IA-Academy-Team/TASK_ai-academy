@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <link rel="icon" type="image/png" href="/static/brand/favicon.png" />
 <title>AI Academy · Centro de control — Inicio</title>
 <%- include('partials/theme-init') %>
@@ -39,18 +40,14 @@
     <section class="card pad">
       <div class="sectiontitle"><h2>Actividad reciente</h2></div>
       <% if (activity.length === 0) { %>
-      <div class="empty">Todavía no hay actividad registrada.</div>
+      <%- include('partials/empty-state', { text: 'Todavía no hay actividad registrada.' }) %>
       <% } else { %>
       <% activity.forEach(function(a) { %>
       <div class="feed">
-        <span class="dot"><%= (a.actorName || "?").charAt(0).toUpperCase() %></span>
+        <span class="dot"><%- include('partials/activity-icon', { kind: a.icon }) %></span>
         <div>
-          <strong><%= a.actorName || "Alguien" %> — <%= a.action %></strong>
-          <p>
-            <% if (a.projectName) { %><%= a.projectName %><% } %>
-            <% if (a.taskTitle) { %> · <%= a.taskTitle %><% } %>
-            <% if (a.note) { %> · <%= a.note %><% } %>
-          </p>
+          <strong><%= a.text %></strong>
+          <p><%= a.when %></p>
         </div>
       </div>
       <% }) %>

@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <link rel="icon" type="image/png" href="/static/brand/favicon.png" />
 <title>AI Academy · Centro de control — Solicitudes de apoyo</title>
 <%- include('../partials/theme-init') %>
@@ -14,16 +15,16 @@
     <div class="topbar">
       <div>
         <h1 class="page-title">Solicitudes de apoyo</h1>
-        <p class="subtitle">Pendientes para vos: <%= forMe.length %><% if (forLeader.length) { %> · Pendientes de resolver como líder: <%= forLeader.length %><% } %></p>
+        <p class="subtitle">Pendientes para ti: <%= forMe.length %><% if (forLeader.length) { %> · Pendientes de resolver como líder: <%= forLeader.length %><% } %></p>
       </div>
     </div>
 
     <% if (error) { %><div class="error"><%= error %></div><% } %>
 
     <section class="card pad">
-      <div class="sectiontitle"><h2>Para vos</h2></div>
+      <div class="sectiontitle"><h2>Para ti</h2></div>
       <% if (forMe.length === 0) { %>
-      <div class="empty">No tenés solicitudes pendientes.</div>
+      <%- include('../partials/empty-state', { text: 'No tienes solicitudes pendientes.' }) %>
       <% } else { %>
       <div class="table-wrap">
       <table class="table">

@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <link rel="icon" type="image/png" href="/static/brand/favicon.png" />
 <title>AI Academy · Centro de control — Mis tareas</title>
 <%- include('partials/theme-init') %>
@@ -19,10 +20,10 @@
     </div>
 
     <div class="kpi-row">
-      <div class="kpi"><small>Total</small><strong><%= total %></strong></div>
-      <div class="kpi"><small>Vencidas</small><strong><%= vencidas %></strong></div>
-      <div class="kpi"><small>Urgentes</small><strong><%= urgentes %></strong></div>
-      <div class="kpi"><small>Completadas</small><strong><%= completadas %></strong></div>
+      <div class="card kpi"><small>Total</small><strong><%= total %></strong></div>
+      <div class="card kpi"><small>Vencidas</small><strong><%= vencidas %></strong></div>
+      <div class="card kpi"><small>Urgentes</small><strong><%= urgentes %></strong></div>
+      <div class="card kpi"><small>Completadas</small><strong><%= completadas %></strong></div>
     </div>
 
     <div class="filters">
@@ -31,14 +32,14 @@
       <% }) %>
     </div>
     <div class="filters">
-      <% ['sequence','due','priority'].forEach(function(o) { %>
-      <a href="/mis-tareas?estado=<%= estado %>&orden=<%= o %>" class="<%= orden === o ? 'on' : '' %>">orden: <%= o %></a>
+      <% [['sequence','Manual'],['due','Vencimiento'],['priority','Prioridad']].forEach(function(o) { %>
+      <a href="/mis-tareas?estado=<%= estado %>&orden=<%= o[0] %>" class="<%= orden === o[0] ? 'on' : '' %>">Orden: <%= o[1] %></a>
       <% }) %>
     </div>
 
     <section class="card pad">
       <% if (tasks.length === 0) { %>
-      <div class="empty">Sin tareas en esta vista.</div>
+      <%- include('partials/empty-state', { text: 'Sin tareas en esta vista.' }) %>
       <% } else { %>
       <div class="table-wrap">
       <table class="table">
@@ -62,7 +63,7 @@
     <section class="card pad">
       <div class="sectiontitle"><h2>Tareas donde soy apoyo</h2></div>
       <% if (support.length === 0) { %>
-      <div class="empty">No sos apoyo de ninguna tarea.</div>
+      <%- include('partials/empty-state', { text: 'No eres apoyo de ninguna tarea.' }) %>
       <% } else { %>
       <div class="table-wrap">
       <table class="table">

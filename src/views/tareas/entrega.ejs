@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <link rel="icon" type="image/png" href="/static/brand/favicon.png" />
 <title>AI Academy · Centro de control — Entregar <%= task.title %></title>
 <%- include('../partials/theme-init') %>
@@ -24,7 +25,7 @@
     <div class="form-grid">
       <section class="card pad">
         <div class="sectiontitle"><h2>Horas registradas</h2></div>
-        <% if (logs.length === 0) { %><div class="empty">Todavía no registraste horas.</div><% } %>
+        <% if (logs.length === 0) { %><%- include('../partials/empty-state', { text: 'Todavía no registraste horas.' }) %><% } %>
         <% logs.forEach(function(l) { %>
         <div class="detail-row"><span><%= l.date %></span><strong><%= l.hours %> h</strong></div>
         <% }) %>

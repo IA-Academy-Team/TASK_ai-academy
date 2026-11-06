@@ -58,7 +58,7 @@ tasksDeliveryRouter.post("/tareas/:id/entrega", async (req, res) => {
       user: req.user,
       task,
       logs,
-      error: "Completá la fecha, las horas y la evidencia de la entrega.",
+      error: "Completa la fecha, las horas y la evidencia de la entrega.",
     });
     return;
   }

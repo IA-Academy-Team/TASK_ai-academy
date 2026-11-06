@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <link rel="icon" type="image/png" href="/static/brand/favicon.png" />
 <title>AI Academy · Centro de control — Productividad</title>
 <%- include('partials/theme-init') %>
@@ -26,16 +27,16 @@
     </div>
 
     <div class="kpi-row">
-      <div class="kpi"><small>Horas registradas</small><strong><%= totalHours %></strong></div>
-      <div class="kpi"><small>Proyectos con actividad</small><strong><%= byProject.length %></strong></div>
-      <div class="kpi"><small>Tareas con registro</small><strong><%= tasksWithHours %></strong></div>
-      <div class="kpi"><small>Colaboradores con horas</small><strong><%= byCollaborator.length %></strong></div>
+      <div class="card kpi"><small>Horas registradas</small><strong><%= totalHours %></strong></div>
+      <div class="card kpi"><small>Proyectos con actividad</small><strong><%= byProject.length %></strong></div>
+      <div class="card kpi"><small>Tareas con registro</small><strong><%= tasksWithHours %></strong></div>
+      <div class="card kpi"><small>Colaboradores con horas</small><strong><%= byCollaborator.length %></strong></div>
     </div>
 
     <section class="card pad">
       <div class="sectiontitle"><h2>Horas por proyecto</h2></div>
       <% if (byProject.length === 0) { %>
-      <div class="empty">Sin horas registradas en el período.</div>
+      <%- include('partials/empty-state', { text: 'Sin horas registradas en el período.' }) %>
       <% } else { %>
       <div class="table-wrap">
       <table class="table">
@@ -53,7 +54,7 @@
     <section class="card pad">
       <div class="sectiontitle"><h2>Top 10 tareas por horas</h2></div>
       <% if (topTasks.length === 0) { %>
-      <div class="empty">Sin tareas con horas en el período.</div>
+      <%- include('partials/empty-state', { text: 'Sin tareas con horas en el período.' }) %>
       <% } else { %>
       <div class="table-wrap">
       <table class="table">
@@ -71,7 +72,7 @@
     <section class="card pad">
       <div class="sectiontitle"><h2>Horas por colaborador</h2></div>
       <% if (byCollaborator.length === 0) { %>
-      <div class="empty">Sin horas registradas en el período.</div>
+      <%- include('partials/empty-state', { text: 'Sin horas registradas en el período.' }) %>
       <% } else { %>
       <div class="table-wrap">
       <table class="table">
@@ -89,7 +90,7 @@
     <section class="card pad">
       <div class="sectiontitle"><h2>Estimado vs. real (tareas aprobadas)</h2></div>
       <% if (estimateVsReal.length === 0) { %>
-      <div class="empty">Todavía no hay tareas aprobadas.</div>
+      <%- include('partials/empty-state', { text: 'Todavía no hay tareas aprobadas.' }) %>
       <% } else { %>
       <div class="table-wrap">
       <table class="table">

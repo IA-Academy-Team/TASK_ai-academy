@@ -35,7 +35,7 @@ projectsRouter.post("/proyectos", authorize("admin"), async (req, res) => {
     res.status(400).render("proyectos/nuevo", {
       users,
       user: req.user,
-      error: "Revisá los campos obligatorios del proyecto.",
+      error: "Revisa los campos obligatorios del proyecto.",
     });
     return;
   }

@@ -82,7 +82,7 @@ tasksEditRouter.post("/tareas/:id/editar", async (req, res) => {
       project,
       allUsers,
       allTasks: allTasks.filter((t) => t.id !== task.id),
-      error: "Revisá los campos obligatorios de la edición.",
+      error: "Revisa los campos obligatorios de la edición.",
     });
     return;
   }

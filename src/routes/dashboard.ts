@@ -2,6 +2,11 @@ import { Router } from "express";
 import { listRecent } from "../db/audit-repo.ts";
 import { countActiveProjects } from "../db/projects-repo.ts";
 import { countOverdueForOwner, countTasksForOwner } from "../db/tasks-repo.ts";
+import {
+  activityIconKind,
+  formatActivity,
+  timeAgo,
+} from "../lib/activity-format.ts";
 
 export const dashboardRouter = Router();
 
@@ -27,6 +32,10 @@ dashboardRouter.get("/", async (req, res) => {
     activeProjects,
     myActiveTasks,
     myOverdueTasks,
-    activity,
+    activity: activity.map((a) => ({
+      icon: activityIconKind(a.action),
+      text: formatActivity(a),
+      when: timeAgo(a.createdAt),
+    })),
   });
 });

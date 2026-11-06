@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <link rel="icon" type="image/png" href="/static/brand/favicon.png" />
 <title>AI Academy · Centro de control — Crear tarea</title>
 <%- include('../partials/theme-init') %>
@@ -14,11 +15,11 @@
     <div class="topbar">
       <div>
         <h1 class="page-title">Crear tarea</h1>
-        <p class="subtitle">Elegí el proyecto y completá los datos de la tarea.</p>
+        <p class="subtitle">Elige el proyecto y completa los datos de la tarea.</p>
       </div>
     </div>
 
-    <% if (error) { %><div class="error">Revisá los campos obligatorios de la tarea.</div><% } %>
+    <% if (error) { %><div class="error">Revisa los campos obligatorios de la tarea.</div><% } %>
 
     <% if (!project) { %>
     <section class="card pad">
@@ -26,7 +27,7 @@
       <form method="get" action="/tareas/nueva" class="form-grid">
         <div class="field full"><label>Proyecto *</label>
           <select name="project" required>
-            <option value="">Elegí un proyecto</option>
+            <option value="">Elige un proyecto</option>
             <% projects.forEach(function(p) { %><option value="<%= p.id %>"><%= p.code %> — <%= p.name %></option><% }) %>
           </select>
         </div>

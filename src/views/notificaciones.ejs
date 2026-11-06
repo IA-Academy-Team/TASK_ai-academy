@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <link rel="icon" type="image/png" href="/static/brand/favicon.png" />
 <title>AI Academy · Centro de control — Notificaciones</title>
 <%- include('partials/theme-init') %>
@@ -21,7 +22,7 @@
     <section class="card pad">
       <div class="sectiontitle"><h2>Validaciones pendientes<% if (reviewPending.length) { %> (<%= reviewPending.length %>)<% } %></h2></div>
       <% if (reviewPending.length === 0) { %>
-      <div class="empty">Nada esperando tu aprobación.</div>
+      <%- include('partials/empty-state', { text: 'Nada esperando tu aprobación.' }) %>
       <% } else { %>
       <% reviewPending.forEach(function(r) { %>
       <div class="detail-row"><span><a href="/tareas/<%= r.task.id %>"><%= r.task.title %></a> · <%= r.projectName %></span><strong><%= r.task.due %></strong></div>
@@ -32,7 +33,7 @@
     <section class="card pad">
       <div class="sectiontitle"><h2>Entregas vencidas<% if (overdue.length) { %> (<%= overdue.length %>)<% } %></h2></div>
       <% if (overdue.length === 0) { %>
-      <div class="empty">No tenés entregas vencidas.</div>
+      <%- include('partials/empty-state', { text: 'No tienes entregas vencidas.' }) %>
       <% } else { %>
       <% overdue.forEach(function(r) { %>
       <div class="detail-row"><span><a href="/tareas/<%= r.task.id %>"><%= r.task.title %></a> · <%= r.projectName %></span><strong><%= r.task.due %></strong></div>
@@ -43,7 +44,7 @@
     <section class="card pad">
       <div class="sectiontitle"><h2>Solicitudes de apoyo<% if (supportPending.length) { %> (<%= supportPending.length %>)<% } %></h2></div>
       <% if (supportPending.length === 0) { %>
-      <div class="empty">Sin solicitudes pendientes.</div>
+      <%- include('partials/empty-state', { text: 'Sin solicitudes pendientes.' }) %>
       <% } else { %>
       <% supportPending.forEach(function(r) { %>
       <div class="detail-row"><span><a href="/tareas/<%= r.request.taskId %>"><%= r.taskTitle %></a> · <%= r.projectName %></span><strong><a href="/solicitudes" class="btn subtle">Ver</a></strong></div>
