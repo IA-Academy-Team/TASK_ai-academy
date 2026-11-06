@@ -1,8 +1,16 @@
 import { Router } from "express";
 import { listAllActiveUsers, listProjects } from "../db/projects-repo.ts";
 import { listTasksByProject } from "../db/tasks-repo.ts";
+import { layoutDayBlocks } from "../domain/week-calendar.ts";
 
 export const plannerRouter = Router();
+
+const CALENDAR_START_HOUR = 8;
+const CALENDAR_END_HOUR = 18;
+const CALENDAR_HOURS = Array.from(
+  { length: CALENDAR_END_HOUR - CALENDAR_START_HOUR },
+  (_, i) => CALENDAR_START_HOUR + i,
+);
 
 function mondayOf(date: Date): Date {
   const d = new Date(date);
@@ -73,14 +81,25 @@ plannerRouter.get("/planeacion", async (req, res) => {
       (t) =>
         t.due === day && t.status !== "cancelada" && t.status !== "completada",
     );
+    const calendarTasks = dayTasks.map((t) => ({
+      id: t.id,
+      title: t.title,
+      priority: t.priority,
+      estimate: Number(t.estimate),
+    }));
     return {
       day,
       label: dayLabel(d, i),
       tasks: dayTasks,
       totalEstimate: dayTasks.reduce((sum, t) => sum + Number(t.estimate), 0),
+      blocks: layoutDayBlocks(calendarTasks),
     };
   });
   const maxEstimate = Math.max(...byDayRaw.map((d) => d.totalEstimate), 1);
+  const calendarHours = Math.max(
+    CALENDAR_HOURS.length,
+    ...byDayRaw.map((d) => d.totalEstimate),
+  );
   const byDay = byDayRaw.map((d) => ({
     ...d,
     loadPct: Math.round((d.totalEstimate / maxEstimate) * 100),
@@ -96,5 +115,7 @@ plannerRouter.get("/planeacion", async (req, res) => {
     byDay,
     today: toDateString(new Date()),
     capacity,
+    calendarHourLabels: CALENDAR_HOURS,
+    calendarHeight: calendarHours,
   });
 });
