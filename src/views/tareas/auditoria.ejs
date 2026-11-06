@@ -12,6 +12,7 @@
 <div class="app">
   <%- include('../partials/sidebar', { active: 'proyectos', user }) %>
   <main class="content">
+    <%- include('../partials/breadcrumb', { active: 'proyectos', crumbs: [{ label: task.title, href: '/tareas/' + task.id }, { label: 'Historial de cambios' }] }) %>
     <div class="topbar">
       <div>
         <p class="subtitle"><a href="/tareas/<%= task.id %>">&larr; <%= task.title %></a></p>

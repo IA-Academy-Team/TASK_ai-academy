@@ -1,0 +1,45 @@
+<%
+var topLevelLabels = {
+  inicio: "Dashboard",
+  proyectos: "Proyectos",
+  "crear-tarea": "Crear tarea",
+  "plan-semanal": "Plan semanal",
+  "mis-tareas": "Mis tareas",
+  equipo: "Equipo y cargas",
+  solicitudes: "Solicitudes de apoyo",
+  productividad: "Productividad",
+  notificaciones: "Notificaciones",
+  usuarios: "Usuarios",
+};
+var topLevelHrefs = {
+  inicio: "/",
+  proyectos: "/proyectos",
+  "crear-tarea": "/tareas/nueva",
+  "plan-semanal": "/planeacion",
+  "mis-tareas": "/mis-tareas",
+  equipo: "/equipo",
+  solicitudes: "/solicitudes",
+  productividad: "/productividad",
+  notificaciones: "/notificaciones",
+  usuarios: "/admin/usuarios",
+};
+var extraCrumbs = typeof crumbs !== "undefined" && crumbs ? crumbs : [];
+var trail = [];
+if (active !== "inicio") {
+  trail.push({ label: "Dashboard", href: "/" });
+}
+if (topLevelLabels[active]) {
+  trail.push({ label: topLevelLabels[active], href: topLevelHrefs[active] });
+}
+extraCrumbs.forEach(function (c) {
+  trail.push(c);
+});
+%>
+<nav class="breadcrumb" aria-label="Volver atrás">
+  <% trail.forEach(function (c, i) { %>
+  <% var isLast = i === trail.length - 1; %>
+  <% if (isLast) { %><span class="breadcrumb-current"><%= c.label %></span>
+  <% } else { %><a href="<%= c.href %>"><%= c.label %></a><span class="breadcrumb-sep"><%- include('./icon', { kind: 'chevron-right', size: 12 }) %></span>
+  <% } %>
+  <% }) %>
+</nav>

@@ -51,7 +51,7 @@ main>*:nth-child(4){animation-delay:120ms}
 .badge-check{width:11px;height:11px;margin-right:3px;vertical-align:-1px;stroke-dasharray:16;stroke-dashoffset:16;animation:checkdraw 300ms var(--ease) 150ms forwards}
 @media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}}
 .app{min-height:100vh;display:flex}
-.sidebar{width:245px;flex:0 0 245px;background:var(--nav);color:#DED8E2;display:flex;flex-direction:column;padding:24px 16px 18px;position:sticky;top:0;height:100vh;z-index:56;transition:background-color var(--t-base) var(--ease)}
+.sidebar{width:245px;flex:0 0 245px;background:var(--nav);color:#DED8E2;display:flex;flex-direction:column;padding:24px 16px 18px;position:sticky;top:0;height:100vh;z-index:85;transition:background-color var(--t-base) var(--ease)}
 .brand{padding:2px 11px 22px;display:flex;gap:11px;align-items:center;border-bottom:1px solid rgba(255,255,255,.12)}
 .brandmark{width:42px;height:42px;border-radius:16px;object-fit:cover;display:block}
 .brand h2{margin:0;color:white;font-size:16px}
@@ -80,6 +80,11 @@ main>*:nth-child(4){animation-delay:120ms}
   .sidebar-user-name{display:none}
   .navbtn[aria-label]:hover::after,.navbtn[aria-label]:focus-visible::after,.sidebar-user[aria-label]:hover::after{content:attr(aria-label);position:absolute;left:100%;top:50%;transform:translateY(-50%);margin-left:10px;background:var(--ink);color:var(--paper);padding:6px 10px;border-radius:8px;font-size:12px;font-weight:700;white-space:nowrap;box-shadow:var(--shadow-2);z-index:90;pointer-events:none}
 }
+.breadcrumb{display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:14px;font-size:12px;font-weight:660}
+.breadcrumb a{color:var(--muted);text-decoration:none}
+.breadcrumb a:hover{color:var(--accent);text-decoration:underline}
+.breadcrumb-sep{display:inline-flex;align-items:center;color:var(--muted);opacity:.55}
+.breadcrumb-current{color:var(--ink);font-weight:760}
 .topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:21px;flex-wrap:wrap}
 .page-title{margin:0 0 7px;font-size:25px;font-weight:800;letter-spacing:-.03em}
 .subtitle{margin:0;color:var(--muted);font-size:12px;line-height:1.55;max-width:860px}

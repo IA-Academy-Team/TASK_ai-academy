@@ -12,6 +12,7 @@
 <div class="app">
   <%- include('partials/sidebar', { active: 'inicio', user }) %>
   <main class="content">
+    <%- include('partials/breadcrumb', { active: 'inicio' }) %>
     <div class="topbar">
       <div>
         <h1 class="page-title">Hola, <%= user.email %></h1>

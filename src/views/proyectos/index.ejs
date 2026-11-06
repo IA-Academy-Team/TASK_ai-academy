@@ -12,6 +12,7 @@
 <div class="app">
   <%- include('../partials/sidebar', { active: 'proyectos', user }) %>
   <main class="content">
+    <%- include('../partials/breadcrumb', { active: 'proyectos' }) %>
     <div class="topbar">
       <div>
         <h1 class="page-title">Proyectos</h1>
@@ -59,7 +60,7 @@
 
     <% if (user.role === "admin") { %>
     <div class="modal <%= openNewProjectModal ? 'open' : '' %>" id="new-project-modal">
-      <div class="modal-backdrop" onclick="document.getElementById('new-project-modal').classList.remove('open')"></div>
+      <div class="modal-backdrop" onclick="location.href='/proyectos'"></div>
       <div class="modal-panel modal-panel-wide">
         <div class="drawer-header" style="padding:0 0 16px">
           <h2>Nuevo proyecto</h2>

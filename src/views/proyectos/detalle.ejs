@@ -12,6 +12,7 @@
 <div class="app">
   <%- include('../partials/sidebar', { active: 'proyectos', user }) %>
   <main class="content">
+    <%- include('../partials/breadcrumb', { active: 'proyectos', crumbs: [{ label: project.name }] }) %>
     <div class="topbar">
       <div>
         <span class="flag"><%= project.code %></span>
@@ -39,7 +40,7 @@
     <% if (error) { %><div class="error"><%= error %></div><% } %>
 
     <div class="modal" id="modal-carga-masiva">
-      <div class="modal-backdrop" onclick="document.getElementById('modal-carga-masiva').classList.remove('open')"></div>
+      <div class="modal-backdrop" onclick="location.href='/proyectos/<%= project.id %>'"></div>
       <div class="modal-panel modal-panel-wide">
         <div class="drawer-header" style="padding:0 0 16px">
           <h2>Carga masiva de tareas</h2>

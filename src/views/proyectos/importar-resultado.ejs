@@ -12,6 +12,7 @@
 <div class="app">
   <%- include('../partials/sidebar', { active: 'proyectos', user }) %>
   <main class="content">
+    <%- include('../partials/breadcrumb', { active: 'proyectos', crumbs: [{ label: project.name, href: '/proyectos/' + project.id }, { label: 'Resultado de la carga masiva' }] }) %>
     <div class="topbar">
       <div>
         <p class="subtitle"><a href="/proyectos/<%= project.id %>">&larr; <%= project.name %></a></p>
