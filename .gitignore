@@ -10,6 +10,10 @@ test-results/
 playwright-report/
 graphify-out/
 
+# Workspace de la herramienta de blueprinting/arquitectura — no es contenido del
+# proyecto, es un espacio de trabajo duplicado.
+blueprints/
+
 # Installed AI-agent skill tooling (local dev tool install, not project source —
 # .claude/skills/impeccable alone ships a 17MB platform binary)
 .agents/
