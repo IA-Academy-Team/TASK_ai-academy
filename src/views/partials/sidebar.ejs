@@ -60,6 +60,16 @@
     return el;
   }
 
+  function dismissToast(toast) {
+    if (toast.classList.contains('leaving')) return;
+    toast.classList.add('leaving');
+    toast.addEventListener('transitionend', function handler(e) {
+      if (e.propertyName !== 'opacity') return;
+      toast.removeEventListener('transitionend', handler);
+      toast.remove();
+    });
+  }
+
   function showSupportAlert(data) {
     var toast = document.createElement('div');
     toast.className = 'toast-alert';
@@ -69,7 +79,7 @@
     close.className = 'toast-alert-close';
     close.setAttribute('aria-label', 'Cerrar');
     close.textContent = '×';
-    close.onclick = function () { toast.remove(); };
+    close.onclick = function () { dismissToast(toast); };
 
     var title = document.createElement('strong');
     title.textContent = 'Nueva solicitud de apoyo';
@@ -87,7 +97,7 @@
     toast.appendChild(body);
     toast.appendChild(link);
     getToastStack().appendChild(toast);
-    setTimeout(function () { toast.remove(); }, 12000);
+    setTimeout(function () { dismissToast(toast); }, 12000);
   }
 
   var stream = new EventSource('/notificaciones/stream');

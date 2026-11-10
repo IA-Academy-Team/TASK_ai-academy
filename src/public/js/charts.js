@@ -40,9 +40,16 @@
     cancelada: "Cancelada",
   };
 
+  var prefersReducedMotion = window.matchMedia(
+    "(prefers-reduced-motion: reduce)",
+  ).matches;
+
   if (window.Chart) {
     Chart.defaults.responsive = true;
     Chart.defaults.maintainAspectRatio = false;
+    Chart.defaults.animation = prefersReducedMotion
+      ? false
+      : { duration: 400, easing: "easeOutQuart" };
     Chart.defaults.font.family = "'Poppins','Segoe UI',Arial,sans-serif";
     Chart.defaults.font.size = 11;
     Chart.defaults.color = palette.muted;
