@@ -432,7 +432,9 @@ export async function moveTask(
       return depOrder < (myOrder ?? 0);
     };
 
-    if (!dependencyOrderOk(task) || !dependencyOrderOk(neighbor)) {
+    // Chequear todos los hermanos, no solo task/neighbor: una tercera tarea
+    // puede depender de cualquiera de los dos y quedar con el orden roto.
+    if (siblings.some((t) => !dependencyOrderOk(t))) {
       throw new HttpError(
         400,
         "ese movimiento deja una dependencia después de la tarea que depende de ella",

@@ -11,6 +11,13 @@ import {
 
 export const tasksImportRouter = Router();
 
+function isLeaderOrAdmin(
+  user: { id: string; role: string },
+  project: { leaderId: string } | undefined,
+): boolean {
+  return user.role === "admin" || (!!project && user.id === project.leaderId);
+}
+
 type ImportResultRow =
   | { row: number; ok: true; title: string }
   | { row: number; ok: false; message: string };
@@ -52,6 +59,12 @@ tasksImportRouter.post(
     const project = await getProject(String(req.params.id));
     if (!project) {
       throw new HttpError(404, "proyecto no encontrado");
+    }
+    if (!isLeaderOrAdmin(req.user, project)) {
+      throw new HttpError(
+        403,
+        "solo el líder del proyecto o un admin pueden importar tareas",
+      );
     }
     if (!req.file) {
       throw new HttpError(400, "subí un archivo .xlsx");

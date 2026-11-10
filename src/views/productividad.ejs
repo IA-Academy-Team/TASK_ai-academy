@@ -163,7 +163,7 @@
   if (byProjectCanvas) {
     window.AIAcademyCharts.barByCategory(
       byProjectCanvas,
-      <%- JSON.stringify(byProject.map(function(p) { return p.projectName; })) %>,
+      <%- JSON.stringify(byProject.map(function(p) { return p.projectName; })).replace(/</g, '\\u003c') %>,
       <%- JSON.stringify(byProject.map(function(p) { return p.hours; })) %>
     );
   }

@@ -6,7 +6,7 @@ import {
   setMembers,
   updateSettings,
 } from "../db/projects-repo.ts";
-import { listTasksByProject, moveTask } from "../db/tasks-repo.ts";
+import { getTask, listTasksByProject, moveTask } from "../db/tasks-repo.ts";
 import { HttpError } from "../lib/http-error.ts";
 import {
   moveTaskSchema,
@@ -101,6 +101,11 @@ projectSettingsRouter.post(
       throw new HttpError(404, "proyecto no encontrado");
     }
     requireLeaderOrAdmin(req.user, project);
+
+    const task = await getTask(req.params.taskId);
+    if (!task || task.projectId !== project.id) {
+      throw new HttpError(404, "tarea no encontrada en este proyecto");
+    }
 
     const parsed = moveTaskSchema.safeParse(req.body);
     if (!parsed.success) {

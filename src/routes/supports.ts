@@ -2,6 +2,7 @@ import { Router } from "express";
 import { getProject, listAllActiveUsers } from "../db/projects-repo.ts";
 import {
   createRequest,
+  getRequest,
   listPendingApplyForLeader,
   listPendingForUserEnriched,
   resolveRequest,
@@ -18,6 +19,38 @@ import { publish } from "../lib/sse-hub.ts";
 import { requestSupportSchema } from "../schemas/task.ts";
 
 export const supportsRouter = Router();
+
+// Una invitación la resuelve el destinatario; una postulación la resuelve el
+// líder del proyecto (o un admin) — nunca un tercero cualquiera.
+async function assertCanResolveRequest(
+  requestId: string,
+  user: { id: string; role: string },
+): Promise<void> {
+  const request = await getRequest(requestId);
+  if (!request) {
+    throw new HttpError(404, "solicitud no encontrada");
+  }
+
+  if (request.mode === "invite") {
+    if (user.id !== request.targetUserId) {
+      throw new HttpError(
+        403,
+        "solo la persona invitada puede resolver esta solicitud",
+      );
+    }
+    return;
+  }
+
+  if (user.role === "admin") return;
+  const task = await getTask(request.taskId);
+  const project = task ? await getProject(task.projectId) : undefined;
+  if (!project || user.id !== project.leaderId) {
+    throw new HttpError(
+      403,
+      "solo el líder del proyecto o un admin pueden resolver esta postulación",
+    );
+  }
+}
 
 supportsRouter.get("/solicitudes", async (req, res) => {
   if (!req.user) {
@@ -49,6 +82,7 @@ supportsRouter.post("/solicitudes/:id/aceptar", async (req, res) => {
     res.redirect("/login");
     return;
   }
+  await assertCanResolveRequest(req.params.id, req.user);
   const resolved = await resolveRequest(req.params.id, "aceptada", req.user.id);
   if (!resolved) {
     throw new HttpError(404, "solicitud no encontrada");
@@ -61,6 +95,7 @@ supportsRouter.post("/solicitudes/:id/rechazar", async (req, res) => {
     res.redirect("/login");
     return;
   }
+  await assertCanResolveRequest(req.params.id, req.user);
   const resolved = await resolveRequest(
     req.params.id,
     "rechazada",

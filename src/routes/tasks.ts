@@ -84,15 +84,27 @@ tasksRouter.post("/tareas/:id/estado", async (req, res) => {
     throw new HttpError(400, "hace falta un motivo para esta transición");
   }
 
+  const project = await getProject(current.projectId);
+  const isLeaderOrAdmin =
+    req.user.role === "admin" ||
+    (!!project && req.user.id === project.leaderId);
+
   if (parsed.data.status === "completada") {
-    const project = await getProject(current.projectId);
-    const isLeaderOrAdmin =
-      req.user.role === "admin" ||
-      (project && req.user.id === project.leaderId);
     if (!isLeaderOrAdmin) {
       throw new HttpError(
         403,
         "solo el líder del proyecto o un admin pueden aprobar la tarea",
+      );
+    }
+  } else {
+    const support = await listSupport(current.id);
+    const isOwnerOrSupport =
+      req.user.id === current.ownerId ||
+      support.some((s) => s.userId === req.user?.id);
+    if (!isLeaderOrAdmin && !isOwnerOrSupport) {
+      throw new HttpError(
+        403,
+        "solo el responsable, el apoyo o el líder del proyecto pueden cambiar el estado",
       );
     }
   }

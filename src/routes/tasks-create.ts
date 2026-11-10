@@ -11,6 +11,13 @@ import { createTaskSchema } from "../schemas/task.ts";
 
 export const tasksCreateRouter = Router();
 
+function isLeaderOrAdmin(
+  user: { id: string; role: string },
+  project: { leaderId: string } | undefined,
+): boolean {
+  return user.role === "admin" || (!!project && user.id === project.leaderId);
+}
+
 tasksCreateRouter.get("/tareas/nueva", async (req, res) => {
   if (!req.user) {
     res.redirect("/login");
@@ -71,6 +78,12 @@ tasksCreateRouter.post("/tareas", async (req, res) => {
   const project = await getProject(projectId);
   if (!project) {
     throw new HttpError(404, "proyecto no encontrado");
+  }
+  if (!isLeaderOrAdmin(req.user, project)) {
+    throw new HttpError(
+      403,
+      "solo el líder del proyecto o un admin pueden crear tareas",
+    );
   }
 
   await createTask({
