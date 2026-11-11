@@ -3,8 +3,10 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<link rel="icon" type="image/png" href="/static/brand/favicon.png" />
-<title>AI Academy · Centro de control — Solicitudes de apoyo</title>
+<link rel="icon" href="/static/brand/favicon.ico" sizes="any" />
+<link rel="icon" type="image/png" sizes="32x32" href="/static/brand/favicon-32x32.png" />
+<link rel="icon" type="image/png" sizes="16x16" href="/static/brand/favicon-16x16.png" />
+<title>Task by Academy — Solicitudes de apoyo</title>
 <%- include('../partials/theme-init') %>
 <%- include('../partials/styles') %>
 </head>
@@ -12,7 +14,7 @@
 <div class="app">
   <%- include('../partials/sidebar', { active: 'solicitudes', user }) %>
   <main class="content">
-    <%- include('../partials/breadcrumb', { active: 'solicitudes' }) %>
+    <%- include('../partials/navbar', { active: 'solicitudes' }) %>
     <div class="topbar">
       <div>
         <h1 class="page-title">Solicitudes de apoyo</h1>
@@ -63,18 +65,23 @@
         var userSelect = document.getElementById('solicitud-user');
         var form = document.getElementById('nueva-solicitud-form');
 
+        var INDEPENDENT_GROUP = '__independent__';
         var projects = [];
         var seen = {};
         requestable.forEach(function (t) {
-          if (!seen[t.projectId]) {
-            seen[t.projectId] = true;
-            projects.push({ id: t.projectId, code: t.projectCode, name: t.projectName });
+          var pid = t.projectId || INDEPENDENT_GROUP;
+          if (!seen[pid]) {
+            seen[pid] = true;
+            projects.push({
+              id: pid,
+              label: t.projectId ? (t.projectCode + ' — ' + t.projectName) : 'Tareas independientes',
+            });
           }
         });
         projects.forEach(function (p) {
           var opt = document.createElement('option');
           opt.value = p.id;
-          opt.textContent = p.code + ' — ' + p.name;
+          opt.textContent = p.label;
           projectSelect.appendChild(opt);
         });
 
@@ -83,7 +90,7 @@
           userSelect.innerHTML = '';
           var placeholder = document.createElement('option');
           placeholder.value = '';
-          var tasks = requestable.filter(function (t) { return t.projectId === projectSelect.value; });
+          var tasks = requestable.filter(function (t) { return (t.projectId || INDEPENDENT_GROUP) === projectSelect.value; });
           if (!projectSelect.value || tasks.length === 0) {
             placeholder.textContent = 'Elige primero un proyecto';
             taskSelect.appendChild(placeholder);
@@ -148,7 +155,7 @@
           <% forMe.forEach(function(row) { %>
           <tr>
             <td><a href="/tareas/<%= row.request.taskId %>"><%= row.taskTitle %></a></td>
-            <td><%= row.projectName %></td>
+            <td><%= row.projectName || "Independiente" %></td>
             <td><%= row.requestedByName || row.request.requestedBy %></td>
             <td><%= row.request.reason %></td>
             <td style="display:flex;gap:6px">
@@ -173,7 +180,7 @@
           <% forLeader.forEach(function(row) { %>
           <tr>
             <td><a href="/tareas/<%= row.request.taskId %>"><%= row.taskTitle %></a></td>
-            <td><%= row.projectName %></td>
+            <td><%= row.projectName || "Independiente" %></td>
             <td><%= row.requestedByName || row.request.requestedBy %></td>
             <td><%= row.request.reason %></td>
             <td style="display:flex;gap:6px">

@@ -5,6 +5,7 @@ import {
   eq,
   gte,
   inArray,
+  isNull,
   lt,
   lte,
   notInArray,
@@ -35,7 +36,7 @@ export const REQUESTABLE_SUPPORT_STATUSES = [
 ];
 
 export async function createTask(input: {
-  projectId: string;
+  projectId: string | null;
   title: string;
   deliverable: string;
   description: string;
@@ -62,24 +63,32 @@ export async function createTask(input: {
   }
 
   const row = await db.transaction(async (tx) => {
-    // Lock the project row so two concurrent creates can't both count the
-    // same "existing" total and land on the same order number.
-    await tx
-      .select()
-      .from(projects)
-      .where(eq(projects.id, input.projectId))
-      .for("update");
+    // La secuencia (order) y el bloqueo de fila solo aplican a tareas
+    // ancladas a un proyecto — una tarea independiente no compite por orden
+    // con nadie, siempre es la primera de su (inexistente) lista.
+    let order = 1;
+    if (input.projectId) {
+      const projectId = input.projectId;
+      // Lock the project row so two concurrent creates can't both count the
+      // same "existing" total and land on the same order number.
+      await tx
+        .select()
+        .from(projects)
+        .where(eq(projects.id, projectId))
+        .for("update");
 
-    const [{ value: existing }] = await tx
-      .select({ value: count() })
-      .from(tasks)
-      .where(eq(tasks.projectId, input.projectId));
+      const [{ value: existing }] = await tx
+        .select({ value: count() })
+        .from(tasks)
+        .where(eq(tasks.projectId, projectId));
+      order = existing + 1;
+    }
 
     const [created] = await tx
       .insert(tasks)
       .values({
         projectId: input.projectId,
-        order: existing + 1,
+        order,
         title: input.title,
         deliverable: input.deliverable,
         description: input.description,
@@ -118,6 +127,14 @@ export async function listTasksByProject(projectId: string) {
     .select()
     .from(tasks)
     .where(eq(tasks.projectId, projectId))
+    .orderBy(asc(tasks.order));
+}
+
+export async function listTasksWithoutProject() {
+  return db
+    .select()
+    .from(tasks)
+    .where(isNull(tasks.projectId))
     .orderBy(asc(tasks.order));
 }
 
@@ -191,13 +208,17 @@ export async function transitionTask(
   }
 
   const row = await db.transaction(async (tx) => {
-    if (nextStatus === "activa" || nextStatus === "revision") {
+    const projectId = task.projectId;
+
+    // Los límites de WIP son por proyecto — una tarea independiente no
+    // tiene proyecto que bloquear ni límite que chequear.
+    if (projectId && (nextStatus === "activa" || nextStatus === "revision")) {
       // Lock the project row so two concurrent transitions into the same WIP
       // column can't both read the count as "under the limit" before either commits.
       await tx
         .select()
         .from(projects)
-        .where(eq(projects.id, task.projectId))
+        .where(eq(projects.id, projectId))
         .for("update");
     }
 
@@ -211,37 +232,36 @@ export async function transitionTask(
           );
         }
       }
-      const [project] = await tx
-        .select()
-        .from(projects)
-        .where(eq(projects.id, task.projectId));
-      const [{ value: activeCount }] = await tx
-        .select({ value: count() })
-        .from(tasks)
-        .where(
-          and(eq(tasks.projectId, task.projectId), eq(tasks.status, "activa")),
-        );
-      if (project && activeCount >= project.limitActive) {
-        throw new HttpError(
-          400,
-          "el proyecto ya tiene el máximo de tareas activas",
-        );
+      if (projectId) {
+        const [project] = await tx
+          .select()
+          .from(projects)
+          .where(eq(projects.id, projectId));
+        const [{ value: activeCount }] = await tx
+          .select({ value: count() })
+          .from(tasks)
+          .where(
+            and(eq(tasks.projectId, projectId), eq(tasks.status, "activa")),
+          );
+        if (project && activeCount >= project.limitActive) {
+          throw new HttpError(
+            400,
+            "el proyecto ya tiene el máximo de tareas activas",
+          );
+        }
       }
     }
 
-    if (nextStatus === "revision") {
+    if (nextStatus === "revision" && projectId) {
       const [project] = await tx
         .select()
         .from(projects)
-        .where(eq(projects.id, task.projectId));
+        .where(eq(projects.id, projectId));
       const [{ value: reviewCount }] = await tx
         .select({ value: count() })
         .from(tasks)
         .where(
-          and(
-            eq(tasks.projectId, task.projectId),
-            eq(tasks.status, "revision"),
-          ),
+          and(eq(tasks.projectId, projectId), eq(tasks.status, "revision")),
         );
       if (project && reviewCount >= project.limitReview) {
         throw new HttpError(
@@ -336,7 +356,7 @@ export async function listOverdueForOwner(ownerId: string, today: string) {
   return db
     .select({ task: tasks, projectName: projects.name })
     .from(tasks)
-    .innerJoin(projects, eq(projects.id, tasks.projectId))
+    .leftJoin(projects, eq(projects.id, tasks.projectId))
     .where(
       and(
         eq(tasks.ownerId, ownerId),
@@ -347,11 +367,34 @@ export async function listOverdueForOwner(ownerId: string, today: string) {
     .orderBy(asc(tasks.due));
 }
 
+// Tareas activas/en validación sin ninguna hora registrada todavía — el
+// presupuesto (estimate) existe pero nadie reportó avance real contra él.
+export async function listBudgetPendingForLeader(leaderId: string | null) {
+  return db
+    .select({ task: tasks, projectName: projects.name })
+    .from(tasks)
+    .leftJoin(projects, eq(projects.id, tasks.projectId))
+    .leftJoin(taskLogs, eq(taskLogs.taskId, tasks.id))
+    .where(
+      leaderId
+        ? and(
+            inArray(tasks.status, ["activa", "revision"]),
+            isNull(taskLogs.id),
+            eq(projects.leaderId, leaderId),
+          )
+        : and(
+            inArray(tasks.status, ["activa", "revision"]),
+            isNull(taskLogs.id),
+          ),
+    )
+    .orderBy(asc(tasks.due));
+}
+
 export async function listReviewPendingForLeader(leaderId: string | null) {
   return db
     .select({ task: tasks, projectName: projects.name })
     .from(tasks)
-    .innerJoin(projects, eq(projects.id, tasks.projectId))
+    .leftJoin(projects, eq(projects.id, tasks.projectId))
     .where(
       leaderId
         ? and(eq(tasks.status, "revision"), eq(projects.leaderId, leaderId))
@@ -386,7 +429,7 @@ export async function listRequestableTasksForUser(
       projectName: projects.name,
     })
     .from(tasks)
-    .innerJoin(projects, eq(projects.id, tasks.projectId))
+    .leftJoin(projects, eq(projects.id, tasks.projectId))
     .innerJoin(user, eq(user.id, tasks.ownerId))
     .where(scopeFilter)
     .orderBy(asc(projects.name), asc(tasks.order));
@@ -401,16 +444,24 @@ export async function moveTask(
   if (!task) return undefined;
 
   await db.transaction(async (tx) => {
-    await tx
-      .select()
-      .from(projects)
-      .where(eq(projects.id, task.projectId))
-      .for("update");
+    if (task.projectId) {
+      await tx
+        .select()
+        .from(projects)
+        .where(eq(projects.id, task.projectId))
+        .for("update");
+    }
 
+    // NULL nunca es igual a NULL en SQL — `eq` no sirve para agrupar
+    // tareas independientes, hace falta `isNull`.
     const siblings = await tx
       .select()
       .from(tasks)
-      .where(eq(tasks.projectId, task.projectId))
+      .where(
+        task.projectId
+          ? eq(tasks.projectId, task.projectId)
+          : isNull(tasks.projectId),
+      )
       .orderBy(asc(tasks.order));
 
     const index = siblings.findIndex((t) => t.id === id);
@@ -539,7 +590,7 @@ export async function listTasksForOwner(ownerId: string) {
       projectCode: projects.code,
     })
     .from(tasks)
-    .innerJoin(projects, eq(projects.id, tasks.projectId))
+    .leftJoin(projects, eq(projects.id, tasks.projectId))
     .where(eq(tasks.ownerId, ownerId))
     .orderBy(asc(tasks.due));
 }
@@ -553,7 +604,7 @@ export async function listTasksForSupport(userId: string) {
     })
     .from(taskSupport)
     .innerJoin(tasks, eq(tasks.id, taskSupport.taskId))
-    .innerJoin(projects, eq(projects.id, tasks.projectId))
+    .leftJoin(projects, eq(projects.id, tasks.projectId))
     .where(eq(taskSupport.userId, userId))
     .orderBy(asc(tasks.due));
 }
@@ -646,13 +697,16 @@ export async function hoursByProject(range: DateRange) {
     { projectId: string; projectName: string; hours: number }
   >();
   for (const row of rows) {
-    const existing = byProject.get(row.projectId) ?? {
-      projectId: row.projectId,
+    // El inner join con projects garantiza que projectId nunca es null acá
+    // (una tarea independiente no tiene fila de proyecto que machear).
+    const projectId = row.projectId as string;
+    const existing = byProject.get(projectId) ?? {
+      projectId,
       projectName: row.projectName,
       hours: 0,
     };
     existing.hours += Number(row.hours);
-    byProject.set(row.projectId, existing);
+    byProject.set(projectId, existing);
   }
   return Array.from(byProject.values());
 }

@@ -49,9 +49,12 @@ export const projectMembers = pgTable(
 // Sin enum a nivel DB a propósito (misma convención que el resto del proyecto) — Zod es el gate.
 export const tasks = pgTable("tasks", {
   id: uuid("id").primaryKey().defaultRandom(),
-  projectId: uuid("project_id")
-    .notNull()
-    .references(() => projects.id, { onDelete: "cascade" }),
+  // Nullable a propósito: una tarea puede anclarse a un proyecto o existir
+  // independiente, sin proyecto. "set null" para que borrar el proyecto
+  // deje la tarea huérfana (independiente) en vez de destruirla.
+  projectId: uuid("project_id").references(() => projects.id, {
+    onDelete: "set null",
+  }),
   order: integer("order").notNull().default(1),
   title: text("title").notNull(),
   deliverable: text("deliverable").notNull(),
@@ -112,9 +115,11 @@ export const taskLogs = pgTable("task_logs", {
 //         support_request_resolved
 export const auditLog = pgTable("audit_log", {
   id: uuid("id").primaryKey().defaultRandom(),
-  projectId: uuid("project_id")
-    .notNull()
-    .references(() => projects.id, { onDelete: "cascade" }),
+  // Nullable igual que tasks.projectId — una tarea independiente también
+  // audita sus cambios, solo que sin proyecto asociado.
+  projectId: uuid("project_id").references(() => projects.id, {
+    onDelete: "set null",
+  }),
   taskId: uuid("task_id").references(() => tasks.id, { onDelete: "cascade" }),
   // Sin cascade a propósito: es un registro histórico, igual que
   // taskLogs.userId — el borrado duro de un usuario queda bloqueado por esta

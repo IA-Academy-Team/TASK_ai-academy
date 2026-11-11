@@ -57,7 +57,7 @@ export async function listPendingForUserEnriched(userId: string) {
     })
     .from(supportRequests)
     .innerJoin(tasks, eq(tasks.id, supportRequests.taskId))
-    .innerJoin(projects, eq(projects.id, tasks.projectId))
+    .leftJoin(projects, eq(projects.id, tasks.projectId))
     .leftJoin(user, eq(user.id, supportRequests.requestedBy))
     .where(
       and(

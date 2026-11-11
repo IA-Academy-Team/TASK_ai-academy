@@ -44,7 +44,11 @@ async function assertCanResolveRequest(
   if (user.role === "admin") return;
   const task = await getTask(request.taskId);
   const project = task ? await getProject(task.projectId) : undefined;
-  if (!project || user.id !== project.leaderId) {
+  // Sin proyecto no hay líder que delegue — el responsable hace de líder.
+  const canResolve = project
+    ? user.id === project.leaderId
+    : !!task && user.id === task.ownerId;
+  if (!canResolve) {
     throw new HttpError(
       403,
       "solo el líder del proyecto o un admin pueden resolver esta postulación",

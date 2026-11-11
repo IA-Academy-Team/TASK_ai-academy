@@ -1,12 +1,12 @@
 {
-  "name": "AI Academy · Centro de control",
-  "short_name": "AI Academy",
+  "name": "Task by Academy",
+  "short_name": "Task",
   "description": "Gestión de proyectos y tareas con control de horas para AI Academy.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#F6F5F9",
-  "theme_color": "#6030AD",
+  "theme_color": "#7346CC",
   "lang": "es",
   "icons": [
     {

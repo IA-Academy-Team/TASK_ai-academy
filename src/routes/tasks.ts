@@ -34,9 +34,11 @@ tasksRouter.get("/tareas/:id", async (req, res) => {
   const totalHours = logs.reduce((sum, l) => sum + Number(l.hours), 0);
   const recentChanges = (await listByTaskEnriched(task.id)).slice(0, 3);
 
+  // Sin proyecto no hay líder que delegue — el responsable hace de líder.
   const isLeaderOrAdmin =
     req.user.role === "admin" ||
-    (!!project && req.user.id === project.leaderId);
+    (!!project && req.user.id === project.leaderId) ||
+    (!project && req.user.id === task.ownerId);
 
   res.render("tareas/detalle", {
     task,
@@ -87,7 +89,8 @@ tasksRouter.post("/tareas/:id/estado", async (req, res) => {
   const project = await getProject(current.projectId);
   const isLeaderOrAdmin =
     req.user.role === "admin" ||
-    (!!project && req.user.id === project.leaderId);
+    (!!project && req.user.id === project.leaderId) ||
+    (!project && req.user.id === current.ownerId);
 
   if (parsed.data.status === "completada") {
     if (!isLeaderOrAdmin) {

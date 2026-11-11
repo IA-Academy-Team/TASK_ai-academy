@@ -3,8 +3,10 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<link rel="icon" type="image/png" href="/static/brand/favicon.png" />
-<title>AI Academy · Centro de control — Productividad</title>
+<link rel="icon" href="/static/brand/favicon.ico" sizes="any" />
+<link rel="icon" type="image/png" sizes="32x32" href="/static/brand/favicon-32x32.png" />
+<link rel="icon" type="image/png" sizes="16x16" href="/static/brand/favicon-16x16.png" />
+<title>Task by Academy — Productividad</title>
 <%- include('partials/theme-init') %>
 <%- include('partials/styles') %>
 </head>
@@ -12,7 +14,7 @@
 <div class="app">
   <%- include('partials/sidebar', { active: 'productividad', user }) %>
   <main class="content">
-    <%- include('partials/breadcrumb', { active: 'productividad' }) %>
+    <%- include('partials/navbar', { active: 'productividad', actions: [{ label: 'Exportar CSV', href: '/productividad/export.csv?rango=' + rango, variant: 'subtle' }] }) %>
     <div class="topbar">
       <div>
         <h1 class="page-title">Productividad</h1>
@@ -24,7 +26,6 @@
       <% ['dia','semana','mes'].forEach(function(r) { %>
       <a href="/productividad?rango=<%= r %>" class="<%= rango === r ? 'on' : '' %>"><%= r %></a>
       <% }) %>
-      <a href="/productividad/export.csv?rango=<%= rango %>" class="btn subtle">Exportar CSV</a>
     </div>
 
     <div class="kpi-row">
@@ -32,6 +33,13 @@
       <div class="card kpi"><small>Proyectos con actividad</small><strong><%= byProject.length %></strong></div>
       <div class="card kpi"><small>Tareas con registro</small><strong><%= tasksWithHours %></strong></div>
       <div class="card kpi"><small>Colaboradores con horas</small><strong><%= byCollaborator.length %></strong></div>
+    </div>
+
+    <div class="kpi-row">
+      <div class="card kpi"><small>Presupuesto (tareas aprobadas)</small><strong><%= totalEstimate.toFixed(1) %> h</strong></div>
+      <div class="card kpi"><small>Horas reales (tareas aprobadas)</small><strong><%= totalActual.toFixed(1) %> h</strong></div>
+      <div class="card kpi <%= compliance !== null && compliance >= 80 ? 'kpi-positive' : '' %>"><small>Cumplimiento de presupuesto</small><strong><%= compliance === null ? '—' : compliance + '%' %></strong></div>
+      <div class="card kpi"><small>Diferencia real vs. estimado</small><strong><%= (variance >= 0 ? '+' : '') + variance.toFixed(1) %> h</strong></div>
     </div>
 
     <section class="card pad">

@@ -2,7 +2,7 @@ import { count, desc, eq, inArray, like } from "drizzle-orm";
 import { recordChange } from "./audit-repo.ts";
 import { user } from "./auth-schema.ts";
 import { db } from "./client.ts";
-import { projectMembers, projects, tasks } from "./schema.ts";
+import { projectMembers, projects, taskLogs, tasks } from "./schema.ts";
 
 const GENERIC_CODE_PREFIX = "PRY";
 
@@ -84,6 +84,7 @@ export async function listProjects() {
     .from(projects)
     .orderBy(desc(projects.createdAt));
   const allTasks = await db.select().from(tasks);
+  const allLogs = await db.select().from(taskLogs);
   const allMembers = await db
     .select({
       projectId: projectMembers.projectId,
@@ -92,21 +93,37 @@ export async function listProjects() {
     })
     .from(projectMembers)
     .innerJoin(user, eq(user.id, projectMembers.userId));
+  const leaders = await db
+    .select({ id: user.id, name: user.name })
+    .from(user)
+    .where(
+      inArray(
+        user.id,
+        rows.map((p) => p.leaderId),
+      ),
+    );
+  const leaderNameById = new Map(leaders.map((l) => [l.id, l.name]));
 
   return rows.map((p) => {
     const projectTasks = allTasks.filter((t) => t.projectId === p.id);
+    const projectTaskIds = new Set(projectTasks.map((t) => t.id));
     const done = projectTasks.filter((t) => t.status === "completada").length;
     const members = allMembers.filter((m) => m.projectId === p.id);
+    const logs = allLogs.filter((l) => projectTaskIds.has(l.taskId));
     return {
       ...p,
       taskCount: projectTasks.length,
       doneCount: done,
       members,
+      leaderName: leaderNameById.get(p.leaderId) ?? "",
+      tasks: projectTasks,
+      logs,
     };
   });
 }
 
-export async function getProject(id: string) {
+export async function getProject(id: string | null | undefined) {
+  if (!id) return undefined;
   const [row] = await db.select().from(projects).where(eq(projects.id, id));
   return row;
 }

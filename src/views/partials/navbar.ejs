@@ -1,0 +1,18 @@
+<div class="navbar">
+  <%- include('./breadcrumb', { active: active, crumbs: typeof crumbs !== 'undefined' ? crumbs : undefined }) %>
+  <div class="navbar-actions">
+    <% if (typeof actions !== 'undefined' && actions) { %>
+    <% actions.forEach(function (a) { %>
+      <% if (a.href) { %>
+      <a href="<%= a.href %>" class="btn <%= a.variant || 'primary' %>"><%= a.label %></a>
+      <% } else { %>
+      <button type="button" class="btn <%= a.variant || 'primary' %>" onclick="<%= a.onclick %>"><%= a.label %></button>
+      <% } %>
+    <% }) %>
+    <% } %>
+    <a class="navbar-bell" href="/notificaciones" aria-label="Notificaciones">
+      <%- include('./icon', { kind: 'bell', size: 18 }) %>
+      <% if (typeof sidebarCounts !== 'undefined' && sidebarCounts && sidebarCounts.notifications > 0) { %><span class="navbar-bell-count"><%= sidebarCounts.notifications %></span><% } %>
+    </a>
+  </div>
+</div>

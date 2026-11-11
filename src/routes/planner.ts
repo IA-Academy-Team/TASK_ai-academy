@@ -1,6 +1,9 @@
 import { Router } from "express";
 import { listAllActiveUsers, listProjects } from "../db/projects-repo.ts";
-import { listTasksByProject } from "../db/tasks-repo.ts";
+import {
+  listTasksByProject,
+  listTasksWithoutProject,
+} from "../db/tasks-repo.ts";
 import { layoutDayBlocks } from "../domain/week-calendar.ts";
 
 export const plannerRouter = Router();
@@ -67,6 +70,11 @@ plannerRouter.get("/planeacion", async (req, res) => {
     projectsToLoad.map((p) => listTasksByProject(p.id)),
   );
   const allTasks = taskLists.flat();
+  // Las tareas independientes no pertenecen a ningún proyecto — se incluyen
+  // siempre que no haya un filtro de proyecto activo.
+  if (!projectFilter) {
+    allTasks.push(...(await listTasksWithoutProject()));
+  }
 
   const capacity = await listAllActiveUsers();
   const ownerNameById = new Map(capacity.map((u) => [u.id, u.name]));

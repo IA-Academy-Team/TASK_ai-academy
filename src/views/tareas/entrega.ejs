@@ -3,8 +3,10 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<link rel="icon" type="image/png" href="/static/brand/favicon.png" />
-<title>AI Academy · Centro de control — Entregar <%= task.title %></title>
+<link rel="icon" href="/static/brand/favicon.ico" sizes="any" />
+<link rel="icon" type="image/png" sizes="32x32" href="/static/brand/favicon-32x32.png" />
+<link rel="icon" type="image/png" sizes="16x16" href="/static/brand/favicon-16x16.png" />
+<title>Task by Academy — Entregar <%= task.title %></title>
 <%- include('../partials/theme-init') %>
 <%- include('../partials/styles') %>
 </head>
@@ -12,7 +14,7 @@
 <div class="app">
   <%- include('../partials/sidebar', { active: 'proyectos', user }) %>
   <main class="content">
-    <%- include('../partials/breadcrumb', { active: 'proyectos', crumbs: [{ label: task.title, href: '/tareas/' + task.id }, { label: 'Entregar' }] }) %>
+    <%- include('../partials/navbar', { active: 'proyectos', crumbs: [{ label: task.title, href: '/tareas/' + task.id }, { label: 'Entregar' }] }) %>
     <div class="topbar">
       <div>
         <p class="subtitle"><a href="/tareas/<%= task.id %>">&larr; <%= task.title %></a></p>

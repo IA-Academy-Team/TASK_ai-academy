@@ -52,6 +52,16 @@ async function loadReport(rango: Rango) {
 
   const totalHours = byProject.reduce((sum, p) => sum + p.hours, 0);
 
+  const totalEstimate = estimateVsReal.reduce((sum, t) => sum + t.estimate, 0);
+  const totalActual = estimateVsReal.reduce((sum, t) => sum + t.actual, 0);
+  const onBudgetCount = estimateVsReal.filter(
+    (t) => t.actual <= t.estimate,
+  ).length;
+  const compliance = estimateVsReal.length
+    ? Math.round((onBudgetCount / estimateVsReal.length) * 100)
+    : null;
+  const variance = totalActual - totalEstimate;
+
   const days = enumerateDays(range.from, range.to);
   const dailyChart = {
     labels: days.map((d) => d.slice(5)),
@@ -88,6 +98,10 @@ async function loadReport(rango: Rango) {
     tasksWithHours: allTasks.length,
     byCollaborator,
     estimateVsReal,
+    totalEstimate,
+    totalActual,
+    compliance,
+    variance,
     dailyChart,
     heatmap,
   };

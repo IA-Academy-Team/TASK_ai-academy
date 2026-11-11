@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { listPendingForUserEnriched } from "../db/support-requests-repo.ts";
 import {
+  listBudgetPendingForLeader,
   listOverdueForOwner,
   listReviewPendingForLeader,
 } from "../db/tasks-repo.ts";
@@ -44,16 +45,19 @@ notificationsRouter.get("/notificaciones", async (req, res) => {
   const today = new Date().toLocaleDateString("en-CA");
   const leaderId = req.user.role === "admin" ? null : req.user.id;
 
-  const [reviewPending, overdue, supportPending] = await Promise.all([
-    listReviewPendingForLeader(leaderId),
-    listOverdueForOwner(req.user.id, today),
-    listPendingForUserEnriched(req.user.id),
-  ]);
+  const [reviewPending, overdue, supportPending, budgetPending] =
+    await Promise.all([
+      listReviewPendingForLeader(leaderId),
+      listOverdueForOwner(req.user.id, today),
+      listPendingForUserEnriched(req.user.id),
+      listBudgetPendingForLeader(leaderId),
+    ]);
 
   res.render("notificaciones", {
     user: req.user,
     reviewPending,
     overdue,
     supportPending,
+    budgetPending,
   });
 });

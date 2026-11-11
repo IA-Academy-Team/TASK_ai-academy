@@ -3,26 +3,15 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<link rel="icon" type="image/png" href="/static/brand/favicon.png" />
-<title>AI Academy · Centro de control — Login</title>
+<link rel="icon" href="/static/brand/favicon.ico" sizes="any" />
+<link rel="icon" type="image/png" sizes="32x32" href="/static/brand/favicon-32x32.png" />
+<link rel="icon" type="image/png" sizes="16x16" href="/static/brand/favicon-16x16.png" />
+<title>Task by Academy — Login</title>
 <%- include('partials/theme-init') %>
 <%- include('partials/styles') %>
 <style>
-  .login-main{min-height:100vh;display:grid;place-items:center;padding:28px 16px;position:relative;background:radial-gradient(ellipse at 50% 36%,var(--navlight) 0%,var(--nav) 42%,var(--bg) 85%);overflow:hidden}
-  .splash{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:21px;z-index:2;pointer-events:none;transition:opacity .65s ease,visibility .65s ease}
-  .logo-glow{position:absolute;width:260px;height:260px;border-radius:50%;background:color-mix(in srgb,var(--accent) 22%,transparent);filter:blur(80px);z-index:-1}
-  .splash-logo{width:clamp(96px,22vw,140px);height:auto;border-radius:16px;filter:drop-shadow(0 0 28px color-mix(in srgb,var(--accent) 55%,transparent));opacity:0;will-change:transform,opacity}
-  .splash-name{font-size:clamp(24px,6vw,40px);font-weight:800;letter-spacing:.03em;opacity:0;transform:translateY(14px);white-space:nowrap;color:var(--primary-text)}
-  .splash-name span{color:var(--accent)}
-  .splash-subtitle{color:color-mix(in srgb, var(--accent) 45%, var(--primary-text));letter-spacing:.27em;text-transform:uppercase;font-size:10px;opacity:0}
-  .play .splash-logo{animation:logoIntro .55s ease-out both}
-  .play .splash-name{animation:reveal .7s .55s ease-out both}
-  .play .splash-subtitle{animation:reveal .7s .85s ease-out both}
-  @keyframes logoIntro{from{opacity:0;scale:.72}to{opacity:1;scale:1}}
-  @keyframes reveal{to{opacity:1;transform:translateY(0)}}
-  .splash.out{opacity:0;visibility:hidden}
-  .login-card{width:min(100%,380px);opacity:0;transform:translateY(30px) scale(.97);pointer-events:none;transition:opacity .85s ease,transform .85s cubic-bezier(.16,1,.3,1);position:relative;z-index:1}
-  .login-card.show{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
+  .login-main{min-height:100vh;display:grid;place-items:center;padding:28px 16px;background:radial-gradient(ellipse at 50% 36%,var(--navlight) 0%,var(--nav) 42%,var(--bg) 85%)}
+  .login-card{width:min(100%,380px)}
   .login-brand{display:flex;align-items:center;gap:12px;margin-bottom:22px}
   .login-brand img{width:42px;height:42px;border-radius:16px;object-fit:cover}
   .login-brand strong{font-size:16px}
@@ -36,27 +25,17 @@
   .login-options input{width:auto;min-height:auto;accent-color:var(--primary)}
   .login-options a{color:var(--primary)}
   .login-bottom{margin-top:20px;text-align:center;color:var(--muted);font-size:11px}
-  .replay{display:block;margin:13px auto 0;border:0;background:transparent;color:var(--primary);text-decoration:underline;text-underline-offset:3px;cursor:pointer;font-size:11px}
   .notice{min-height:16px;margin:13px 0 0;text-align:center;font-size:12px}
-  .skip{position:fixed;top:18px;right:18px;z-index:5;color:var(--primary-text);background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);border-radius:22px;padding:9px 15px;cursor:pointer;font-size:12px}
-  .skip.hide{display:none}
   #login-submit{transition:opacity var(--duration-fast) var(--ease-standard)}
   #login-submit:disabled{opacity:.7;cursor:default}
 </style>
 </head>
 <body>
 <main class="login-main">
-  <button class="skip" id="skip" type="button">Omitir intro</button>
-  <div class="splash play" id="splash" aria-label="Animación de presentación de AI Academy">
-    <div class="logo-glow"></div>
-    <img class="splash-logo" alt="Logo AI Academy" src="/static/brand/logo.png" />
-    <div class="splash-name">AI <span>ACADEMY</span></div>
-    <div class="splash-subtitle">Centro de control</div>
-  </div>
-  <section class="card pad login-card" id="login" aria-label="Formulario de acceso" aria-hidden="true">
+  <section class="card pad login-card" aria-label="Formulario de acceso">
     <div class="login-brand">
       <img src="/static/brand/logo.png" alt="" />
-      <div><strong>AI Academy</strong><small>Centro de control</small></div>
+      <div><strong>Task</strong><small>by Academy</small></div>
     </div>
     <h1>Bienvenido de nuevo</h1>
     <p class="login-intro">Accede a tu espacio de trabajo con tu cuenta institucional.</p>
@@ -72,45 +51,16 @@
       <button type="submit" class="btn primary" id="login-submit" style="width:100%;justify-content:center">Entrar</button>
       <p class="notice error" id="error" style="display:none"></p>
     </form>
-    <div class="login-bottom">AI Academy · Acceso exclusivo para el equipo</div>
-    <button class="replay" id="replay" type="button">↻ Repetir animación</button>
+    <div class="login-bottom">Task · Acceso exclusivo para el equipo</div>
   </section>
 </main>
 <script>
-  const splash = document.getElementById("splash");
-  const login = document.getElementById("login");
-  const skip = document.getElementById("skip");
-  const SPLASH_DURATION_MS = 2200;
-  let timers = [];
-  function cancelTimers() { timers.forEach(clearTimeout); timers = []; }
-  function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
-  function finishSplash() {
-    cancelTimers();
-    splash.classList.add("out");
-    login.classList.add("show");
-    login.setAttribute("aria-hidden", "false");
-    skip.classList.add("hide");
-  }
-  function playSplash() {
-    cancelTimers();
-    login.classList.remove("show");
-    login.setAttribute("aria-hidden", "true");
-    skip.classList.remove("hide");
-    splash.classList.remove("out", "play");
-    void splash.offsetWidth;
-    splash.classList.add("play");
-    later(finishSplash, SPLASH_DURATION_MS);
-  }
-  skip.addEventListener("click", finishSplash);
-  document.getElementById("replay").addEventListener("click", playSplash);
   document.getElementById("toggle-password").addEventListener("click", () => {
     const pwd = document.getElementById("password");
     const btn = document.getElementById("toggle-password");
     pwd.type = pwd.type === "password" ? "text" : "password";
     btn.textContent = pwd.type === "password" ? "Mostrar" : "Ocultar";
   });
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) finishSplash();
-  else later(finishSplash, SPLASH_DURATION_MS);
 
   document.getElementById("login-form").addEventListener("submit", async (e) => {
     e.preventDefault();

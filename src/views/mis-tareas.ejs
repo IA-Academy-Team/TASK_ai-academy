@@ -3,8 +3,10 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<link rel="icon" type="image/png" href="/static/brand/favicon.png" />
-<title>AI Academy · Centro de control — Mis tareas</title>
+<link rel="icon" href="/static/brand/favicon.ico" sizes="any" />
+<link rel="icon" type="image/png" sizes="32x32" href="/static/brand/favicon-32x32.png" />
+<link rel="icon" type="image/png" sizes="16x16" href="/static/brand/favicon-16x16.png" />
+<title>Task by Academy — Mis tareas</title>
 <%- include('partials/theme-init') %>
 <%- include('partials/styles') %>
 </head>
@@ -12,7 +14,7 @@
 <div class="app">
   <%- include('partials/sidebar', { active: 'mis-tareas', user }) %>
   <main class="content">
-    <%- include('partials/breadcrumb', { active: 'mis-tareas' }) %>
+    <%- include('partials/navbar', { active: 'mis-tareas', actions: [{ label: '+ Crear tarea propia', href: '/tareas/nueva' }] }) %>
     <div class="topbar">
       <div>
         <h1 class="page-title">Mis tareas</h1>
@@ -65,7 +67,7 @@
           <% tasks.forEach(function(r) { %>
           <tr onclick="location.href='/tareas/<%= r.task.id %>'" style="cursor:pointer">
             <td><%= r.task.title %></td>
-            <td><%= r.projectName %></td>
+            <td><%= r.projectName || "Independiente" %></td>
             <td><span class="badge <%= r.task.priority %>"><%= r.task.priority %></span></td>
             <td><span class="badge <%= r.task.status %>"><%= r.task.status %></span></td>
             <td><%= r.task.due %></td>
@@ -89,7 +91,7 @@
           <% support.forEach(function(r) { %>
           <tr onclick="location.href='/tareas/<%= r.task.id %>'" style="cursor:pointer">
             <td><%= r.task.title %></td>
-            <td><%= r.projectName %></td>
+            <td><%= r.projectName || "Independiente" %></td>
             <td><span class="badge <%= r.task.status %>"><%= r.task.status %></span></td>
             <td><%= r.task.due %></td>
           </tr>

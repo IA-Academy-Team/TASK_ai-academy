@@ -1,8 +1,8 @@
 <button type="button" class="navtoggle" aria-label="Abrir menú" onclick="document.querySelector('.sidebar').classList.toggle('open')">&#9776;</button>
 <nav class="sidebar">
   <button type="button" class="brand" aria-label="Expandir o contraer el menú" onclick="(function(){var s=document.querySelector('.sidebar');if(window.matchMedia('(max-width:750px)').matches){s.classList.toggle('open');return}var h=document.documentElement;var next=h.getAttribute('data-sidebar')==='expanded'?'collapsed':'expanded';h.setAttribute('data-sidebar',next);try{localStorage.setItem('aiacademy-sidebar',next)}catch(e){}})()">
-    <img class="brandmark" src="/static/brand/logo.png" alt="AI Academy" />
-    <h2>AI Academy</h2>
+    <img class="brandmark" src="/static/brand/logo.png" alt="Task" />
+    <h2>Task</h2>
   </button>
 
   <div class="navgroup">
@@ -22,16 +22,12 @@
       <% if (typeof sidebarCounts !== 'undefined' && sidebarCounts && sidebarCounts.supports > 0) { %><span class="navcount"><%= sidebarCounts.supports %></span><% } %>
     </a>
     <a class="navbtn <%= active === 'productividad' ? 'on' : '' %>" href="/productividad" aria-label="Productividad"><%- include('./icon', { kind: 'chart', size: 16 }) %><span class="navbtn-label">Productividad</span></a>
-    <a class="navbtn <%= active === 'notificaciones' ? 'on' : '' %>" href="/notificaciones" aria-label="Notificaciones">
-      <%- include('./icon', { kind: 'bell', size: 16 }) %><span class="navbtn-label">Notificaciones</span>
-      <% if (typeof sidebarCounts !== 'undefined' && sidebarCounts && sidebarCounts.notifications > 0) { %><span class="navcount"><%= sidebarCounts.notifications %></span><% } %>
-    </a>
   </div>
 
   <% if (user.role === "admin") { %>
   <div class="navgroup">
     <span class="navlabel">Admin</span>
-    <a class="navbtn <%= active === 'usuarios' ? 'on' : '' %>" href="/admin/usuarios" aria-label="Usuarios"><%- include('./icon', { kind: 'shield', size: 16 }) %><span class="navbtn-label">Usuarios</span></a>
+    <a class="navbtn <%= active === 'usuarios' ? 'on' : '' %>" href="/admin/usuarios" aria-label="Administración"><%- include('./icon', { kind: 'shield', size: 16 }) %><span class="navbtn-label">Administración</span></a>
   </div>
   <% } %>
 
@@ -40,7 +36,6 @@
       <span class="sidebar-avatar"><%= (user.name || user.email || "?").charAt(0).toUpperCase() %></span>
       <span class="sidebar-user-name"><%= user.name || user.email %></span>
     </div>
-    <button type="button" class="navbtn" aria-label="Cambiar tema" onclick="(function(){var h=document.documentElement;var next=h.getAttribute('data-theme')==='dark'?'light':'dark';h.setAttribute('data-theme',next);try{localStorage.setItem('aiacademy-theme',next)}catch(e){}if(document.querySelector('canvas')){location.reload()}})()"><%- include('./icon', { kind: 'theme', size: 16 }) %><span class="navbtn-label">Cambiar tema</span></button>
     <button type="button" class="navbtn" aria-label="Salir" onclick="fetch('/api/auth/sign-out',{method:'POST'}).then(()=>location.href='/login')"><%- include('./icon', { kind: 'logout', size: 16 }) %><span class="navbtn-label">Salir</span></button>
   </div>
 </nav>

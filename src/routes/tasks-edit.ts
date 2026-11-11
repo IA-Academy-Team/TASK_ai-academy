@@ -1,16 +1,27 @@
 import { Router } from "express";
 import { getProject, listAllActiveUsers } from "../db/projects-repo.ts";
-import { getTask, listTasksByProject, updateTask } from "../db/tasks-repo.ts";
+import {
+  getTask,
+  listTasksByProject,
+  listTasksWithoutProject,
+  updateTask,
+} from "../db/tasks-repo.ts";
 import { HttpError } from "../lib/http-error.ts";
 import { updateTaskSchema } from "../schemas/task.ts";
 
 export const tasksEditRouter = Router();
 
+// Sin proyecto no hay líder que delegue — el responsable hace de líder.
 function isLeaderOrAdmin(
   user: { id: string; role: string },
   project: { leaderId: string } | undefined,
+  ownerId: string,
 ): boolean {
-  return user.role === "admin" || (!!project && user.id === project.leaderId);
+  return (
+    user.role === "admin" ||
+    (!!project && user.id === project.leaderId) ||
+    (!project && user.id === ownerId)
+  );
 }
 
 tasksEditRouter.get("/tareas/:id/editar", async (req, res) => {
@@ -24,7 +35,7 @@ tasksEditRouter.get("/tareas/:id/editar", async (req, res) => {
     throw new HttpError(404, "tarea no encontrada");
   }
   const project = await getProject(task.projectId);
-  if (!isLeaderOrAdmin(req.user, project)) {
+  if (!isLeaderOrAdmin(req.user, project, task.ownerId)) {
     throw new HttpError(
       403,
       "solo el líder del proyecto o un admin pueden editar la tarea",
@@ -39,7 +50,9 @@ tasksEditRouter.get("/tareas/:id/editar", async (req, res) => {
 
   const [allUsers, allTasks] = await Promise.all([
     listAllActiveUsers(),
-    listTasksByProject(task.projectId),
+    task.projectId
+      ? listTasksByProject(task.projectId)
+      : listTasksWithoutProject(),
   ]);
 
   res.render("tareas/editar", {
@@ -63,7 +76,7 @@ tasksEditRouter.post("/tareas/:id/editar", async (req, res) => {
     throw new HttpError(404, "tarea no encontrada");
   }
   const project = await getProject(task.projectId);
-  if (!isLeaderOrAdmin(req.user, project)) {
+  if (!isLeaderOrAdmin(req.user, project, task.ownerId)) {
     throw new HttpError(
       403,
       "solo el líder del proyecto o un admin pueden editar la tarea",
@@ -74,7 +87,9 @@ tasksEditRouter.post("/tareas/:id/editar", async (req, res) => {
   if (!parsed.success) {
     const [allUsers, allTasks] = await Promise.all([
       listAllActiveUsers(),
-      listTasksByProject(task.projectId),
+      task.projectId
+        ? listTasksByProject(task.projectId)
+        : listTasksWithoutProject(),
     ]);
     res.status(400).render("tareas/editar", {
       user: req.user,

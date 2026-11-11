@@ -3,8 +3,10 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<link rel="icon" type="image/png" href="/static/brand/favicon.png" />
-<title>AI Academy · Centro de control — Horas de apoyo</title>
+<link rel="icon" href="/static/brand/favicon.ico" sizes="any" />
+<link rel="icon" type="image/png" sizes="32x32" href="/static/brand/favicon-32x32.png" />
+<link rel="icon" type="image/png" sizes="16x16" href="/static/brand/favicon-16x16.png" />
+<title>Task by Academy — Horas de apoyo</title>
 <%- include('../partials/theme-init') %>
 <%- include('../partials/styles') %>
 </head>
@@ -12,7 +14,7 @@
 <div class="app">
   <%- include('../partials/sidebar', { active: 'solicitudes', user }) %>
   <main class="content">
-    <%- include('../partials/breadcrumb', { active: 'solicitudes', crumbs: [{ label: task.title, href: '/tareas/' + task.id }, { label: 'Horas de apoyo' }] }) %>
+    <%- include('../partials/navbar', { active: 'solicitudes', crumbs: [{ label: task.title, href: '/tareas/' + task.id }, { label: 'Horas de apoyo' }] }) %>
     <div class="topbar">
       <div>
         <p class="subtitle"><a href="/tareas/<%= task.id %>">&larr; <%= task.title %></a></p>

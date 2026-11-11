@@ -3,8 +3,10 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<link rel="icon" type="image/png" href="/static/brand/favicon.png" />
-<title>AI Academy · Centro de control — Notificaciones</title>
+<link rel="icon" href="/static/brand/favicon.ico" sizes="any" />
+<link rel="icon" type="image/png" sizes="32x32" href="/static/brand/favicon-32x32.png" />
+<link rel="icon" type="image/png" sizes="16x16" href="/static/brand/favicon-16x16.png" />
+<title>Task by Academy — Notificaciones</title>
 <%- include('partials/theme-init') %>
 <%- include('partials/styles') %>
 </head>
@@ -12,7 +14,7 @@
 <div class="app">
   <%- include('partials/sidebar', { active: 'notificaciones', user }) %>
   <main class="content">
-    <%- include('partials/breadcrumb', { active: 'notificaciones' }) %>
+    <%- include('partials/navbar', { active: 'notificaciones' }) %>
     <div class="topbar">
       <div>
         <h1 class="page-title">Notificaciones</h1>
@@ -26,7 +28,7 @@
       <%- include('partials/empty-state', { text: 'Nada esperando tu aprobación.' }) %>
       <% } else { %>
       <% reviewPending.forEach(function(r) { %>
-      <div class="detail-row"><span><a href="/tareas/<%= r.task.id %>"><%= r.task.title %></a> · <%= r.projectName %></span><strong><%= r.task.due %></strong></div>
+      <div class="detail-row"><span><a href="/tareas/<%= r.task.id %>"><%= r.task.title %></a> · <%= r.projectName || "Independiente" %></span><strong><%= r.task.due %></strong></div>
       <% }) %>
       <% } %>
     </section>
@@ -37,7 +39,18 @@
       <%- include('partials/empty-state', { text: 'No tienes entregas vencidas.' }) %>
       <% } else { %>
       <% overdue.forEach(function(r) { %>
-      <div class="detail-row"><span><a href="/tareas/<%= r.task.id %>"><%= r.task.title %></a> · <%= r.projectName %></span><strong><%= r.task.due %></strong></div>
+      <div class="detail-row"><span><a href="/tareas/<%= r.task.id %>"><%= r.task.title %></a> · <%= r.projectName || "Independiente" %></span><strong><%= r.task.due %></strong></div>
+      <% }) %>
+      <% } %>
+    </section>
+
+    <section class="card pad">
+      <div class="sectiontitle"><h2>Presupuesto sin horas registradas<% if (budgetPending.length) { %> (<%= budgetPending.length %>)<% } %></h2></div>
+      <% if (budgetPending.length === 0) { %>
+      <%- include('partials/empty-state', { text: 'Toda tarea activa o en validación tiene horas reportadas.' }) %>
+      <% } else { %>
+      <% budgetPending.forEach(function(r) { %>
+      <div class="detail-row"><span><a href="/tareas/<%= r.task.id %>"><%= r.task.title %></a> · <%= r.projectName || "Independiente" %></span><strong><%= r.task.due %></strong></div>
       <% }) %>
       <% } %>
     </section>
@@ -48,7 +61,7 @@
       <%- include('partials/empty-state', { text: 'Sin solicitudes pendientes.' }) %>
       <% } else { %>
       <% supportPending.forEach(function(r) { %>
-      <div class="detail-row"><span><a href="/tareas/<%= r.request.taskId %>"><%= r.taskTitle %></a> · <%= r.projectName %></span><strong><a href="/solicitudes" class="btn subtle">Ver</a></strong></div>
+      <div class="detail-row"><span><a href="/tareas/<%= r.request.taskId %>"><%= r.taskTitle %></a> · <%= r.projectName || "Independiente" %></span><strong><a href="/solicitudes" class="btn subtle">Ver</a></strong></div>
       <% }) %>
       <% } %>
     </section>

@@ -3,65 +3,86 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<link rel="icon" type="image/png" href="/static/brand/favicon.png" />
-<title>AI Academy · Centro de control — Crear tarea</title>
+<link rel="icon" href="/static/brand/favicon.ico" sizes="any" />
+<link rel="icon" type="image/png" sizes="32x32" href="/static/brand/favicon-32x32.png" />
+<link rel="icon" type="image/png" sizes="16x16" href="/static/brand/favicon-16x16.png" />
+<title>Task by Academy — Crear tarea</title>
 <%- include('../partials/theme-init') %>
 <%- include('../partials/styles') %>
 </head>
 <body>
 <div class="app">
   <%- include('../partials/sidebar', { active: 'crear-tarea', user }) %>
-  <main class="content"></main>
-
-  <div class="modal open" id="crear-tarea-modal">
-    <div class="modal-backdrop" onclick="location.href='/proyectos'"></div>
-    <div class="modal-panel modal-panel-wide">
-      <div class="drawer-header" style="padding:0 0 16px">
-        <h2>Crear tarea</h2>
-        <button type="button" class="drawer-close" aria-label="Cerrar" onclick="location.href='/proyectos'"><%- include('../partials/icon', { kind: 'x', size: 18 }) %></button>
+  <main class="content">
+    <%- include('../partials/navbar', { active: 'crear-tarea' }) %>
+    <div class="topbar">
+      <div>
+        <p class="subtitle"><a href="/proyectos">&larr; Proyectos</a></p>
+        <h1 class="page-title">Crear tarea</h1>
       </div>
+    </div>
 
-      <% if (error) { %><div class="error">Revisa los campos obligatorios de la tarea.</div><% } %>
+    <% if (error) { %><div class="error">Revisa los campos obligatorios de la tarea.</div><% } %>
 
-      <% if (!project) { %>
-      <p class="subtitle" style="margin-top:0">Elige el proyecto para continuar.</p>
+    <% if (!project && !independent) { %>
+    <section class="card pad">
+      <p class="subtitle" style="margin-top:0">Elige el proyecto, o creá una tarea independiente sin proyecto.</p>
       <form method="get" action="/tareas/nueva" class="form-grid">
-        <div class="field full"><label>Proyecto *</label>
-          <select name="project" required>
+        <div class="field full"><label>Proyecto</label>
+          <select name="project">
             <option value="">Elige un proyecto</option>
             <% projects.forEach(function(p) { %><option value="<%= p.id %>"><%= p.code %> — <%= p.name %></option><% }) %>
           </select>
         </div>
-        <div class="foot-actions full"><button type="submit" class="btn primary">Continuar</button></div>
+        <div class="foot-actions full">
+          <a href="/tareas/nueva?project=independent" class="btn subtle">Tarea independiente</a>
+          <button type="submit" class="btn primary">Continuar</button>
+        </div>
       </form>
-      <% } else { %>
-      <p class="subtitle" style="margin-top:0"><%= project.code %> — <%= project.name %></p>
-      <form method="post" action="/tareas" class="form-grid">
-        <input type="hidden" name="projectId" value="<%= project.id %>" />
-        <div class="field full"><label>Título *</label><input name="title" maxlength="200" required /></div>
+    </section>
+    <% } else { %>
+    <p class="subtitle"><% if (independent) { %>Tarea independiente (sin proyecto)<% } else { %><%= project.code %> — <%= project.name %><% } %></p>
+
+    <div class="task-create-steps">
+      <div class="task-create-step"><b>1</b> Proyecto</div>
+      <div class="task-create-step"><b>2</b> Detalles</div>
+      <div class="task-create-step"><b>3</b> Asignación y prioridad</div>
+      <div class="task-create-step"><b>4</b> Revisar y crear</div>
+    </div>
+
+    <div class="task-create-layout">
+    <section class="card pad">
+      <form method="post" action="/tareas" class="form-grid" id="task-create-form">
+        <% if (!independent) { %><input type="hidden" name="projectId" value="<%= project.id %>" /><% } %>
+        <div class="field full"><label>Título *</label><input id="f-title" name="title" maxlength="200" required /></div>
         <div class="field full"><label>Entregable esperado *</label><input name="deliverable" maxlength="300" required /></div>
         <div class="field full"><label>Descripción</label><textarea name="description" maxlength="2000"></textarea></div>
+        <% if (independent) { %>
+        <input type="hidden" name="ownerId" value="<%= user.id %>" />
+        <div class="field"><label>Responsable</label><input value="<%= user.name || user.email %> (vos)" disabled /></div>
+        <% } else { %>
         <div class="field"><label>Responsable *</label>
           <select name="ownerId" required>
             <% allUsers.forEach(function(u) { %><option value="<%= u.id %>"><%= u.name %></option><% }) %>
           </select>
         </div>
+        <% } %>
         <div class="field"><label>Apoyo</label>
           <select name="support" multiple>
             <% allUsers.forEach(function(u) { %><option value="<%= u.id %>"><%= u.name %></option><% }) %>
           </select>
         </div>
         <div class="field"><label>Prioridad *</label>
-          <select name="priority" required>
+          <select id="f-priority" name="priority" required>
             <option value="baja">Baja</option>
             <option value="media" selected>Media</option>
             <option value="alta">Alta</option>
             <option value="critica">Crítica</option>
           </select>
         </div>
-        <div class="field"><label>Peso del avance</label><input type="number" name="weight" min="1" max="10" value="1" required /></div>
-        <div class="field"><label>Horas estimadas *</label><input type="number" name="estimate" min="0.5" step="0.5" required /></div>
-        <div class="field"><label>Fecha límite *</label><input type="date" name="due" required /></div>
+        <div class="field"><label>Peso del avance</label><input id="f-weight" type="number" name="weight" min="1" max="10" value="1" required /></div>
+        <div class="field"><label>Horas estimadas *</label><input id="f-estimate" type="number" name="estimate" min="0.5" step="0.5" required /></div>
+        <div class="field"><label>Fecha límite *</label><input id="f-due" type="date" name="due" required /></div>
         <div class="field full"><label>Depende de</label>
           <select name="dependencyId">
             <option value="">Ninguna</option>
@@ -69,13 +90,64 @@
           </select>
         </div>
         <div class="foot-actions full">
-          <a href="/tareas/nueva" class="btn subtle">Elegir otro proyecto</a>
+          <a href="/tareas/nueva" class="btn subtle"><% if (independent) { %>Elegir un proyecto<% } else { %>Elegir otro proyecto<% } %></a>
           <button type="submit" class="btn primary">Crear tarea</button>
         </div>
       </form>
-      <% } %>
+    </section>
+
+    <aside class="task-create-preview">
+      <div class="card pad">
+        <div class="sectiontitle"><h2>Vista previa</h2></div>
+        <div class="task-create-preview-row"><span>Título</span><strong id="pv-title">Sin título</strong></div>
+        <div class="task-create-preview-row"><span>Proyecto</span><strong><% if (independent) { %>Ninguno<% } else { %><%= project.code %><% } %></strong></div>
+        <div class="task-create-preview-row"><span>Estado</span><strong>Pendiente</strong></div>
+        <div class="task-create-preview-row"><span>Prioridad</span><strong id="pv-priority">Media</strong></div>
+        <div class="task-create-preview-row"><span>Peso</span><strong id="pv-weight">1</strong></div>
+        <div class="task-create-preview-row"><span>Horas est.</span><strong id="pv-estimate">—</strong></div>
+        <div class="task-create-preview-row"><span>Vence</span><strong id="pv-due">—</strong></div>
+      </div>
+      <div class="card pad">
+        <div class="sectiontitle"><h2><% if (independent) { %>Otras tareas independientes<% } else { %>Tareas del proyecto<% } %></h2></div>
+        <% if (allTasks.length === 0) { %>
+        <%- include('../partials/empty-state', { text: independent ? 'Todavía no hay tareas independientes.' : 'Todavía no hay tareas en este proyecto.' }) %>
+        <% } else { %>
+        <div class="task-create-related">
+          <% allTasks.forEach(function(t) { %>
+          <a href="/tareas/<%= t.id %>"><span>#<%= t.order %> <%= t.title %></span><span class="badge <%= t.status %>"><%= t.status %></span></a>
+          <% }) %>
+        </div>
+        <% } %>
+      </div>
+    </aside>
     </div>
-  </div>
+
+    <script>
+    (function () {
+      var form = document.getElementById('task-create-form');
+      if (!form) return;
+      var pvTitle = document.getElementById('pv-title');
+      var pvPriority = document.getElementById('pv-priority');
+      var pvWeight = document.getElementById('pv-weight');
+      var pvEstimate = document.getElementById('pv-estimate');
+      var pvDue = document.getElementById('pv-due');
+      var titleInput = document.getElementById('f-title');
+      var priorityInput = document.getElementById('f-priority');
+      var weightInput = document.getElementById('f-weight');
+      var estimateInput = document.getElementById('f-estimate');
+      var dueInput = document.getElementById('f-due');
+      var PRIORITY_LABEL = { baja: 'Baja', media: 'Media', alta: 'Alta', critica: 'Crítica' };
+      form.addEventListener('input', function () {
+        pvTitle.textContent = titleInput.value.trim() || 'Sin título';
+        pvPriority.textContent = PRIORITY_LABEL[priorityInput.value] || priorityInput.value;
+        pvWeight.textContent = weightInput.value || '1';
+        pvEstimate.textContent = estimateInput.value ? estimateInput.value + ' h' : '—';
+        pvDue.textContent = dueInput.value || '—';
+      });
+    })();
+    </script>
+    <% } %>
+  </main>
 </div>
 </body>
 </html>

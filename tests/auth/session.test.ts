@@ -21,7 +21,7 @@ describe("session and authorize", () => {
     const app = createApp();
     const res = await supertest(app).get("/login");
     expect(res.status).toBe(200);
-    expect(res.text).toContain("Centro de control");
+    expect(res.text).toContain("Task by Academy");
   });
 
   it("una sesion valida deja req.user con role e isActive", async () => {

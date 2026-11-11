@@ -108,10 +108,10 @@ async function main() {
     date: "2026-10-30",
     hours: "4",
   });
-  await transitionTask(nebDefinirRuta.id, "revision", santiago.id, {});
-  await transitionTask(nebDefinirRuta.id, "completada", santiago.id, {
+  await transitionTask(nebDefinirRuta.id, "revision", santiago.id, {
     evidence: "Mapa curricular v1",
   });
+  await transitionTask(nebDefinirRuta.id, "completada", santiago.id, {});
 
   const nebGuiones = await createTask({
     projectId: nebula.id,
@@ -142,10 +142,10 @@ async function main() {
     date: "2026-11-03",
     hours: "6",
   });
-  await transitionTask(nebGuiones.id, "revision", jorge.id, {});
-  await transitionTask(nebGuiones.id, "completada", jorge.id, {
+  await transitionTask(nebGuiones.id, "revision", jorge.id, {
     evidence: "Guiones consolidados v2",
   });
+  await transitionTask(nebGuiones.id, "completada", jorge.id, {});
 
   const nebCapsulas = await createTask({
     projectId: nebula.id,
@@ -264,10 +264,10 @@ async function main() {
     date: "2026-11-03",
     hours: "6",
   });
-  await transitionTask(fmDiagnostico.id, "revision", valentina.id, {});
-  await transitionTask(fmDiagnostico.id, "completada", valentina.id, {
+  await transitionTask(fmDiagnostico.id, "revision", valentina.id, {
     evidence: "Diagnóstico final",
   });
+  await transitionTask(fmDiagnostico.id, "completada", valentina.id, {});
 
   const fmActividades = await createTask({
     projectId: futureMinds.id,
@@ -350,10 +350,10 @@ async function main() {
     date: "2026-11-02",
     hours: "9",
   });
-  await transitionTask(comPropuesta.id, "revision", maria.id, {});
-  await transitionTask(comPropuesta.id, "completada", maria.id, {
+  await transitionTask(comPropuesta.id, "revision", maria.id, {
     evidence: "Propuesta final",
   });
+  await transitionTask(comPropuesta.id, "completada", maria.id, {});
 
   const comAnexos = await createTask({
     projectId: comerciales.id,

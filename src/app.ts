@@ -13,6 +13,7 @@ import { notificationsRouter } from "./routes/notifications.ts";
 import { plannerRouter } from "./routes/planner.ts";
 import { projectSettingsRouter } from "./routes/project-settings.ts";
 import { projectsRouter } from "./routes/projects.ts";
+import { projectsImportRouter } from "./routes/projects-import.ts";
 import { reportsRouter } from "./routes/reports.ts";
 import { supportsRouter } from "./routes/supports.ts";
 import { tasksRouter } from "./routes/tasks.ts";
@@ -78,6 +79,7 @@ export function createApp() {
   });
 
   app.use(dashboardRouter);
+  app.use(projectsImportRouter);
   app.use(projectsRouter);
   app.use(projectSettingsRouter);
   app.use(tasksCreateRouter);

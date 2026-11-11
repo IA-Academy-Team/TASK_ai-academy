@@ -3,8 +3,10 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<link rel="icon" type="image/png" href="/static/brand/favicon.png" />
-<title>AI Academy · Centro de control — <%= project.name %></title>
+<link rel="icon" href="/static/brand/favicon.ico" sizes="any" />
+<link rel="icon" type="image/png" sizes="32x32" href="/static/brand/favicon-32x32.png" />
+<link rel="icon" type="image/png" sizes="16x16" href="/static/brand/favicon-16x16.png" />
+<title>Task by Academy — <%= project.name %></title>
 <%- include('../partials/theme-init') %>
 <%- include('../partials/styles') %>
 </head>
@@ -12,7 +14,7 @@
 <div class="app">
   <%- include('../partials/sidebar', { active: 'proyectos', user }) %>
   <main class="content">
-    <%- include('../partials/breadcrumb', { active: 'proyectos', crumbs: [{ label: project.name }] }) %>
+    <%- include('../partials/navbar', { active: 'proyectos', crumbs: [{ label: project.name }] }) %>
     <div class="topbar">
       <div>
         <span class="flag"><%= project.code %></span>
@@ -48,17 +50,53 @@
         </div>
         <p class="subtitle">
           Subí un archivo .xlsx con una tarea por fila. El responsable y el apoyo se identifican por email.
-          <a href="/proyectos/<%= project.id %>/tareas/plantilla.xlsx">Descargar plantilla</a>.
         </p>
-        <form method="post" action="/proyectos/<%= project.id %>/tareas/importar" enctype="multipart/form-data" class="form-grid">
-          <div class="field full"><label>Archivo .xlsx *</label><input type="file" name="file" accept=".xlsx" required /></div>
+        <a class="btn subtle" style="width:100%;justify-content:center;margin-bottom:12px" href="/proyectos/<%= project.id %>/tareas/plantilla.xlsx" download><%- include('../partials/icon', { kind: 'download', size: 14 }) %>Descargar plantilla</a>
+        <form id="form-carga-masiva-tareas" method="post" action="/proyectos/<%= project.id %>/tareas/importar" enctype="multipart/form-data" class="form-grid">
+          <div class="field full">
+            <label>Archivo .xlsx *</label>
+            <label class="dropzone" id="dropzone-carga-masiva-tareas">
+              <%- include('../partials/icon', { kind: 'upload', size: 20 }) %>
+              <span class="dropzone-text" id="dropzone-text-tareas">Arrastrá tu archivo .xlsx acá o hacé clic para buscarlo</span>
+              <input type="file" id="file-carga-masiva-tareas" name="file" accept=".xlsx" required />
+            </label>
+          </div>
           <div class="foot-actions full">
             <button type="button" class="btn" onclick="document.getElementById('modal-carga-masiva').classList.remove('open')">Cancelar</button>
-            <button type="submit" class="btn primary">Importar</button>
+            <button type="submit" class="btn primary" id="btn-importar-tareas">Importar</button>
           </div>
         </form>
       </div>
     </div>
+    <script>
+    (function () {
+      var dz = document.getElementById('dropzone-carga-masiva-tareas');
+      var input = document.getElementById('file-carga-masiva-tareas');
+      var text = document.getElementById('dropzone-text-tareas');
+      var form = document.getElementById('form-carga-masiva-tareas');
+      var btn = document.getElementById('btn-importar-tareas');
+      var defaultText = text.textContent;
+      function updateText() {
+        text.textContent = input.files.length ? input.files[0].name : defaultText;
+        dz.classList.toggle('has-file', input.files.length > 0);
+      }
+      input.addEventListener('change', updateText);
+      dz.addEventListener('dragover', function (e) { e.preventDefault(); dz.classList.add('dragover'); });
+      dz.addEventListener('dragleave', function () { dz.classList.remove('dragover'); });
+      dz.addEventListener('drop', function (e) {
+        e.preventDefault();
+        dz.classList.remove('dragover');
+        if (e.dataTransfer.files.length) {
+          input.files = e.dataTransfer.files;
+          updateText();
+        }
+      });
+      form.addEventListener('submit', function () {
+        btn.disabled = true;
+        btn.textContent = 'Importando…';
+      });
+    })();
+    </script>
 
     <div class="drawer" id="drawer-nueva-tarea">
       <div class="drawer-backdrop" onclick="document.getElementById('drawer-nueva-tarea').classList.remove('open')"></div>
@@ -132,14 +170,44 @@
       </div>
     </div>
 
+    <%
+      function estadoHref(e) {
+        var qs = [];
+        if (e) qs.push('estado=' + e);
+        if (responsable) qs.push('responsable=' + responsable);
+        return '/proyectos/' + project.id + (qs.length ? '?' + qs.join('&') : '');
+      }
+      function responsableHref(id) {
+        var qs = [];
+        if (estado) qs.push('estado=' + estado);
+        if (id) qs.push('responsable=' + id);
+        return '/proyectos/' + project.id + (qs.length ? '?' + qs.join('&') : '');
+      }
+    %>
     <div class="filters">
-      <a href="/proyectos/<%= project.id %>" class="<%= !estado ? 'on' : '' %>">Todas</a>
-      <a href="/proyectos/<%= project.id %>?estado=pendiente" class="<%= estado === 'pendiente' ? 'on' : '' %>">Pendiente</a>
-      <a href="/proyectos/<%= project.id %>?estado=activa" class="<%= estado === 'activa' ? 'on' : '' %>">Activa</a>
-      <a href="/proyectos/<%= project.id %>?estado=revision" class="<%= estado === 'revision' ? 'on' : '' %>">Revisión</a>
-      <a href="/proyectos/<%= project.id %>?estado=completada" class="<%= estado === 'completada' ? 'on' : '' %>">Completada</a>
-      <a href="/proyectos/<%= project.id %>?estado=bloqueada" class="<%= estado === 'bloqueada' ? 'on' : '' %>">Bloqueada</a>
+      <a href="<%= estadoHref(null) %>" class="<%= !estado ? 'on' : '' %>">Todas</a>
+      <a href="<%= estadoHref('pendiente') %>" class="<%= estado === 'pendiente' ? 'on' : '' %>">Pendiente</a>
+      <a href="<%= estadoHref('activa') %>" class="<%= estado === 'activa' ? 'on' : '' %>">Activa</a>
+      <a href="<%= estadoHref('revision') %>" class="<%= estado === 'revision' ? 'on' : '' %>">Revisión</a>
+      <a href="<%= estadoHref('completada') %>" class="<%= estado === 'completada' ? 'on' : '' %>">Completada</a>
+      <a href="<%= estadoHref('bloqueada') %>" class="<%= estado === 'bloqueada' ? 'on' : '' %>">Bloqueada</a>
     </div>
+
+    <section class="card pad">
+      <div class="sectiontitle"><h2>Carga por persona</h2></div>
+      <div class="people-load-row">
+        <a href="<%= responsableHref(null) %>" class="person-load-chip <%= !responsable ? 'on' : '' %>">
+          <span class="chip-avatar">·</span>Todos
+        </a>
+        <% peopleLoad.forEach(function(p) { %>
+        <a href="<%= responsableHref(p.id) %>" class="person-load-chip <%= responsable === p.id ? 'on' : '' %>" title="<%= p.taskCount %> tareas abiertas · <%= p.openHours %> h declaradas">
+          <span class="chip-avatar"><%= (p.name || '?').charAt(0).toUpperCase() %></span>
+          <%= p.name %><% if (p.isLeader) { %> · líder<% } %>
+          <strong><%= p.taskCount %></strong><small>· <%= p.openHours %> h</small>
+        </a>
+        <% }) %>
+      </div>
+    </section>
 
     <section class="card pad">
       <% if (tasks.length === 0) { %>
@@ -163,12 +231,6 @@
       </table>
       </div>
       <% } %>
-    </section>
-
-    <section class="card pad">
-      <div class="sectiontitle"><h2>Equipo del proyecto</h2></div>
-      <% if (leader) { %><span class="badge admin"><%= leader.name %> · líder</span> <% } %>
-      <% members.forEach(function(m) { %><span class="badge usuario"><%= m.name %></span> <% }) %>
     </section>
 
     <% if (isLeaderOrAdmin) { %>

@@ -3,8 +3,10 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<link rel="icon" type="image/png" href="/static/brand/favicon.png" />
-<title>AI Academy · Centro de control — Plan semanal</title>
+<link rel="icon" href="/static/brand/favicon.ico" sizes="any" />
+<link rel="icon" type="image/png" sizes="32x32" href="/static/brand/favicon-32x32.png" />
+<link rel="icon" type="image/png" sizes="16x16" href="/static/brand/favicon-16x16.png" />
+<title>Task by Academy — Plan semanal</title>
 <%- include('partials/theme-init') %>
 <%- include('partials/styles') %>
 </head>
@@ -12,7 +14,7 @@
 <div class="app">
   <%- include('partials/sidebar', { active: 'plan-semanal', user }) %>
   <main class="content">
-    <%- include('partials/breadcrumb', { active: 'plan-semanal' }) %>
+    <%- include('partials/navbar', { active: 'plan-semanal', actions: [{ label: '+ Crear tarea', href: '/tareas/nueva' }] }) %>
     <div class="topbar">
       <div>
         <h1 class="page-title">Plan semanal</h1>

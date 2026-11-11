@@ -18,6 +18,7 @@ blueprints/
 # .claude/skills/impeccable alone ships a 17MB platform binary)
 .agents/
 .claude/agents/
+.codex/
 .claude/skills/design-taste-frontend
 .claude/skills/impeccable/
 .claude/skills/logo-design/

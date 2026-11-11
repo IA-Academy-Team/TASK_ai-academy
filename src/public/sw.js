@@ -1,7 +1,10 @@
-const CACHE = "ai-academy-shell-v1";
+const CACHE = "task-shell-v2";
 const SHELL_ASSETS = [
   "/static/brand/logo.png",
-  "/static/brand/favicon.png",
+  "/static/brand/favicon.ico",
+  "/static/brand/favicon-32x32.png",
+  "/static/brand/favicon-16x16.png",
+  "/static/brand/apple-touch-icon.png",
   "/static/brand/icon-192.png",
   "/static/brand/icon-512.png",
   "/manifest.json",

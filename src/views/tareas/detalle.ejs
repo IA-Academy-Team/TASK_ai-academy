@@ -3,20 +3,22 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<link rel="icon" type="image/png" href="/static/brand/favicon.png" />
-<title>AI Academy · Centro de control — <%= task.title %></title>
+<link rel="icon" href="/static/brand/favicon.ico" sizes="any" />
+<link rel="icon" type="image/png" sizes="32x32" href="/static/brand/favicon-32x32.png" />
+<link rel="icon" type="image/png" sizes="16x16" href="/static/brand/favicon-16x16.png" />
+<title>Task by Academy — <%= task.title %></title>
 <%- include('../partials/theme-init') %>
 <%- include('../partials/styles') %>
 </head>
 <body>
 <div class="app">
-  <%- include('../partials/sidebar', { active: 'proyectos', user }) %>
+  <%- include('../partials/sidebar', { active: project ? 'proyectos' : 'mis-tareas', user }) %>
   <main class="content">
-    <%- include('../partials/breadcrumb', { active: 'proyectos', crumbs: [{ label: project.name, href: '/proyectos/' + project.id }, { label: task.title }] }) %>
+    <%- include('../partials/navbar', { active: project ? 'proyectos' : 'mis-tareas', crumbs: project ? [{ label: project.name, href: '/proyectos/' + project.id }, { label: task.title }] : [{ label: task.title }] }) %>
     <div class="topbar">
       <div>
-        <p class="subtitle"><a href="/proyectos/<%= project.id %>">&larr; <%= project.name %></a></p>
-        <h1 class="page-title">#<%= task.order %> <%= task.title %></h1>
+        <p class="subtitle"><% if (project) { %><a href="/proyectos/<%= project.id %>">&larr; <%= project.name %></a><% } else { %>Tarea independiente<% } %></p>
+        <h1 class="page-title"><% if (project) { %>#<%= task.order %> <% } %><%= task.title %></h1>
         <p class="subtitle"><%= task.deliverable %></p>
       </div>
       <div>

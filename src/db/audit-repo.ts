@@ -4,7 +4,7 @@ import { db } from "./client.ts";
 import { auditLog, projects, tasks } from "./schema.ts";
 
 export async function recordChange(input: {
-  projectId: string;
+  projectId: string | null;
   taskId?: string | null;
   actorId: string;
   action: string;

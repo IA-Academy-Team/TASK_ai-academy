@@ -4,7 +4,11 @@ import {
   listAllActiveUsers,
   listProjects,
 } from "../db/projects-repo.ts";
-import { createTask, listTasksByProject } from "../db/tasks-repo.ts";
+import {
+  createTask,
+  listTasksByProject,
+  listTasksWithoutProject,
+} from "../db/tasks-repo.ts";
 import { HttpError } from "../lib/http-error.ts";
 import { toArray } from "../schemas/project.ts";
 import { createTaskSchema } from "../schemas/task.ts";
@@ -24,15 +28,16 @@ tasksCreateRouter.get("/tareas/nueva", async (req, res) => {
     return;
   }
 
-  const projectId =
+  const projectParam =
     typeof req.query.project === "string" ? req.query.project : null;
   const error = req.query.error === "1";
 
-  if (!projectId) {
+  if (!projectParam) {
     const projects = await listProjects();
     res.render("tareas/nueva", {
       user: req.user,
       project: null,
+      independent: false,
       allUsers: [],
       allTasks: [],
       projects,
@@ -41,7 +46,24 @@ tasksCreateRouter.get("/tareas/nueva", async (req, res) => {
     return;
   }
 
-  const project = await getProject(projectId);
+  if (projectParam === "independent") {
+    const [allUsers, allTasks] = await Promise.all([
+      listAllActiveUsers(),
+      listTasksWithoutProject(),
+    ]);
+    res.render("tareas/nueva", {
+      user: req.user,
+      project: null,
+      independent: true,
+      allUsers,
+      allTasks,
+      projects: [],
+      error,
+    });
+    return;
+  }
+
+  const project = await getProject(projectParam);
   if (!project) {
     throw new HttpError(404, "proyecto no encontrado");
   }
@@ -54,6 +76,7 @@ tasksCreateRouter.get("/tareas/nueva", async (req, res) => {
   res.render("tareas/nueva", {
     user: req.user,
     project,
+    independent: false,
     allUsers,
     allTasks,
     projects: [],
@@ -67,31 +90,43 @@ tasksCreateRouter.post("/tareas", async (req, res) => {
     return;
   }
 
-  const projectId =
+  const projectIdRaw =
     typeof req.body.projectId === "string" ? req.body.projectId : "";
+  const isIndependent = projectIdRaw === "";
+
   const parsed = createTaskSchema.safeParse(req.body);
-  if (!projectId || !parsed.success) {
-    res.redirect(303, `/tareas/nueva?project=${projectId}&error=1`);
+  if (!parsed.success) {
+    res.redirect(
+      303,
+      `/tareas/nueva?project=${isIndependent ? "independent" : projectIdRaw}&error=1`,
+    );
     return;
   }
 
-  const project = await getProject(projectId);
-  if (!project) {
-    throw new HttpError(404, "proyecto no encontrado");
-  }
-  if (!isLeaderOrAdmin(req.user, project)) {
-    throw new HttpError(
-      403,
-      "solo el líder del proyecto o un admin pueden crear tareas",
-    );
+  let project: Awaited<ReturnType<typeof getProject>>;
+  if (!isIndependent) {
+    project = await getProject(projectIdRaw);
+    if (!project) {
+      throw new HttpError(404, "proyecto no encontrado");
+    }
+    if (!isLeaderOrAdmin(req.user, project)) {
+      throw new HttpError(
+        403,
+        "solo el líder del proyecto o un admin pueden crear tareas",
+      );
+    }
   }
 
+  // Sin proyecto no hay líder que delegue el responsable — una tarea
+  // independiente siempre se crea para una misma, nunca "para otra persona".
+  const ownerId = isIndependent ? req.user.id : parsed.data.ownerId;
+
   await createTask({
-    projectId: project.id,
+    projectId: isIndependent ? null : (project?.id ?? null),
     title: parsed.data.title,
     deliverable: parsed.data.deliverable,
     description: parsed.data.description,
-    ownerId: parsed.data.ownerId,
+    ownerId,
     priority: parsed.data.priority,
     weight: parsed.data.weight,
     estimate: String(parsed.data.estimate),
@@ -101,5 +136,8 @@ tasksCreateRouter.post("/tareas", async (req, res) => {
     actorId: req.user.id,
   });
 
-  res.redirect(303, `/proyectos/${project.id}`);
+  res.redirect(
+    303,
+    isIndependent ? "/mis-tareas" : `/proyectos/${project?.id}`,
+  );
 });

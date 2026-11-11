@@ -6,6 +6,12 @@
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["dev"],
       "port": 3100
+    },
+    {
+      "name": "graphify-view",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8743", "--directory", "graphify-out"],
+      "port": 8743
     }
   ]
 }
