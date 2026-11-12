@@ -1,8 +1,7 @@
 import { Router } from "express";
 import multer from "multer";
 import {
-  createProject,
-  generateProjectCode,
+  createProjectWithCode,
   listAllActiveUsers,
 } from "../db/projects-repo.ts";
 import { validateProjectImportRow } from "../domain/project-import.ts";
@@ -78,10 +77,8 @@ projectsImportRouter.post(
         continue;
       }
       try {
-        const code = await generateProjectCode(outcome.project.name);
-        await createProject({
+        await createProjectWithCode({
           name: outcome.project.name,
-          code,
           objective: outcome.project.objective,
           leaderId: outcome.project.leaderId,
           start: outcome.project.start,

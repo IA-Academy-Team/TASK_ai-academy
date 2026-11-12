@@ -1,20 +1,26 @@
 import { z } from "zod";
+import { dateString } from "./shared.ts";
 
-export const createProjectSchema = z.object({
-  name: z.string().min(1).max(120),
-  objective: z.string().min(1).max(500),
-  leaderId: z.string().min(1),
-  start: z.string().min(1),
-  due: z.string().min(1),
-  limitActive: z.coerce.number().int().min(1).max(20),
-  limitReview: z.coerce.number().int().min(1).max(20),
-  members: z.union([z.string(), z.array(z.string())]).optional(),
-});
+export const createProjectSchema = z
+  .object({
+    name: z.string().min(1).max(120),
+    objective: z.string().min(1).max(500),
+    leaderId: z.string().min(1),
+    start: dateString,
+    due: dateString,
+    limitActive: z.coerce.number().int().min(1).max(20),
+    limitReview: z.coerce.number().int().min(1).max(20),
+    members: z.union([z.string(), z.array(z.string())]).optional(),
+  })
+  .refine((data) => data.due >= data.start, {
+    message: "la fecha de vencimiento no puede ser anterior al inicio",
+    path: ["due"],
+  });
 
 export const updateSettingsSchema = z.object({
   limitActive: z.coerce.number().int().min(1).max(20),
   limitReview: z.coerce.number().int().min(1).max(20),
-  due: z.string().min(1),
+  due: dateString,
   members: z.union([z.string(), z.array(z.string())]).optional(),
 });
 

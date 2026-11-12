@@ -329,7 +329,19 @@ select,.field select{appearance:none;-webkit-appearance:none;-moz-appearance:non
 .auth-shell{min-height:100vh;display:grid;place-items:center;padding:20px}
 .auth-card{width:100%;max-width:360px}
 .auth-card h1{font-size:16px;margin:0 0 20px}
-.table-wrap{width:100%;overflow-x:auto}
+.table-wrap{
+  width:100%;overflow-x:auto;
+  /* Sombra de desplazamiento: solo aparece del lado donde hay más contenido
+     para ver, y desaparece justo al llegar al borde — sin JS. */
+  background:
+    linear-gradient(to right, var(--paper) 30%, transparent),
+    linear-gradient(to right, transparent, var(--paper) 70%) 100% 0,
+    radial-gradient(farthest-side at 0 50%, color-mix(in srgb, var(--ink) 18%, transparent), transparent),
+    radial-gradient(farthest-side at 100% 50%, color-mix(in srgb, var(--ink) 18%, transparent), transparent) 100% 0;
+  background-repeat:no-repeat;
+  background-size:24px 100%,24px 100%,10px 100%,10px 100%;
+  background-attachment:local,local,scroll,scroll;
+}
 .navtoggle{display:none;position:fixed;top:14px;left:14px;z-index:60;width:40px;height:40px;align-items:center;justify-content:center;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:10px;box-shadow:var(--shadow);font-size:16px}
 .sidebar-backdrop{display:none}
 @media (max-width:750px){

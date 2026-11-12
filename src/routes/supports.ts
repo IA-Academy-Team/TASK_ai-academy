@@ -142,6 +142,9 @@ supportsRouter.post("/tareas/:id/apoyo", async (req, res) => {
   if (!parsed.success) {
     throw new HttpError(400, "solicitud de apoyo inválida");
   }
+  if (parsed.data.targetUserId === req.user.id) {
+    throw new HttpError(400, "no podés pedirte apoyo a vos mismo");
+  }
 
   await createRequest({
     taskId: task.id,

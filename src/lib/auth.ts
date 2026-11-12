@@ -10,6 +10,10 @@ export const auth = betterAuth({
     schema: { ...appSchema, ...authSchema },
   }),
   emailAndPassword: { enabled: true },
+  // better-auth ya limita /sign-in* a 3 intentos cada 10s por defecto, pero
+  // solo si está activo — por defecto solo se activa cuando NODE_ENV=production.
+  // Lo dejamos explícito para no depender de esa variable de entorno.
+  rateLimit: { enabled: true },
   user: {
     additionalFields: {
       role: { type: "string", defaultValue: "usuario", input: false },

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { dateString } from "./shared.ts";
 
 export const priorityEnum = z.enum(["baja", "media", "alta", "critica"]);
 export const statusEnum = z.enum([
@@ -23,7 +24,7 @@ export const createTaskSchema = z.object({
     .string()
     .optional()
     .transform((v) => (v ? v : null)),
-  due: z.string().min(1),
+  due: dateString,
   support: z.union([z.string(), z.array(z.string())]).optional(),
 });
 
@@ -34,7 +35,7 @@ export const transitionSchema = z.object({
 });
 
 export const logHoursSchema = z.object({
-  date: z.string().min(1),
+  date: dateString,
   hours: z.coerce.number().positive().max(24),
 });
 
@@ -51,7 +52,7 @@ export const updateTaskSchema = z.object({
     .string()
     .optional()
     .transform((v) => (v ? v : null)),
-  due: z.string().min(1),
+  due: dateString,
 });
 
 export const requestSupportSchema = z.object({
@@ -65,7 +66,7 @@ export const resolveSupportRequestSchema = z.object({
 });
 
 export const deliverySchema = z.object({
-  date: z.string().min(1),
+  date: dateString,
   hours: z.coerce.number().positive().max(24),
   evidence: z.string().min(1).max(2000),
 });

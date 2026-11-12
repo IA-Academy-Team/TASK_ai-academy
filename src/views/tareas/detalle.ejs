@@ -64,7 +64,7 @@
           <% } %>
           <% if (task.status === 'revision') { %>
             <% if (isLeaderOrAdmin) { %>
-            <form method="post" action="/tareas/<%= task.id %>/estado">
+            <form method="post" action="/tareas/<%= task.id %>/estado" onsubmit="return confirm('¿Aprobar esta tarea? Pasa a completada y no se puede deshacer.')">
               <input type="hidden" name="status" value="completada" />
               <% if (!task.evidence) { %><input name="evidence" placeholder="Evidencia" required style="padding:8px;border:1px solid var(--line);border-radius:8px" />&nbsp;<% } %>
               <button class="btn primary" type="submit">Aprobar</button>

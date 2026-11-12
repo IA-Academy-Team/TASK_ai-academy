@@ -155,4 +155,37 @@ describe("solicitudes de apoyo", () => {
       .set("Cookie", cookie);
     expect(res.status).toBe(403);
   });
+
+  it("POST /tareas/:id/apoyo rechaza pedirse apoyo a uno mismo", async () => {
+    const { app, cookie, me, task } = await setup("sup5@test.local");
+    const res = await supertest(app)
+      .post(`/tareas/${task.id}/apoyo`)
+      .set("Cookie", cookie)
+      .type("form")
+      .send({ targetUserId: me.id, mode: "invite", reason: "x" });
+    expect(res.status).toBe(400);
+  });
+
+  it("POST /tareas/:id/apoyo rechaza una solicitud duplicada pendiente", async () => {
+    const { app, cookie, task } = await setup("sup6-owner@test.local");
+    await signUpAndGetCookie("sup6-target@test.local");
+    const [target] = await db
+      .select()
+      .from(user)
+      .where(eq(user.email, "sup6-target@test.local"));
+
+    const first = await supertest(app)
+      .post(`/tareas/${task.id}/apoyo`)
+      .set("Cookie", cookie)
+      .type("form")
+      .send({ targetUserId: target.id, mode: "invite", reason: "x" });
+    expect(first.status).toBe(303);
+
+    const second = await supertest(app)
+      .post(`/tareas/${task.id}/apoyo`)
+      .set("Cookie", cookie)
+      .type("form")
+      .send({ targetUserId: target.id, mode: "invite", reason: "x" });
+    expect(second.status).toBe(400);
+  });
 });

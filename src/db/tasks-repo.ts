@@ -329,6 +329,25 @@ export async function listLogs(taskId: string) {
     .orderBy(asc(taskLogs.date));
 }
 
+// Misma forma que listLogs, pero para varias tareas en una sola consulta —
+// evita hacer una query por tarea cuando se necesitan las horas de muchas a
+// la vez (ej. la carga por persona de un proyecto).
+export async function listLogsByTaskIds(taskIds: string[]) {
+  if (taskIds.length === 0) return new Map<string, { hours: string }[]>();
+  const rows = await db
+    .select({ taskId: taskLogs.taskId, hours: taskLogs.hours })
+    .from(taskLogs)
+    .where(inArray(taskLogs.taskId, taskIds));
+
+  const byTask = new Map<string, { hours: string }[]>();
+  for (const row of rows) {
+    const list = byTask.get(row.taskId) ?? [];
+    list.push({ hours: row.hours });
+    byTask.set(row.taskId, list);
+  }
+  return byTask;
+}
+
 export async function countTasksForOwner(ownerId: string, statuses: string[]) {
   const [{ value }] = await db
     .select({ value: count() })
@@ -610,65 +629,99 @@ export async function teamLoad() {
     .select()
     .from(user)
     .where(eq(user.isActive, true));
+  if (activeUsers.length === 0) return [];
 
+  const userIds = activeUsers.map((u) => u.id);
   const now = new Date();
   const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
 
-  const rows = [];
-  for (const u of activeUsers) {
-    const [{ value: pending }] = await db
-      .select({ value: count() })
-      .from(tasks)
-      .where(and(eq(tasks.ownerId, u.id), eq(tasks.status, "pendiente")));
-    const [{ value: active }] = await db
-      .select({ value: count() })
-      .from(tasks)
-      .where(and(eq(tasks.ownerId, u.id), eq(tasks.status, "activa")));
-    const [{ value: supportCount }] = await db
-      .select({ value: count() })
-      .from(taskSupport)
-      .innerJoin(tasks, eq(tasks.id, taskSupport.taskId))
-      .where(
-        and(
-          eq(taskSupport.userId, u.id),
-          notInArray(tasks.status, ["completada", "cancelada"]),
+  // Una consulta agregada por métrica para todo el equipo a la vez, en vez de
+  // 5 consultas por persona (N+1) — el resultado es idéntico, solo cambia
+  // cómo se arma.
+  const [pendingRows, activeRows, supportRows, openLogRows, monthLogRows] =
+    await Promise.all([
+      db
+        .select({ ownerId: tasks.ownerId, value: count() })
+        .from(tasks)
+        .where(
+          and(inArray(tasks.ownerId, userIds), eq(tasks.status, "pendiente")),
+        )
+        .groupBy(tasks.ownerId),
+      db
+        .select({ ownerId: tasks.ownerId, value: count() })
+        .from(tasks)
+        .where(and(inArray(tasks.ownerId, userIds), eq(tasks.status, "activa")))
+        .groupBy(tasks.ownerId),
+      db
+        .select({ userId: taskSupport.userId, value: count() })
+        .from(taskSupport)
+        .innerJoin(tasks, eq(tasks.id, taskSupport.taskId))
+        .where(
+          and(
+            inArray(taskSupport.userId, userIds),
+            notInArray(tasks.status, ["completada", "cancelada"]),
+          ),
+        )
+        .groupBy(taskSupport.userId),
+      db
+        .select({ userId: taskLogs.userId, hours: taskLogs.hours })
+        .from(taskLogs)
+        .innerJoin(tasks, eq(tasks.id, taskLogs.taskId))
+        .where(
+          and(
+            inArray(taskLogs.userId, userIds),
+            notInArray(tasks.status, ["completada", "cancelada"]),
+          ),
         ),
-      );
+      db
+        .select({ userId: taskLogs.userId, hours: taskLogs.hours })
+        .from(taskLogs)
+        .innerJoin(tasks, eq(tasks.id, taskLogs.taskId))
+        .where(
+          and(
+            inArray(taskLogs.userId, userIds),
+            eq(tasks.status, "completada"),
+            gte(taskLogs.date, monthStart),
+          ),
+        ),
+    ]);
 
-    const openLogs = await db
-      .select({ hours: taskLogs.hours })
-      .from(taskLogs)
-      .innerJoin(tasks, eq(tasks.id, taskLogs.taskId))
-      .where(
-        and(
-          eq(taskLogs.userId, u.id),
-          notInArray(tasks.status, ["completada", "cancelada"]),
-        ),
-      );
-    const monthLogs = await db
-      .select({ hours: taskLogs.hours })
-      .from(taskLogs)
-      .innerJoin(tasks, eq(tasks.id, taskLogs.taskId))
-      .where(
-        and(
-          eq(taskLogs.userId, u.id),
-          eq(tasks.status, "completada"),
-          gte(taskLogs.date, monthStart),
-        ),
-      );
+  const countByUser = (
+    rows: { ownerId?: string; userId?: string; value: number }[],
+  ) => {
+    const map = new Map<string, number>();
+    for (const row of rows) {
+      const key = row.ownerId ?? row.userId;
+      if (key) map.set(key, row.value);
+    }
+    return map;
+  };
+  const logsByUser = (rows: { userId: string; hours: string }[]) => {
+    const map = new Map<string, { hours: string }[]>();
+    for (const row of rows) {
+      const list = map.get(row.userId) ?? [];
+      list.push({ hours: row.hours });
+      map.set(row.userId, list);
+    }
+    return map;
+  };
 
-    rows.push({
-      userId: u.id,
-      name: u.name,
-      pending,
-      active,
-      support: supportCount,
-      openHours: declaredHours(openLogs),
-      confirmedMonthHours: declaredHours(monthLogs),
-      weeklyCapacityHours: u.weeklyCapacityHours,
-    });
-  }
-  return rows;
+  const pendingByUser = countByUser(pendingRows);
+  const activeByUser = countByUser(activeRows);
+  const supportByUser = countByUser(supportRows);
+  const openLogsByUser = logsByUser(openLogRows);
+  const monthLogsByUser = logsByUser(monthLogRows);
+
+  return activeUsers.map((u) => ({
+    userId: u.id,
+    name: u.name,
+    pending: pendingByUser.get(u.id) ?? 0,
+    active: activeByUser.get(u.id) ?? 0,
+    support: supportByUser.get(u.id) ?? 0,
+    openHours: declaredHours(openLogsByUser.get(u.id) ?? []),
+    confirmedMonthHours: declaredHours(monthLogsByUser.get(u.id) ?? []),
+    weeklyCapacityHours: u.weeklyCapacityHours,
+  }));
 }
 
 export interface DateRange {
@@ -806,16 +859,25 @@ export async function estimateVsActual() {
     .select()
     .from(tasks)
     .where(eq(tasks.status, "completada"));
+  if (doneTasks.length === 0) return [];
 
-  const results = [];
-  for (const t of doneTasks) {
-    const logs = await listLogs(t.id);
-    results.push({
-      taskId: t.id,
-      title: t.title,
-      estimate: Number(t.estimate),
-      actual: declaredHours(logs),
-    });
+  const taskIds = doneTasks.map((t) => t.id);
+  const logs = await db
+    .select({ taskId: taskLogs.taskId, hours: taskLogs.hours })
+    .from(taskLogs)
+    .where(inArray(taskLogs.taskId, taskIds));
+
+  const logsByTask = new Map<string, { hours: string }[]>();
+  for (const log of logs) {
+    const list = logsByTask.get(log.taskId) ?? [];
+    list.push({ hours: log.hours });
+    logsByTask.set(log.taskId, list);
   }
-  return results;
+
+  return doneTasks.map((t) => ({
+    taskId: t.id,
+    title: t.title,
+    estimate: Number(t.estimate),
+    actual: declaredHours(logsByTask.get(t.id) ?? []),
+  }));
 }

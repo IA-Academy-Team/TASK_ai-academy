@@ -83,6 +83,34 @@ describe("GET/POST /proyectos", () => {
     expect(res.status).toBe(404);
   });
 
+  it("admin, POST /proyectos con due anterior a start rechaza el formulario", async () => {
+    const app = createApp();
+    const cookie = await signUpAndGetCookie("proj5@test.local");
+    await db
+      .update(user)
+      .set({ role: "admin" })
+      .where(eq(user.email, "proj5@test.local"));
+    const [me] = await db
+      .select()
+      .from(user)
+      .where(eq(user.email, "proj5@test.local"));
+    const res = await supertest(app)
+      .post("/proyectos")
+      .set("Cookie", cookie)
+      .type("form")
+      .send({
+        name: "Proyecto fechas invertidas",
+        objective: "Objetivo de prueba",
+        leaderId: me.id,
+        start: "2026-02-01",
+        due: "2026-01-01",
+        limitActive: "2",
+        limitReview: "2",
+      });
+    expect(res.status).toBe(303);
+    expect(res.headers.location).toBe("/proyectos?error=1");
+  });
+
   it("GET /proyectos/:id con un id mal formado responde 404, no 500", async () => {
     const app = createApp();
     const cookie = await signUpAndGetCookie("proj4@test.local");

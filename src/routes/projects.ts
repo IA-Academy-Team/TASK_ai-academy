@@ -1,8 +1,7 @@
 import { Router } from "express";
 import {
-  createProject,
+  createProjectWithCode,
   deleteProject,
-  generateProjectCode,
   getProject,
   listAllActiveUsers,
   listMembers,
@@ -10,7 +9,7 @@ import {
 } from "../db/projects-repo.ts";
 import {
   countByStatus,
-  listLogs,
+  listLogsByTaskIds,
   listTasksByProject,
 } from "../db/tasks-repo.ts";
 import {
@@ -76,10 +75,8 @@ projectsRouter.post("/proyectos", authorize("admin"), async (req, res) => {
     return;
   }
 
-  const code = await generateProjectCode(parsed.data.name);
-  const project = await createProject({
+  const project = await createProjectWithCode({
     name: parsed.data.name,
-    code,
     objective: parsed.data.objective,
     leaderId: parsed.data.leaderId,
     start: parsed.data.start,
@@ -140,10 +137,7 @@ projectsRouter.get("/proyectos/:id", async (req, res) => {
   const openTasks = allTasks.filter(
     (t) => t.status !== "completada" && t.status !== "cancelada",
   );
-  const openLogsByTask = new Map<string, { hours: string }[]>();
-  for (const t of openTasks) {
-    openLogsByTask.set(t.id, await listLogs(t.id));
-  }
+  const openLogsByTask = await listLogsByTaskIds(openTasks.map((t) => t.id));
   const peopleLoad = candidates.map((person) => {
     const personOpenTasks = openTasks.filter((t) => t.ownerId === person.id);
     const openHours = personOpenTasks.reduce(

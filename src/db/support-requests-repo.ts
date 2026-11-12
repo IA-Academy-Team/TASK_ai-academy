@@ -14,6 +14,23 @@ export async function createRequest(input: {
   mode: string;
   reason: string;
 }) {
+  const [existing] = await db
+    .select()
+    .from(supportRequests)
+    .where(
+      and(
+        eq(supportRequests.taskId, input.taskId),
+        eq(supportRequests.targetUserId, input.targetUserId),
+        eq(supportRequests.status, "pendiente"),
+      ),
+    );
+  if (existing) {
+    throw new HttpError(
+      400,
+      "ya hay una solicitud de apoyo pendiente para esta persona en esta tarea",
+    );
+  }
+
   const [row] = await db
     .insert(supportRequests)
     .values({

@@ -4,6 +4,7 @@ import { auth } from "../lib/auth.ts";
 type SessionUser = {
   id: string;
   email: string;
+  name: string;
   role: string;
   isActive: boolean;
 };
@@ -29,6 +30,7 @@ export async function attachSession(
     req.user = {
       id: session.user.id,
       email: session.user.email,
+      name: session.user.name,
       role: (session.user as unknown as { role: string }).role,
       isActive: true,
     };

@@ -1,4 +1,4 @@
-import { count, desc, eq, inArray, like } from "drizzle-orm";
+import { count, desc, eq, inArray, like, sql } from "drizzle-orm";
 import { isUuid } from "../lib/uuid.ts";
 import { recordChange } from "./audit-repo.ts";
 import { user } from "./auth-schema.ts";
@@ -23,6 +23,15 @@ function codePrefixFromName(name: string): string {
   return (words[0] ?? GENERIC_CODE_PREFIX).slice(0, 3) || GENERIC_CODE_PREFIX;
 }
 
+function nextCodeForPrefix(prefix: string, existingCodes: string[]): string {
+  const numberPattern = new RegExp(`^${prefix}-(\\d+)$`);
+  const maxNumber = existingCodes.reduce((max, code) => {
+    const match = code.match(numberPattern);
+    return match ? Math.max(max, Number(match[1])) : max;
+  }, 0);
+  return `${prefix}-${String(maxNumber + 1).padStart(3, "0")}`;
+}
+
 export async function generateProjectCode(name: string): Promise<string> {
   const prefix = codePrefixFromName(name);
   const existing = await db
@@ -30,13 +39,10 @@ export async function generateProjectCode(name: string): Promise<string> {
     .from(projects)
     .where(like(projects.code, `${prefix}-%`));
 
-  const numberPattern = new RegExp(`^${prefix}-(\\d+)$`);
-  const maxNumber = existing.reduce((max, row) => {
-    const match = row.code.match(numberPattern);
-    return match ? Math.max(max, Number(match[1])) : max;
-  }, 0);
-
-  return `${prefix}-${String(maxNumber + 1).padStart(3, "0")}`;
+  return nextCodeForPrefix(
+    prefix,
+    existing.map((row) => row.code),
+  );
 }
 
 export async function createProject(input: {
@@ -79,13 +85,88 @@ export async function createProject(input: {
   });
 }
 
+// Genera el código y crea el proyecto en la misma transacción, con un
+// advisory lock por prefijo — a diferencia de llamar generateProjectCode()
+// y createProject() por separado, dos altas concurrentes con el mismo
+// prefijo no pueden calcular el mismo número correlativo. El lock es por
+// transacción (pg_advisory_xact_lock): se libera solo al cerrar la tx, y
+// cubre también el caso de un prefijo que todavía no tiene ninguna fila
+// (un SELECT ... FOR UPDATE no bloquearía nada en ese caso).
+export async function createProjectWithCode(input: {
+  name: string;
+  objective: string;
+  leaderId: string;
+  start: string;
+  due: string;
+  limitActive: number;
+  limitReview: number;
+  memberIds: string[];
+}) {
+  const prefix = codePrefixFromName(input.name);
+
+  return db.transaction(async (tx) => {
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${prefix}))`);
+
+    const existing = await tx
+      .select({ code: projects.code })
+      .from(projects)
+      .where(like(projects.code, `${prefix}-%`));
+    const code = nextCodeForPrefix(
+      prefix,
+      existing.map((row) => row.code),
+    );
+
+    const [row] = await tx
+      .insert(projects)
+      .values({
+        name: input.name,
+        code,
+        objective: input.objective,
+        leaderId: input.leaderId,
+        start: input.start,
+        due: input.due,
+        limitActive: input.limitActive,
+        limitReview: input.limitReview,
+      })
+      .returning();
+
+    const memberIds = Array.from(new Set(input.memberIds)).filter(
+      (id) => id !== input.leaderId,
+    );
+    if (memberIds.length > 0) {
+      await tx
+        .insert(projectMembers)
+        .values(memberIds.map((userId) => ({ projectId: row.id, userId })));
+    }
+
+    return row;
+  });
+}
+
 export async function listProjects() {
   const rows = await db
     .select()
     .from(projects)
     .orderBy(desc(projects.createdAt));
-  const allTasks = await db.select().from(tasks);
-  const allLogs = await db.select().from(taskLogs);
+  const projectIds = rows.map((p) => p.id);
+
+  // Acotada a las tareas/horas de estos proyectos (nunca todo el historial
+  // del sistema, incluidas tareas independientes que no hacen falta acá).
+  const allTasks =
+    projectIds.length === 0
+      ? []
+      : await db
+          .select()
+          .from(tasks)
+          .where(inArray(tasks.projectId, projectIds));
+  const taskIds = allTasks.map((t) => t.id);
+  const allLogs =
+    taskIds.length === 0
+      ? []
+      : await db
+          .select()
+          .from(taskLogs)
+          .where(inArray(taskLogs.taskId, taskIds));
   const allMembers = await db
     .select({
       projectId: projectMembers.projectId,

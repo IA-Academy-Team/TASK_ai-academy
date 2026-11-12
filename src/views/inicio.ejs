@@ -17,7 +17,7 @@
     <%- include('partials/navbar', { active: 'inicio' }) %>
     <div class="topbar">
       <div>
-        <h1 class="page-title">Hola, <%= user.email %></h1>
+        <h1 class="page-title">Hola, <%= user.name || user.email %></h1>
         <p class="subtitle">Resumen de tu actividad en Task.</p>
       </div>
     </div>
