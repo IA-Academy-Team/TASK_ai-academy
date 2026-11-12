@@ -36,6 +36,13 @@
       "when": 1794350325183,
       "tag": "0004_careless_echo",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794508018588,
+      "tag": "0005_old_goliath",
+      "breakpoints": true
     }
   ]
 }

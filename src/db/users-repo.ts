@@ -22,6 +22,13 @@ export async function deactivateUser(id: string) {
   await db.update(user).set({ isActive: false }).where(eq(user.id, id));
 }
 
+export async function setMustChangePassword(id: string, value: boolean) {
+  await db
+    .update(user)
+    .set({ mustChangePassword: value })
+    .where(eq(user.id, id));
+}
+
 export async function deleteUser(id: string) {
   await db.delete(user).where(eq(user.id, id));
 }

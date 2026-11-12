@@ -55,10 +55,13 @@
       <div class="modal-panel">
         <h3>Crear usuario</h3>
         <% if (error) { %><div class="error"><%= error %></div><% } %>
+        <p style="color:var(--muted);font-size:12px;margin:0 0 14px">
+          Se crea con la contraseña genérica <strong><%= genericPassword %></strong>. El usuario
+          deberá cambiarla al iniciar sesión por primera vez.
+        </p>
         <form method="post" action="/admin/usuarios" class="form-grid">
           <div class="field full"><label>Nombre *</label><input name="name" placeholder="Nombre" required /></div>
           <div class="field full"><label>Email *</label><input name="email" type="email" placeholder="email@aiacademy.local" required /></div>
-          <div class="field full"><label>Contraseña *</label><input name="password" type="password" placeholder="Contraseña (8+)" minlength="8" required /></div>
           <div class="foot-actions full">
             <button type="button" class="btn" onclick="document.getElementById('create-user-modal').classList.remove('open')">Cancelar</button>
             <button type="submit" class="btn primary">Crear usuario</button>

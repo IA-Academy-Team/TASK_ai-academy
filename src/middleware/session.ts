@@ -7,6 +7,7 @@ type SessionUser = {
   name: string;
   role: string;
   isActive: boolean;
+  mustChangePassword: boolean;
 };
 
 declare module "express-serve-static-core" {
@@ -24,15 +25,19 @@ export async function attachSession(
     headers: new Headers(req.headers as Record<string, string>),
   });
 
-  const isActive = (session?.user as unknown as { isActive?: boolean })
-    ?.isActive;
-  if (session?.user && isActive !== false) {
+  const extra = session?.user as unknown as {
+    isActive?: boolean;
+    role: string;
+    mustChangePassword?: boolean;
+  };
+  if (session?.user && extra.isActive !== false) {
     req.user = {
       id: session.user.id,
       email: session.user.email,
       name: session.user.name,
-      role: (session.user as unknown as { role: string }).role,
+      role: extra.role,
       isActive: true,
+      mustChangePassword: extra.mustChangePassword === true,
     };
   }
 

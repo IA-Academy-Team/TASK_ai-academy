@@ -4,16 +4,22 @@ import {
   deleteUser,
   getUserActivityCounts,
   listAllUsers,
+  setMustChangePassword,
 } from "../db/users-repo.ts";
 import { auth } from "../lib/auth.ts";
 import { authorize } from "../middleware/authorize.ts";
-import { createUserSchema } from "../schemas/admin.ts";
+import { createUserSchema, GENERIC_PASSWORD } from "../schemas/admin.ts";
 
 export const adminRouter = Router();
 
 adminRouter.get("/admin/usuarios", authorize("admin"), async (req, res) => {
   const users = await listAllUsers();
-  res.render("admin/usuarios", { users, user: req.user, error: null });
+  res.render("admin/usuarios", {
+    users,
+    user: req.user,
+    error: null,
+    genericPassword: GENERIC_PASSWORD,
+  });
 });
 
 adminRouter.post("/admin/usuarios", authorize("admin"), async (req, res) => {
@@ -23,12 +29,16 @@ adminRouter.post("/admin/usuarios", authorize("admin"), async (req, res) => {
     res.status(400).render("admin/usuarios", {
       users,
       user: req.user,
-      error: "Email, nombre y contraseña (8+ caracteres) son obligatorios.",
+      error: "Email y nombre son obligatorios.",
+      genericPassword: GENERIC_PASSWORD,
     });
     return;
   }
 
-  await auth.api.signUpEmail({ body: parsed.data });
+  const created = await auth.api.signUpEmail({
+    body: { ...parsed.data, password: GENERIC_PASSWORD },
+  });
+  await setMustChangePassword(created.user.id, true);
   res.redirect(303, "/admin/usuarios");
 });
 
@@ -48,6 +58,7 @@ adminRouter.post(
         users,
         user: req.user,
         error: "No podés desactivar tu propia cuenta.",
+        genericPassword: GENERIC_PASSWORD,
       });
       return;
     }
@@ -73,6 +84,7 @@ adminRouter.post(
         users,
         user: req.user,
         error: "No podés eliminar tu propia cuenta.",
+        genericPassword: GENERIC_PASSWORD,
       });
       return;
     }
@@ -86,6 +98,7 @@ adminRouter.post(
         user: req.user,
         error:
           "No se puede eliminar: el usuario tiene actividad registrada en el sistema (proyectos, tareas, horas, solicitudes de apoyo o historial). Desactivalo en su lugar.",
+        genericPassword: GENERIC_PASSWORD,
       });
       return;
     }

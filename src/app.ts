@@ -7,6 +7,7 @@ import { errorHandler } from "./middleware/error-handler.ts";
 import { pageErrorHandler } from "./middleware/page-error-handler.ts";
 import { attachSession } from "./middleware/session.ts";
 import { adminRouter } from "./routes/admin.ts";
+import { changePasswordRouter } from "./routes/change-password.ts";
 import { dashboardRouter } from "./routes/dashboard.ts";
 import { healthRouter } from "./routes/health.ts";
 import { mytasksRouter } from "./routes/mytasks.ts";
@@ -71,6 +72,16 @@ export function createApp() {
     next();
   });
 
+  // Cuenta recién creada por un admin con la contraseña genérica: bloqueamos
+  // todo excepto /cambiar-password hasta que la reemplace por una propia.
+  app.use((req, res, next) => {
+    if (req.user?.mustChangePassword && req.path !== "/cambiar-password") {
+      res.redirect("/cambiar-password");
+      return;
+    }
+    next();
+  });
+
   app.get("/login", (req, res) => {
     if (req.user) {
       res.redirect("/");
@@ -79,6 +90,7 @@ export function createApp() {
     res.render("login");
   });
 
+  app.use(changePasswordRouter);
   app.use(dashboardRouter);
   app.use(projectsImportRouter);
   app.use(projectsRouter);
