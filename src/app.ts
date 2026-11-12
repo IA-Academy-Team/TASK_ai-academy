@@ -4,6 +4,7 @@ import express from "express";
 import { getSidebarCounts } from "./db/sidebar-repo.ts";
 import { auth } from "./lib/auth.ts";
 import { errorHandler } from "./middleware/error-handler.ts";
+import { pageErrorHandler } from "./middleware/page-error-handler.ts";
 import { attachSession } from "./middleware/session.ts";
 import { adminRouter } from "./routes/admin.ts";
 import { dashboardRouter } from "./routes/dashboard.ts";
@@ -96,6 +97,7 @@ export function createApp() {
   app.use(reportsRouter);
   app.use(adminRouter);
 
+  app.use(pageErrorHandler);
   app.use(errorHandler);
 
   return app;

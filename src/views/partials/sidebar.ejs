@@ -36,34 +36,73 @@
       <span class="sidebar-avatar"><%= (user.name || user.email || "?").charAt(0).toUpperCase() %></span>
       <span class="sidebar-user-name"><%= user.name || user.email %></span>
     </div>
-    <button type="button" class="navbtn" aria-label="Salir" onclick="fetch('/api/auth/sign-out',{method:'POST'}).then(()=>location.href='/login')"><%- include('./icon', { kind: 'logout', size: 16 }) %><span class="navbtn-label">Salir</span></button>
+    <button type="button" class="navbtn" aria-label="Salir" onclick="aiacademySignOut(this)"><%- include('./icon', { kind: 'logout', size: 16 }) %><span class="navbtn-label">Salir</span></button>
   </div>
 </nav>
 <div class="sidebar-backdrop" onclick="document.querySelector('.sidebar').classList.remove('open')"></div>
 <script>
+function getToastStack() {
+  var el = document.getElementById('toast-stack');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'toast-stack';
+    el.className = 'toast-stack';
+    document.body.appendChild(el);
+  }
+  return el;
+}
+
+function dismissToast(toast) {
+  if (toast.classList.contains('leaving')) return;
+  toast.classList.add('leaving');
+  toast.addEventListener('transitionend', function handler(e) {
+    if (e.propertyName !== 'opacity') return;
+    toast.removeEventListener('transitionend', handler);
+    toast.remove();
+  });
+}
+
+function showErrorAlert(title, message) {
+  var toast = document.createElement('div');
+  toast.className = 'toast-alert';
+
+  var close = document.createElement('button');
+  close.type = 'button';
+  close.className = 'toast-alert-close';
+  close.setAttribute('aria-label', 'Cerrar');
+  close.textContent = '×';
+  close.onclick = function () { dismissToast(toast); };
+
+  var titleEl = document.createElement('strong');
+  titleEl.textContent = title;
+
+  var body = document.createElement('p');
+  body.textContent = message;
+
+  toast.appendChild(close);
+  toast.appendChild(titleEl);
+  toast.appendChild(body);
+  getToastStack().appendChild(toast);
+  setTimeout(function () { dismissToast(toast); }, 12000);
+}
+
+function aiacademySignOut(button) {
+  button.disabled = true;
+  fetch('/api/auth/sign-out', { method: 'POST' })
+    .then(function (res) {
+      if (!res.ok) {
+        throw new Error('sign-out failed with status ' + res.status);
+      }
+      location.href = '/login';
+    })
+    .catch(function () {
+      button.disabled = false;
+      showErrorAlert('No se pudo cerrar sesión', 'Intentá de nuevo. Si el problema sigue, recargá la página.');
+    });
+}
+
 (function () {
   if (!window.EventSource) return;
-
-  function getToastStack() {
-    var el = document.getElementById('toast-stack');
-    if (!el) {
-      el = document.createElement('div');
-      el.id = 'toast-stack';
-      el.className = 'toast-stack';
-      document.body.appendChild(el);
-    }
-    return el;
-  }
-
-  function dismissToast(toast) {
-    if (toast.classList.contains('leaving')) return;
-    toast.classList.add('leaving');
-    toast.addEventListener('transitionend', function handler(e) {
-      if (e.propertyName !== 'opacity') return;
-      toast.removeEventListener('transitionend', handler);
-      toast.remove();
-    });
-  }
 
   function showSupportAlert(data) {
     var toast = document.createElement('div');

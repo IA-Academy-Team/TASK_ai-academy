@@ -1,4 +1,5 @@
 import { count, desc, eq, inArray, like } from "drizzle-orm";
+import { isUuid } from "../lib/uuid.ts";
 import { recordChange } from "./audit-repo.ts";
 import { user } from "./auth-schema.ts";
 import { db } from "./client.ts";
@@ -123,7 +124,7 @@ export async function listProjects() {
 }
 
 export async function getProject(id: string | null | undefined) {
-  if (!id) return undefined;
+  if (!id || !isUuid(id)) return undefined;
   const [row] = await db.select().from(projects).where(eq(projects.id, id));
   return row;
 }

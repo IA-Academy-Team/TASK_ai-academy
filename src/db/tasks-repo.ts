@@ -13,6 +13,7 @@ import {
 } from "drizzle-orm";
 import { declaredHours } from "../domain/hours.ts";
 import { HttpError } from "../lib/http-error.ts";
+import { isUuid } from "../lib/uuid.ts";
 import { recordChange } from "./audit-repo.ts";
 import { user } from "./auth-schema.ts";
 import { db } from "./client.ts";
@@ -50,10 +51,7 @@ export async function createTask(input: {
   actorId: string;
 }) {
   if (input.dependencyId) {
-    const [dep] = await db
-      .select()
-      .from(tasks)
-      .where(eq(tasks.id, input.dependencyId));
+    const dep = await getTask(input.dependencyId);
     if (!dep || dep.projectId !== input.projectId) {
       throw new HttpError(
         400,
@@ -139,6 +137,7 @@ export async function listTasksWithoutProject() {
 }
 
 export async function getTask(id: string) {
+  if (!isUuid(id)) return undefined;
   const [row] = await db.select().from(tasks).where(eq(tasks.id, id));
   return row;
 }
@@ -545,10 +544,7 @@ export async function updateTask(
     if (patch.dependencyId === id) {
       throw new HttpError(400, "una tarea no puede depender de sí misma");
     }
-    const [dep] = await db
-      .select()
-      .from(tasks)
-      .where(eq(tasks.id, patch.dependencyId));
+    const dep = await getTask(patch.dependencyId);
     if (!dep || dep.projectId !== task.projectId) {
       throw new HttpError(
         400,

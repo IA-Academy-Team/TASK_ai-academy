@@ -77,6 +77,22 @@ describe("admin usuarios", () => {
     expect(after.isActive).toBe(false);
   });
 
+  it("POST /admin/usuarios/:id/desactivar rechaza auto-desactivación", async () => {
+    const app = createApp();
+    const email = "adminx4c@test.local";
+    const cookie = await signUpAndGetCookie(email);
+    await db.update(user).set({ role: "admin" }).where(eq(user.email, email));
+    const [self] = await db.select().from(user).where(eq(user.email, email));
+
+    const res = await supertest(app)
+      .post(`/admin/usuarios/${self.id}/desactivar`)
+      .set("Cookie", cookie);
+    expect(res.status).toBe(400);
+
+    const [after] = await db.select().from(user).where(eq(user.email, email));
+    expect(after.isActive).toBe(true);
+  });
+
   it("desactivar corta el acceso de una sesión ya abierta", async () => {
     const app = createApp();
     const email = "adminx4b@test.local";

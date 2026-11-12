@@ -36,7 +36,23 @@ adminRouter.post(
   "/admin/usuarios/:id/desactivar",
   authorize("admin"),
   async (req, res) => {
-    await deactivateUser(String(req.params.id));
+    if (!req.user) {
+      res.redirect(303, "/login");
+      return;
+    }
+    const id = String(req.params.id);
+
+    if (id === req.user.id) {
+      const users = await listAllUsers();
+      res.status(400).render("admin/usuarios", {
+        users,
+        user: req.user,
+        error: "No podés desactivar tu propia cuenta.",
+      });
+      return;
+    }
+
+    await deactivateUser(id);
     res.redirect(303, "/admin/usuarios");
   },
 );

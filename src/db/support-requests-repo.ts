@@ -1,5 +1,6 @@
 import { and, desc, eq } from "drizzle-orm";
 import { HttpError } from "../lib/http-error.ts";
+import { isUuid } from "../lib/uuid.ts";
 import { recordChange } from "./audit-repo.ts";
 import { user } from "./auth-schema.ts";
 import { db } from "./client.ts";
@@ -91,6 +92,7 @@ export async function listPendingApplyForLeader(leaderId: string) {
 }
 
 export async function getRequest(id: string) {
+  if (!isUuid(id)) return undefined;
   const [row] = await db
     .select()
     .from(supportRequests)

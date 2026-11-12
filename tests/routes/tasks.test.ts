@@ -58,6 +58,14 @@ describe("GET/POST /tareas/:id", () => {
     expect(res.status).toBe(404);
   });
 
+  it("GET /tareas/:id con id mal formado responde 404, no 500", async () => {
+    const { app, cookie } = await setup("task2b@test.local");
+    const res = await supertest(app)
+      .get("/tareas/no-es-un-uuid")
+      .set("Cookie", cookie);
+    expect(res.status).toBe(404);
+  });
+
   it("POST /tareas/:id/estado activa->revision->completada (líder) funciona de punta a punta", async () => {
     const { app, cookie, me, project } = await setup("task3@test.local");
     const task = await createTask({

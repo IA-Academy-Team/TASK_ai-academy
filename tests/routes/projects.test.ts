@@ -82,4 +82,13 @@ describe("GET/POST /proyectos", () => {
       .set("Cookie", cookie);
     expect(res.status).toBe(404);
   });
+
+  it("GET /proyectos/:id con un id mal formado responde 404, no 500", async () => {
+    const app = createApp();
+    const cookie = await signUpAndGetCookie("proj4@test.local");
+    const res = await supertest(app)
+      .get("/proyectos/no-es-un-uuid")
+      .set("Cookie", cookie);
+    expect(res.status).toBe(404);
+  });
 });
