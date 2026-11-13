@@ -18,13 +18,13 @@ export const createTaskSchema = z.object({
   description: z.string().max(2000).optional().default(""),
   ownerId: z.string().min(1),
   priority: priorityEnum,
-  weight: z.coerce.number().int().min(1).max(10),
   estimate: z.coerce.number().positive().max(999),
-  dependencyId: z
+  due: dateString,
+  dueTime: z
     .string()
+    .regex(/^([01]\d|2[0-3]):[0-5]\d$/)
     .optional()
     .transform((v) => (v ? v : null)),
-  due: dateString,
   support: z.union([z.string(), z.array(z.string())]).optional(),
 });
 

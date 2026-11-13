@@ -70,6 +70,8 @@ export const tasks = pgTable("tasks", {
   // la existencia se valida en el repo.
   dependencyId: uuid("dependency_id"),
   due: date("due").notNull(),
+  // Nullable: la hora es opcional, la fecha límite sigue siendo obligatoria.
+  dueTime: text("due_time"),
   evidence: text("evidence"),
   approvedAt: timestamp("approved_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true })

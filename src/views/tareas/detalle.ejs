@@ -43,7 +43,7 @@
         <div class="detail-row"><span>Peso</span><strong><%= task.weight %></strong></div>
         <div class="detail-row"><span>Estimado</span><strong><%= task.estimate %> h</strong></div>
         <div class="detail-row"><span>Horas registradas</span><strong><%= totalHours %> h</strong></div>
-        <div class="detail-row"><span>Vence</span><strong><%= task.due %></strong></div>
+        <div class="detail-row"><span>Vence</span><strong><%= task.due %><% if (task.dueTime) { %> · <%= task.dueTime %><% } %></strong></div>
         <% if (dependency) { %><div class="detail-row"><span>Depende de</span><strong>#<%= dependency.order %> <%= dependency.title %> (<%= dependency.status %>)</strong></div><% } %>
         <% if (task.evidence) { %><div class="detail-row"><span>Evidencia</span><strong><%= task.evidence %></strong></div><% } %>
         <% if (task.approvedAt) { %><div class="detail-row"><span>Aprobada</span><strong><%= task.approvedAt %></strong></div><% } %>

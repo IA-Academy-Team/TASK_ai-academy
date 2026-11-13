@@ -43,6 +43,13 @@
       "when": 1794508018588,
       "tag": "0005_old_goliath",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794608191641,
+      "tag": "0006_nervous_paper_doll",
+      "breakpoints": true
     }
   ]
 }

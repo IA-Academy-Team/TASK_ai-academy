@@ -118,8 +118,12 @@ tasksCreateRouter.post("/tareas", async (req, res) => {
   }
 
   // Sin proyecto no hay líder que delegue el responsable — una tarea
-  // independiente siempre se crea para una misma, nunca "para otra persona".
-  const ownerId = isIndependent ? req.user.id : parsed.data.ownerId;
+  // independiente creada por un usuario siempre es para una misma. Un admin
+  // sí puede elegir responsable aunque la tarea sea independiente.
+  const ownerId =
+    isIndependent && req.user.role !== "admin"
+      ? req.user.id
+      : parsed.data.ownerId;
 
   await createTask({
     projectId: isIndependent ? null : (project?.id ?? null),
@@ -128,10 +132,11 @@ tasksCreateRouter.post("/tareas", async (req, res) => {
     description: parsed.data.description,
     ownerId,
     priority: parsed.data.priority,
-    weight: parsed.data.weight,
+    weight: 1,
     estimate: String(parsed.data.estimate),
-    dependencyId: parsed.data.dependencyId,
+    dependencyId: null,
     due: parsed.data.due,
+    dueTime: parsed.data.dueTime,
     supportIds: toArray(parsed.data.support),
     actorId: req.user.id,
   });

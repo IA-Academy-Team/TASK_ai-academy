@@ -57,20 +57,34 @@
         <div class="field full"><label>Título *</label><input id="f-title" name="title" maxlength="200" required /></div>
         <div class="field full"><label>Entregable esperado *</label><input name="deliverable" maxlength="300" required /></div>
         <div class="field full"><label>Descripción</label><textarea name="description" maxlength="2000"></textarea></div>
-        <% if (independent) { %>
+        <% var showOwnerSelect = !independent || user.role === 'admin'; %>
+        <% if (!showOwnerSelect) { %>
         <input type="hidden" name="ownerId" value="<%= user.id %>" />
         <div class="field"><label>Responsable</label><input value="<%= user.name || user.email %> (vos)" disabled /></div>
         <% } else { %>
         <div class="field"><label>Responsable *</label>
           <select name="ownerId" required>
-            <% allUsers.forEach(function(u) { %><option value="<%= u.id %>"><%= u.name %></option><% }) %>
+            <% allUsers.forEach(function(u) { %><option value="<%= u.id %>" <%= independent && u.id === user.id ? 'selected' : '' %>><%= u.name %></option><% }) %>
           </select>
         </div>
         <% } %>
-        <div class="field"><label>Apoyo</label>
-          <select name="support" multiple>
-            <% allUsers.forEach(function(u) { %><option value="<%= u.id %>"><%= u.name %></option><% }) %>
-          </select>
+        <div class="field full"><label>Apoyo</label>
+          <div class="dropdown-select" id="support-dropdown">
+            <button type="button" class="dropdown-select-trigger" onclick="document.getElementById('support-dropdown').classList.toggle('open')">
+              <span id="support-label">Selecciona apoyo</span>
+              <%- include('../partials/icon', { kind: 'chevron-down', size: 14 }) %>
+            </button>
+            <div class="dropdown-select-panel people-grid" id="support-panel">
+              <% allUsers.forEach(function(u) { %>
+              <label class="person-chip">
+                <input type="checkbox" name="support" value="<%= u.id %>" onchange="aiacademyUpdateSupportSelection()" />
+                <span class="chip-avatar"><%= (u.name || '?').charAt(0).toUpperCase() %></span>
+                <%= u.name %>
+              </label>
+              <% }) %>
+            </div>
+          </div>
+          <div class="selected-pills" id="support-selected"></div>
         </div>
         <div class="field"><label>Prioridad *</label>
           <select id="f-priority" name="priority" required>
@@ -80,15 +94,9 @@
             <option value="critica">Crítica</option>
           </select>
         </div>
-        <div class="field"><label>Peso del avance</label><input id="f-weight" type="number" name="weight" min="1" max="10" value="1" required /></div>
         <div class="field"><label>Horas estimadas *</label><input id="f-estimate" type="number" name="estimate" min="0.5" step="0.5" required /></div>
         <div class="field"><label>Fecha límite *</label><input id="f-due" type="date" name="due" required /></div>
-        <div class="field full"><label>Depende de</label>
-          <select name="dependencyId">
-            <option value="">Ninguna</option>
-            <% allTasks.forEach(function(t) { %><option value="<%= t.id %>">#<%= t.order %> <%= t.title %></option><% }) %>
-          </select>
-        </div>
+        <div class="field"><label>Hora de entrega</label><input id="f-due-time" type="time" name="dueTime" /></div>
         <div class="foot-actions full">
           <a href="/tareas/nueva" class="btn subtle"><% if (independent) { %>Elegir un proyecto<% } else { %>Elegir otro proyecto<% } %></a>
           <button type="submit" class="btn primary">Crear tarea</button>
@@ -103,7 +111,6 @@
         <div class="task-create-preview-row"><span>Proyecto</span><strong><% if (independent) { %>Ninguno<% } else { %><%= project.code %><% } %></strong></div>
         <div class="task-create-preview-row"><span>Estado</span><strong>Pendiente</strong></div>
         <div class="task-create-preview-row"><span>Prioridad</span><strong id="pv-priority">Media</strong></div>
-        <div class="task-create-preview-row"><span>Peso</span><strong id="pv-weight">1</strong></div>
         <div class="task-create-preview-row"><span>Horas est.</span><strong id="pv-estimate">—</strong></div>
         <div class="task-create-preview-row"><span>Vence</span><strong id="pv-due">—</strong></div>
       </div>
@@ -128,23 +135,57 @@
       if (!form) return;
       var pvTitle = document.getElementById('pv-title');
       var pvPriority = document.getElementById('pv-priority');
-      var pvWeight = document.getElementById('pv-weight');
       var pvEstimate = document.getElementById('pv-estimate');
       var pvDue = document.getElementById('pv-due');
       var titleInput = document.getElementById('f-title');
       var priorityInput = document.getElementById('f-priority');
-      var weightInput = document.getElementById('f-weight');
       var estimateInput = document.getElementById('f-estimate');
       var dueInput = document.getElementById('f-due');
+      var dueTimeInput = document.getElementById('f-due-time');
       var PRIORITY_LABEL = { baja: 'Baja', media: 'Media', alta: 'Alta', critica: 'Crítica' };
       form.addEventListener('input', function () {
         pvTitle.textContent = titleInput.value.trim() || 'Sin título';
         pvPriority.textContent = PRIORITY_LABEL[priorityInput.value] || priorityInput.value;
-        pvWeight.textContent = weightInput.value || '1';
         pvEstimate.textContent = estimateInput.value ? estimateInput.value + ' h' : '—';
-        pvDue.textContent = dueInput.value || '—';
+        pvDue.textContent = dueInput.value ? dueInput.value + (dueTimeInput.value ? ' ' + dueTimeInput.value : '') : '—';
       });
     })();
+
+    function aiacademyUpdateSupportSelection() {
+      var boxes = Array.prototype.slice.call(document.querySelectorAll('#support-panel input[type=checkbox]'));
+      var checked = boxes.filter(function (cb) { return cb.checked; });
+      var label = document.getElementById('support-label');
+      label.textContent = checked.length === 0
+        ? 'Selecciona apoyo'
+        : checked.length + ' seleccionado' + (checked.length === 1 ? '' : 's');
+
+      var selected = document.getElementById('support-selected');
+      selected.replaceChildren();
+      checked.forEach(function (cb) {
+        var pill = document.createElement('span');
+        pill.className = 'selected-pill';
+        var name = document.createElement('span');
+        name.textContent = cb.closest('.person-chip').textContent.trim();
+        var remove = document.createElement('button');
+        remove.type = 'button';
+        remove.setAttribute('aria-label', 'Quitar');
+        remove.textContent = '×';
+        remove.onclick = function () {
+          cb.checked = false;
+          aiacademyUpdateSupportSelection();
+        };
+        pill.appendChild(name);
+        pill.appendChild(remove);
+        selected.appendChild(pill);
+      });
+      selected.style.display = checked.length ? 'flex' : 'none';
+    }
+    aiacademyUpdateSupportSelection();
+
+    document.addEventListener('click', function (e) {
+      var dropdown = document.getElementById('support-dropdown');
+      if (dropdown && !dropdown.contains(e.target)) dropdown.classList.remove('open');
+    });
     </script>
     <% } %>
   </main>

@@ -47,6 +47,7 @@ export async function createTask(input: {
   estimate: string;
   dependencyId: string | null;
   due: string;
+  dueTime?: string | null;
   supportIds: string[];
   actorId: string;
 }) {
@@ -96,6 +97,7 @@ export async function createTask(input: {
         estimate: input.estimate,
         dependencyId: input.dependencyId,
         due: input.due,
+        dueTime: input.dueTime ?? null,
       })
       .returning();
 
