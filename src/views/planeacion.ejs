@@ -22,27 +22,42 @@
       </div>
     </div>
 
-    <form method="get" action="/planeacion" class="filters" style="gap:12px">
-      <select name="proyecto" onchange="this.form.submit()">
+    <form method="get" action="/planeacion" class="plan-toolbar">
+      <select name="proyecto" class="plan-project-select" onchange="this.form.submit()">
         <option value="">Todos los proyectos</option>
         <% projects.forEach(function(p) { %><option value="<%= p.id %>" <%= projectFilter === p.id ? 'selected' : '' %>><%= p.code %> — <%= p.name %></option><% }) %>
       </select>
       <input type="hidden" name="semana" value="<%= weekOffset %>" />
-      <a href="/planeacion?semana=<%= weekOffset - 1 %>&proyecto=<%= projectFilter || '' %>" class="btn subtle">&larr; Semana anterior</a>
-      <a href="/planeacion?semana=<%= weekOffset + 1 %>&proyecto=<%= projectFilter || '' %>" class="btn subtle">Semana siguiente &rarr;</a>
+
+      <div class="week-nav">
+        <span class="week-nav-label">Semana</span>
+        <div class="week-nav-controls">
+          <a href="/planeacion?semana=<%= weekOffset - 1 %>&proyecto=<%= projectFilter || '' %>" class="week-nav-btn week-nav-btn-prev" aria-label="Semana anterior"><%- include('partials/icon', { kind: 'chevron-right', size: 15 }) %></a>
+          <a href="/planeacion?semana=<%= weekOffset + 1 %>&proyecto=<%= projectFilter || '' %>" class="week-nav-btn" aria-label="Semana siguiente"><%- include('partials/icon', { kind: 'chevron-right', size: 15 }) %></a>
+        </div>
+      </div>
     </form>
 
     <div>
-      <div class="week-calendar">
+      <div class="week-calendar-grid">
+        <div class="week-calendar-timeaxis-spacer">
+          <div class="week-calendar-daylabel" style="visibility:hidden">·</div>
+          <div class="week-calendar-timeaxis" style="height:<%= gridHeight %>px">
+            <% marks.forEach(function(m) { %>
+            <span class="week-calendar-tick week-calendar-tick-<%= m.anchor %>" style="top:<%= m.top %>px"><%= m.label %></span>
+            <% }) %>
+          </div>
+        </div>
         <% byDay.forEach(function(d) { %>
         <div class="week-calendar-column">
           <div class="week-calendar-daylabel <%= d.day === today ? 'is-today' : '' %>"><%= d.label %></div>
-          <div class="week-calendar-day <%= d.day === today ? 'is-today' : '' %>">
+          <div class="week-calendar-day <%= d.day === today ? 'is-today' : '' %>" style="height:<%= gridHeight %>px">
+            <% marks.forEach(function(m) { %><span class="week-calendar-gridline" style="top:<%= m.top %>px"></span><% }) %>
             <% if (d.blocks.length === 0) { %>
             <p class="week-calendar-empty">Sin tareas</p>
             <% } else { %>
             <% d.blocks.forEach(function(b) { %>
-            <a href="/tareas/<%= b.id %>" class="week-calendar-block prio-<%= b.priority %>" tabindex="0">
+            <a href="/tareas/<%= b.id %>" class="week-calendar-block prio-<%= b.priority %>" style="top:<%= b.topPx %>px;height:<%= b.heightPx %>px" tabindex="0">
               <span class="week-calendar-block-title"><%= b.title %></span>
               <span class="week-calendar-block-owner"><%= b.ownerName %></span>
               <span class="week-calendar-block-hours"><%= b.estimate %> h</span>
@@ -53,22 +68,8 @@
         </div>
         <% }) %>
       </div>
-      <p class="subtitle" style="margin-top:10px">Cada cuadro es una tarea independiente, agrupadas por prioridad — no se solapan aunque varias personas tengan tareas el mismo día. Pasá el mouse para ver el detalle completo. No es un horario real asignado, el sistema no registra hora de inicio.</p>
+      <p class="subtitle" style="margin-top:10px">Cada cuadro es una tarea independiente, ubicada según su prioridad dentro de la jornada (8-12 y 14-18) — no se solapan aunque varias personas tengan tareas el mismo día. Pasá el mouse para ver el detalle completo. No es un horario real asignado, el sistema no registra hora de inicio.</p>
     </div>
-
-    <section class="card pad">
-      <div class="sectiontitle"><h2>Capacidad de referencia</h2></div>
-      <div class="table-wrap">
-      <table class="table">
-        <thead><tr><th>Persona</th><th>Capacidad semanal</th></tr></thead>
-        <tbody>
-          <% capacity.forEach(function(u) { %>
-          <tr><td><%= u.name %></td><td><%= u.weeklyCapacityHours %> h</td></tr>
-          <% }) %>
-        </tbody>
-      </table>
-      </div>
-    </section>
   </main>
 </div>
 </body>

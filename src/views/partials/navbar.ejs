@@ -10,9 +10,90 @@
       <% } %>
     <% }) %>
     <% } %>
-    <a class="navbar-bell" href="/notificaciones" aria-label="Notificaciones">
-      <%- include('./icon', { kind: 'bell', size: 18 }) %>
-      <% if (typeof sidebarCounts !== 'undefined' && sidebarCounts && sidebarCounts.notifications > 0) { %><span class="navbar-bell-count"><%= sidebarCounts.notifications %></span><% } %>
-    </a>
+    <div class="kebab notif-kebab">
+      <button type="button" class="navbar-bell" aria-label="Notificaciones" aria-haspopup="true" onclick="aiacademyToggleNotifDropdown(this)">
+        <%- include('./icon', { kind: 'bell', size: 18 }) %>
+        <% if (typeof sidebarCounts !== 'undefined' && sidebarCounts && sidebarCounts.notifications > 0) { %><span class="navbar-bell-count"><%= sidebarCounts.notifications %></span><% } %>
+      </button>
+      <div class="notif-dropdown">
+        <div class="notif-dropdown-header">Notificaciones</div>
+        <div class="notif-dropdown-body" data-notif-body>
+          <p class="empty" style="padding:22px 16px">Cargando…</p>
+        </div>
+        <a href="/notificaciones" class="notif-dropdown-footer">Ver todas &rarr;</a>
+      </div>
+    </div>
   </div>
 </div>
+<script>
+function aiacademyToggleNotifDropdown(trigger) {
+  var dropdown = trigger.nextElementSibling;
+  var opening = !dropdown.classList.contains('open');
+  document.querySelectorAll('.notif-dropdown.open').forEach(function (d) { d.classList.remove('open'); });
+  if (!opening) return;
+  dropdown.classList.add('open');
+  if (dropdown.getAttribute('data-loaded') === 'true') return;
+  var body = dropdown.querySelector('[data-notif-body]');
+  fetch('/notificaciones/resumen')
+    .then(function (res) { if (!res.ok) throw new Error('request failed'); return res.json(); })
+    .then(function (data) { aiacademyRenderNotifDropdown(body, data); dropdown.setAttribute('data-loaded', 'true'); })
+    .catch(function () {
+      body.replaceChildren();
+      var p = document.createElement('p');
+      p.className = 'empty';
+      p.style.padding = '22px 16px';
+      p.textContent = 'No se pudo cargar. Probá de nuevo.';
+      body.appendChild(p);
+    });
+}
+
+function aiacademyRenderNotifDropdown(body, data) {
+  var groups = [
+    { key: 'review', label: 'Validaciones pendientes' },
+    { key: 'overdue', label: 'Entregas vencidas' },
+    { key: 'budget', label: 'Presupuesto sin horas' },
+    { key: 'support', label: 'Solicitudes de apoyo' },
+  ];
+  body.replaceChildren();
+  var hasAny = false;
+  groups.forEach(function (g) {
+    var items = (data.items && data.items[g.key]) || [];
+    if (items.length === 0) return;
+    hasAny = true;
+    var section = document.createElement('div');
+    section.className = 'notif-dropdown-group';
+    var heading = document.createElement('div');
+    heading.className = 'notif-dropdown-group-label';
+    heading.textContent = g.label + ' (' + (data.counts ? data.counts[g.key] : items.length) + ')';
+    section.appendChild(heading);
+    items.forEach(function (item) {
+      var link = document.createElement('a');
+      link.className = 'notif-dropdown-item';
+      link.href = item.href;
+      var title = document.createElement('span');
+      title.className = 'notif-dropdown-item-title';
+      title.textContent = item.title;
+      var meta = document.createElement('span');
+      meta.className = 'notif-dropdown-item-meta';
+      meta.textContent = item.meta;
+      link.appendChild(title);
+      link.appendChild(meta);
+      section.appendChild(link);
+    });
+    body.appendChild(section);
+  });
+  if (!hasAny) {
+    var p = document.createElement('p');
+    p.className = 'empty';
+    p.style.padding = '22px 16px';
+    p.textContent = 'No tenés notificaciones pendientes.';
+    body.appendChild(p);
+  }
+}
+
+document.addEventListener('click', function (e) {
+  document.querySelectorAll('.notif-dropdown.open').forEach(function (dropdown) {
+    if (!dropdown.parentElement.contains(e.target)) dropdown.classList.remove('open');
+  });
+});
+</script>

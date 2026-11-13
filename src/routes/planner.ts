@@ -4,7 +4,12 @@ import {
   listTasksByProject,
   listTasksWithoutProject,
 } from "../db/tasks-repo.ts";
-import { layoutDayBlocks } from "../domain/week-calendar.ts";
+import {
+  dayGridHeightPx,
+  layoutDayBlocks,
+  positionDayBlocks,
+  timeAxisMarks,
+} from "../domain/week-calendar.ts";
 
 export const plannerRouter = Router();
 
@@ -95,9 +100,13 @@ plannerRouter.get("/planeacion", async (req, res) => {
     return {
       day,
       label: dayLabel(d, i),
-      blocks: layoutDayBlocks(calendarTasks),
+      blocks: positionDayBlocks(layoutDayBlocks(calendarTasks)),
     };
   });
+
+  const gridHeight = Math.max(
+    ...byDayRaw.map((d) => dayGridHeightPx(d.blocks)),
+  );
 
   res.render("planeacion", {
     user: req.user,
@@ -106,6 +115,7 @@ plannerRouter.get("/planeacion", async (req, res) => {
     weekOffset,
     byDay: byDayRaw,
     today: toDateString(new Date()),
-    capacity,
+    gridHeight,
+    marks: timeAxisMarks(),
   });
 });
