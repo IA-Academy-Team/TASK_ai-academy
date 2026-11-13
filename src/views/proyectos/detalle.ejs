@@ -28,8 +28,10 @@
           Vence <%= project.due %>
         </div>
         <div style="display:flex;gap:8px">
+          <% if (isLeaderOrAdmin) { %>
           <button type="button" class="btn" onclick="document.getElementById('modal-carga-masiva').classList.add('open')"><%- include('../partials/icon', { kind: 'upload', size: 14 }) %>Carga masiva</button>
           <button type="button" class="btn primary" onclick="document.getElementById('drawer-nueva-tarea').classList.add('open')">+ Nueva tarea</button>
+          <% } %>
           <% if (user.role === "admin") { %>
           <form method="post" action="/proyectos/<%= project.id %>/eliminar" data-project-name="<%= project.name %>" onsubmit="return confirmDeleteProject(this)">
             <button type="submit" class="btn danger">Eliminar proyecto</button>

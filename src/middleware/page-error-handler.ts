@@ -2,16 +2,17 @@ import type { NextFunction, Request, Response } from "express";
 import { ZodError } from "zod";
 import { HttpError } from "../lib/http-error.ts";
 
-// Las rutas de página (navegación GET, fuera de /api) muestran una vista de
-// error con el layout de la app en vez del JSON crudo que usa el resto de la
-// API — para esas, delega al errorHandler genérico sin tocarlo.
+// Las rutas de página (todo lo que no sea /api, ya sea GET o el POST de un
+// <form>) muestran una vista de error con el layout de la app en vez del
+// JSON crudo que usa better-auth bajo /api — para esas, delega al
+// errorHandler genérico sin tocarlo.
 export function pageErrorHandler(
   err: unknown,
   req: Request,
   res: Response,
   next: NextFunction,
 ) {
-  if (req.method !== "GET" || req.path.startsWith("/api/")) {
+  if (req.path.startsWith("/api/")) {
     next(err);
     return;
   }
