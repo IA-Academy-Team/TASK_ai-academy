@@ -57,7 +57,7 @@
             <p class="week-calendar-empty">Sin tareas</p>
             <% } else { %>
             <% d.blocks.forEach(function(b) { %>
-            <a href="/tareas/<%= b.id %>" class="week-calendar-block prio-<%= b.priority %>" style="top:<%= b.topPx %>px;height:<%= b.heightPx %>px" tabindex="0">
+            <a href="/tareas/<%= b.id %>" class="week-calendar-block prio-<%= b.priority %>" style="top:<%= b.topPx %>px;height:<%= b.heightPx %>px" tabindex="0" title="<%= b.title %> — <%= b.ownerName %> (<%= b.estimate %> h)">
               <span class="week-calendar-block-title"><%= b.title %></span>
               <span class="week-calendar-block-owner"><%= b.ownerName %></span>
               <span class="week-calendar-block-hours"><%= b.estimate %> h</span>

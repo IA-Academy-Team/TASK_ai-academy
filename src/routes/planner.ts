@@ -6,9 +6,11 @@ import {
 } from "../db/tasks-repo.ts";
 import {
   dayGridHeightPx,
+  dayTotalHours,
   layoutDayBlocks,
   positionDayBlocks,
   timeAxisMarks,
+  WORKDAY_HOURS,
 } from "../domain/week-calendar.ts";
 
 export const plannerRouter = Router();
@@ -97,15 +99,21 @@ plannerRouter.get("/planeacion", async (req, res) => {
       estimate: Number(t.estimate),
       ownerName: ownerNameById.get(t.ownerId) ?? "",
     }));
+    const dayBlocks = layoutDayBlocks(calendarTasks);
     return {
       day,
       label: dayLabel(d, i),
-      blocks: positionDayBlocks(layoutDayBlocks(calendarTasks)),
+      blocks: positionDayBlocks(dayBlocks),
+      totalHours: dayTotalHours(dayBlocks),
     };
   });
 
   const gridHeight = Math.max(
     ...byDayRaw.map((d) => dayGridHeightPx(d.blocks)),
+  );
+  const overflowHours = Math.max(
+    0,
+    ...byDayRaw.map((d) => d.totalHours - WORKDAY_HOURS),
   );
 
   res.render("planeacion", {
@@ -116,6 +124,6 @@ plannerRouter.get("/planeacion", async (req, res) => {
     byDay: byDayRaw,
     today: toDateString(new Date()),
     gridHeight,
-    marks: timeAxisMarks(),
+    marks: timeAxisMarks(overflowHours),
   });
 });

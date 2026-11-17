@@ -212,6 +212,9 @@ select,.field select{appearance:none;-webkit-appearance:none;-moz-appearance:non
 .chart-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin-bottom:20px}
 .chart-wrap{position:relative;height:220px}
 .chart-wrap-donut{height:200px}
+.chart-fallback-table{width:100%;font-size:12px;border-collapse:collapse}
+.chart-fallback-table td{padding:5px 8px;border-bottom:1px solid var(--line);color:var(--ink)}
+.chart-fallback-table td:last-child{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
 .hbar-list{display:flex;flex-direction:column;gap:9px}
 .hbar-row{display:grid;grid-template-columns:160px 1fr 46px;align-items:center;gap:10px;font-size:12px}
 .hbar-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)}
@@ -304,13 +307,13 @@ select,.field select{appearance:none;-webkit-appearance:none;-moz-appearance:non
 .week-nav-btn:hover{background:var(--lav);border-color:var(--accent);transform:scale(1.06)}
 .week-nav-btn:active{transform:scale(.96)}
 .week-nav-btn-prev svg{transform:rotate(180deg)}
-.week-calendar-grid{display:grid;grid-template-columns:52px repeat(5,minmax(220px,1fr));gap:12px;overflow-x:auto;padding-bottom:4px}
+.week-calendar-grid{display:grid;grid-template-columns:44px repeat(5,minmax(0,1fr));gap:8px;width:100%}
 .week-calendar-timeaxis-spacer{display:flex;flex-direction:column}
 .week-calendar-timeaxis{position:relative}
 .week-calendar-tick{position:absolute;left:0;right:4px;transform:translateY(-50%);font-size:10px;font-weight:700;color:var(--muted);text-align:right;white-space:nowrap}
 .week-calendar-tick-end{transform:translateY(-100%)}
 .week-calendar-tick-start{transform:translateY(0)}
-.week-calendar-column{min-width:220px}
+.week-calendar-column{min-width:0}
 .week-calendar-daylabel{padding:8px 4px;font-size:11px;font-weight:760;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);text-align:center;border-bottom:2px solid var(--line);margin-bottom:8px}
 .week-calendar-daylabel.is-today{color:var(--accent);border-color:var(--accent)}
 .week-calendar-day{position:relative;padding:0;border:1px solid var(--border);border-radius:var(--radius-card);background:var(--paper);overflow:hidden}
@@ -358,6 +361,8 @@ select,.field select{appearance:none;-webkit-appearance:none;-moz-appearance:non
 .kpi-icon{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:10px;background:var(--lav);color:var(--primary);margin-bottom:10px}
 .kpi-positive .kpi-icon{background:var(--greenlight);color:var(--green)}
 .kpi-positive strong{color:var(--green)}
+.kpi-negative .kpi-icon{background:var(--redlight);color:var(--red)}
+.kpi-negative strong{color:var(--red)}
 .feed{display:flex;gap:12px;border-bottom:1px solid var(--line);padding:13px 0}
 .feed:last-child{border-bottom:0}
 .feed .dot{width:31px;height:31px;border-radius:10px;background:var(--lav);color:var(--primary);display:grid;place-items:center;flex:0 0 auto;font-size:13px;font-weight:800}

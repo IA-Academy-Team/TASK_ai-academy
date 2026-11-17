@@ -5,7 +5,11 @@ import { createApp } from "../../src/app.ts";
 import { user } from "../../src/db/auth-schema.ts";
 import { db } from "../../src/db/client.ts";
 import { createProject } from "../../src/db/projects-repo.ts";
-import { createTask, logHours } from "../../src/db/tasks-repo.ts";
+import {
+  createTask,
+  logHours,
+  transitionTask,
+} from "../../src/db/tasks-repo.ts";
 import { signUpAndGetCookie } from "../helpers/auth.ts";
 
 describe("GET /productividad", () => {
@@ -66,6 +70,59 @@ describe("GET /productividad", () => {
       expect(res.status).toBe(200);
       expect(res.text).toContain("Proyecto");
     }
+  });
+});
+
+describe("cumplimiento de presupuesto", () => {
+  it("es real/estimado de las tareas completadas, no % de tareas dentro de presupuesto", async () => {
+    const app = createApp();
+    const cookie = await signUpAndGetCookie("rep4@test.local");
+    const [me] = await db
+      .select()
+      .from(user)
+      .where(eq(user.email, "rep4@test.local"));
+    const project = await createProject({
+      name: "Proyecto compliance",
+      code: "PR-2",
+      objective: "Objetivo",
+      leaderId: me.id,
+      start: "2026-01-01",
+      due: "2026-02-01",
+      limitActive: 2,
+      limitReview: 2,
+      memberIds: [],
+    });
+    const task = await createTask({
+      projectId: project.id,
+      title: "T",
+      deliverable: "E",
+      description: "",
+      ownerId: me.id,
+      priority: "media",
+      weight: 1,
+      estimate: "4",
+      dependencyId: null,
+      due: "2026-01-10",
+      supportIds: [],
+      actorId: me.id,
+    });
+    await transitionTask(task.id, "activa", me.id, {});
+    await logHours({
+      taskId: task.id,
+      userId: me.id,
+      role: "owner",
+      date: "2026-01-04",
+      hours: "5",
+    });
+    await transitionTask(task.id, "revision", me.id, { evidence: "avance" });
+    await transitionTask(task.id, "completada", me.id, { evidence: "ok" });
+
+    const res = await supertest(app)
+      .get("/productividad")
+      .set("Cookie", cookie);
+    expect(res.status).toBe(200);
+    // 5h reales / 4h estimadas = 125%, no el % de tareas dentro de presupuesto.
+    expect(res.text).toContain("125%");
   });
 });
 

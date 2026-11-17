@@ -13,7 +13,7 @@ import {
   listTasksByProject,
 } from "../db/tasks-repo.ts";
 import {
-  declaredHours,
+  openHoursRemaining,
   plannedBudget,
   projectStats,
   weightedProgress,
@@ -129,8 +129,8 @@ projectsRouter.get("/proyectos/:id", async (req, res) => {
   const reviewCount = await countByStatus(project.id, "revision");
 
   // Carga por persona: tareas abiertas (sin contar completadas/canceladas) y
-  // horas ya declaradas sobre esas tareas — misma definición que "Equipo y
-  // cargas", pero acotada a este proyecto.
+  // lo que falta por registrar sobre su estimado — misma definición que
+  // "Equipo y cargas" (ver teamLoad), acotada a este proyecto.
   const candidates = leader
     ? [leader, ...members.filter((m) => m.id !== leader.id)]
     : members;
@@ -140,9 +140,11 @@ projectsRouter.get("/proyectos/:id", async (req, res) => {
   const openLogsByTask = await listLogsByTaskIds(openTasks.map((t) => t.id));
   const peopleLoad = candidates.map((person) => {
     const personOpenTasks = openTasks.filter((t) => t.ownerId === person.id);
-    const openHours = personOpenTasks.reduce(
-      (sum, t) => sum + declaredHours(openLogsByTask.get(t.id) ?? []),
-      0,
+    const openHours = openHoursRemaining(
+      personOpenTasks.map((t) => ({
+        estimate: t.estimate,
+        logs: openLogsByTask.get(t.id) ?? [],
+      })),
     );
     return {
       id: person.id,

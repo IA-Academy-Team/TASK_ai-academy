@@ -54,12 +54,10 @@ async function loadReport(rango: Rango) {
 
   const totalEstimate = estimateVsReal.reduce((sum, t) => sum + t.estimate, 0);
   const totalActual = estimateVsReal.reduce((sum, t) => sum + t.actual, 0);
-  const onBudgetCount = estimateVsReal.filter(
-    (t) => t.actual <= t.estimate,
-  ).length;
-  const compliance = estimateVsReal.length
-    ? Math.round((onBudgetCount / estimateVsReal.length) * 100)
-    : null;
+  // % del presupuesto consumido (real/estimado) — coherente con la
+  // diferencia real vs. estimado que se muestra al lado.
+  const compliance =
+    totalEstimate > 0 ? Math.round((totalActual / totalEstimate) * 100) : null;
   const variance = totalActual - totalEstimate;
 
   const days = enumerateDays(range.from, range.to);

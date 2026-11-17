@@ -9,6 +9,7 @@ import {
   listRequestableTasksForUser,
   listTasksByProject,
   logHours,
+  teamLoad,
   transitionTask,
 } from "../../src/db/tasks-repo.ts";
 import { auth } from "../../src/lib/auth.ts";
@@ -334,5 +335,56 @@ describe("tasks-repo", () => {
 
     const result = await listRequestableTasksForUser(leader.id, "usuario");
     expect(result.map((t) => t.id)).not.toContain(task.id);
+  });
+});
+
+describe("teamLoad", () => {
+  it("horas abiertas = estimado - registrado de tareas abiertas como responsable, no las horas ya registradas", async () => {
+    const leader = await makeUser("team-open1@test.local");
+    const project = await makeProject(leader.id);
+
+    // Sin horas registradas todavía: abiertas = estimado completo, no 0.
+    const untouched = await createTask({
+      projectId: project.id,
+      title: "Sin registrar",
+      deliverable: "E",
+      description: "",
+      ownerId: leader.id,
+      priority: "media",
+      weight: 1,
+      estimate: "6",
+      dependencyId: null,
+      due: "2026-01-10",
+      supportIds: [],
+      actorId: leader.id,
+    });
+
+    const partial = await createTask({
+      projectId: project.id,
+      title: "Parcial",
+      deliverable: "E",
+      description: "",
+      ownerId: leader.id,
+      priority: "media",
+      weight: 1,
+      estimate: "4",
+      dependencyId: null,
+      due: "2026-01-11",
+      supportIds: [],
+      actorId: leader.id,
+    });
+    await transitionTask(partial.id, "activa", leader.id, {});
+    await logHours({
+      taskId: partial.id,
+      userId: leader.id,
+      role: "owner",
+      date: "2026-01-04",
+      hours: "1",
+    });
+
+    const rows = await teamLoad();
+    const row = rows.find((r) => r.userId === leader.id);
+    expect(row?.openHours).toBe(6 + (4 - 1));
+    expect(untouched.status).toBe("pendiente");
   });
 });

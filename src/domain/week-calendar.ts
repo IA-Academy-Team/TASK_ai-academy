@@ -72,8 +72,24 @@ export interface TimeAxisMark {
   anchor: "start" | "center" | "end";
 }
 
-export function timeAxisMarks(): TimeAxisMark[] {
+/**
+ * Horas de offset que ocupa el día más cargado (fin del último bloque). Sirve
+ * para saber si algún día se desborda de la jornada 8-18 y el eje necesita
+ * marcas extra más abajo.
+ */
+export function dayTotalHours(blocks: CalendarBlock[]): number {
+  return blocks.reduce((max, b) => Math.max(max, b.topHours + b.estimate), 0);
+}
+
+/**
+ * `overflowHours`: cuánto se pasa el día más cargado de las WORKDAY_HOURS
+ * (8-18). Si es 0 el eje termina en 18:00 como siempre; si no, se agregan
+ * marcas cada hora hasta cubrir ese desborde, para que ningún bloque quede
+ * en una zona sin referencia horaria.
+ */
+export function timeAxisMarks(overflowHours = 0): TimeAxisMark[] {
   const marks: TimeAxisMark[] = [];
+  const extraHours = Math.max(0, Math.ceil(overflowHours));
   for (let h = 0; h <= MORNING_HOURS; h++) {
     marks.push({
       label: `${8 + h}:00`,
@@ -85,7 +101,14 @@ export function timeAxisMarks(): TimeAxisMark[] {
     marks.push({
       label: `${14 + h}:00`,
       top: hoursOffsetToPx(MORNING_HOURS + h),
-      anchor: h === 0 ? "start" : "center",
+      anchor: h === 0 && extraHours === 0 ? "start" : "center",
+    });
+  }
+  for (let h = 1; h <= extraHours; h++) {
+    marks.push({
+      label: `${18 + h}:00`,
+      top: hoursOffsetToPx(WORKDAY_HOURS + h),
+      anchor: h === extraHours ? "end" : "center",
     });
   }
   return marks;

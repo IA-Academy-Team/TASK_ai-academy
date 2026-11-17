@@ -29,17 +29,17 @@
     </div>
 
     <div class="kpi-row">
-      <div class="card kpi"><small>Horas registradas</small><strong><%= totalHours %></strong></div>
-      <div class="card kpi"><small>Proyectos con actividad</small><strong><%= byProject.length %></strong></div>
-      <div class="card kpi"><small>Tareas con registro</small><strong><%= tasksWithHours %></strong></div>
-      <div class="card kpi"><small>Colaboradores con horas</small><strong><%= byCollaborator.length %></strong></div>
+      <div class="card kpi"><small>Horas registradas</small><strong><%= totalHours %></strong><p>Periodo seleccionado (<%= rango %>)</p></div>
+      <div class="card kpi"><small>Proyectos con actividad</small><strong><%= byProject.length %></strong><p>Periodo seleccionado (<%= rango %>)</p></div>
+      <div class="card kpi"><small>Tareas con registro</small><strong><%= tasksWithHours %></strong><p>Periodo seleccionado (<%= rango %>)</p></div>
+      <div class="card kpi"><small>Colaboradores con horas</small><strong><%= byCollaborator.length %></strong><p>Periodo seleccionado (<%= rango %>)</p></div>
     </div>
 
     <div class="kpi-row">
-      <div class="card kpi"><small>Presupuesto (tareas aprobadas)</small><strong><%= totalEstimate.toFixed(1) %> h</strong></div>
-      <div class="card kpi"><small>Horas reales (tareas aprobadas)</small><strong><%= totalActual.toFixed(1) %> h</strong></div>
-      <div class="card kpi <%= compliance !== null && compliance >= 80 ? 'kpi-positive' : '' %>"><small>Cumplimiento de presupuesto</small><strong><%= compliance === null ? '—' : compliance + '%' %></strong></div>
-      <div class="card kpi"><small>Diferencia real vs. estimado</small><strong><%= (variance >= 0 ? '+' : '') + variance.toFixed(1) %> h</strong></div>
+      <div class="card kpi"><small>Presupuesto (tareas aprobadas)</small><strong><%= totalEstimate.toFixed(1) %> h</strong><p>Todo el historial, no el periodo de arriba</p></div>
+      <div class="card kpi"><small>Horas reales (tareas aprobadas)</small><strong><%= totalActual.toFixed(1) %> h</strong><p>Todo el historial, no el periodo de arriba</p></div>
+      <div class="card kpi <%= compliance === null ? '' : (compliance <= 100 ? 'kpi-positive' : 'kpi-negative') %>"><small>Cumplimiento de presupuesto</small><strong><%= compliance === null ? '—' : compliance + '%' %></strong><p>Real / presupuesto, tareas aprobadas</p></div>
+      <div class="card kpi"><small>Diferencia real vs. estimado</small><strong><%= (variance >= 0 ? '+' : '') + variance.toFixed(1) %> h</strong><p>Tareas aprobadas, todo el historial</p></div>
     </div>
 
     <section class="card pad">

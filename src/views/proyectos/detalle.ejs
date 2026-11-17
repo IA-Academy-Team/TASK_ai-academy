@@ -22,20 +22,15 @@
         <p class="subtitle"><%= project.objective %></p>
       </div>
       <div class="topbar-side">
-        <div class="muted small">
-          Activas: <%= activeCount %>/<%= project.limitActive %> ·
-          En revisión: <%= reviewCount %>/<%= project.limitReview %> ·
+        <div class="muted small" title="Tope simultáneo de tareas por estado, configurable en Configuración del proyecto">
+          Límite simultáneo: Activas <%= activeCount %>/<%= project.limitActive %> ·
+          En revisión <%= reviewCount %>/<%= project.limitReview %> ·
           Vence <%= project.due %>
         </div>
         <div style="display:flex;gap:8px">
           <% if (isLeaderOrAdmin) { %>
           <button type="button" class="btn" onclick="document.getElementById('modal-carga-masiva').classList.add('open')"><%- include('../partials/icon', { kind: 'upload', size: 14 }) %>Carga masiva</button>
           <button type="button" class="btn primary" onclick="document.getElementById('drawer-nueva-tarea').classList.add('open')">+ Nueva tarea</button>
-          <% } %>
-          <% if (user.role === "admin") { %>
-          <form method="post" action="/proyectos/<%= project.id %>/eliminar" data-project-name="<%= project.name %>" onsubmit="return confirmDeleteProject(this)">
-            <button type="submit" class="btn danger">Eliminar proyecto</button>
-          </form>
           <% } %>
         </div>
       </div>
@@ -242,11 +237,5 @@
     <% } %>
   </main>
 </div>
-<script>
-function confirmDeleteProject(form) {
-  var name = form.getAttribute('data-project-name') || '';
-  return confirm('¿Eliminar el proyecto "' + name + '"? Se borran también sus tareas y registros. Esta acción no se puede deshacer.');
-}
-</script>
 </body>
 </html>

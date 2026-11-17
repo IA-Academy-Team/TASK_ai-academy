@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   approvedHours,
   declaredHours,
+  openHoursRemaining,
   plannedBudget,
   projectStats,
   weightedProgress,
@@ -63,5 +64,19 @@ describe("domain/hours", () => {
     expect(stats.unconfirmed).toBe(1);
     expect(stats.closedBudget).toBe(4);
     expect(stats.deviation).toBe(1);
+  });
+
+  it("openHoursRemaining suma estimado menos registrado por tarea, mínimo 0", () => {
+    expect(
+      openHoursRemaining([
+        { estimate: "8", logs: [] },
+        { estimate: "4", logs: [{ hours: "1" }, { hours: "1" }] },
+        { estimate: "2", logs: [{ hours: "5" }] },
+      ]),
+    ).toBe(8 + 2 + 0);
+  });
+
+  it("openHoursRemaining devuelve 0 sin tareas abiertas", () => {
+    expect(openHoursRemaining([])).toBe(0);
   });
 });

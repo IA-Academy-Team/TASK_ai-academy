@@ -11,7 +11,7 @@ import {
   notInArray,
   or,
 } from "drizzle-orm";
-import { declaredHours } from "../domain/hours.ts";
+import { declaredHours, openHoursRemaining } from "../domain/hours.ts";
 import { HttpError } from "../lib/http-error.ts";
 import { isUuid } from "../lib/uuid.ts";
 import { recordChange } from "./audit-repo.ts";
@@ -640,7 +640,7 @@ export async function teamLoad() {
   // Una consulta agregada por métrica para todo el equipo a la vez, en vez de
   // 5 consultas por persona (N+1) — el resultado es idéntico, solo cambia
   // cómo se arma.
-  const [pendingRows, activeRows, supportRows, openLogRows, monthLogRows] =
+  const [pendingRows, activeRows, supportRows, openTaskRows, monthLogRows] =
     await Promise.all([
       db
         .select({ ownerId: tasks.ownerId, value: count() })
@@ -666,12 +666,15 @@ export async function teamLoad() {
         )
         .groupBy(taskSupport.userId),
       db
-        .select({ userId: taskLogs.userId, hours: taskLogs.hours })
-        .from(taskLogs)
-        .innerJoin(tasks, eq(tasks.id, taskLogs.taskId))
+        .select({
+          taskId: tasks.id,
+          ownerId: tasks.ownerId,
+          estimate: tasks.estimate,
+        })
+        .from(tasks)
         .where(
           and(
-            inArray(taskLogs.userId, userIds),
+            inArray(tasks.ownerId, userIds),
             notInArray(tasks.status, ["completada", "cancelada"]),
           ),
         ),
@@ -687,6 +690,26 @@ export async function teamLoad() {
           ),
         ),
     ]);
+
+  // Horas abiertas = estimado - registrado (mínimo 0) de las tareas abiertas,
+  // solo como responsable — el apoyo no suma acá. Necesita el registro por
+  // tarea, no por usuario, así que es una consulta aparte una vez que se
+  // sabe qué tareas están abiertas.
+  const openLogsByTaskId = await listLogsByTaskIds(
+    openTaskRows.map((t) => t.taskId),
+  );
+  const openTasksByUser = new Map<
+    string,
+    { estimate: string | null; logs: { hours: string }[] }[]
+  >();
+  for (const t of openTaskRows) {
+    const list = openTasksByUser.get(t.ownerId) ?? [];
+    list.push({
+      estimate: t.estimate,
+      logs: openLogsByTaskId.get(t.taskId) ?? [],
+    });
+    openTasksByUser.set(t.ownerId, list);
+  }
 
   const countByUser = (
     rows: { ownerId?: string; userId?: string; value: number }[],
@@ -711,7 +734,6 @@ export async function teamLoad() {
   const pendingByUser = countByUser(pendingRows);
   const activeByUser = countByUser(activeRows);
   const supportByUser = countByUser(supportRows);
-  const openLogsByUser = logsByUser(openLogRows);
   const monthLogsByUser = logsByUser(monthLogRows);
 
   return activeUsers.map((u) => ({
@@ -720,7 +742,7 @@ export async function teamLoad() {
     pending: pendingByUser.get(u.id) ?? 0,
     active: activeByUser.get(u.id) ?? 0,
     support: supportByUser.get(u.id) ?? 0,
-    openHours: declaredHours(openLogsByUser.get(u.id) ?? []),
+    openHours: openHoursRemaining(openTasksByUser.get(u.id) ?? []),
     confirmedMonthHours: declaredHours(monthLogsByUser.get(u.id) ?? []),
     weeklyCapacityHours: u.weeklyCapacityHours,
   }));

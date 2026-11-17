@@ -64,9 +64,35 @@
     Chart.defaults.plugins.tooltip.displayColors = false;
   }
 
+  function renderFallback(canvas, rows) {
+    var wrap = canvas.parentElement;
+    if (!wrap) return;
+    canvas.style.display = "none";
+    var table = document.createElement("table");
+    table.className = "chart-fallback-table";
+    rows.forEach((row) => {
+      var tr = document.createElement("tr");
+      var label = document.createElement("td");
+      label.textContent = row[0];
+      var value = document.createElement("td");
+      value.textContent = row[1];
+      tr.appendChild(label);
+      tr.appendChild(value);
+      table.appendChild(tr);
+    });
+    wrap.appendChild(table);
+  }
+
   function doughnutByStatus(canvas, counts) {
     var entries = Object.keys(counts).filter((k) => counts[k] > 0);
     if (!entries.length) return null;
+    if (!window.Chart) {
+      renderFallback(
+        canvas,
+        entries.map((k) => [STATUS_LABEL[k] || k, counts[k]]),
+      );
+      return null;
+    }
     return new Chart(canvas, {
       type: "doughnut",
       data: {
@@ -94,6 +120,13 @@
   }
 
   function areaSeries(canvas, labels, values) {
+    if (!window.Chart) {
+      renderFallback(
+        canvas,
+        labels.map((l, i) => [l, values[i]]),
+      );
+      return null;
+    }
     return new Chart(canvas, {
       type: "line",
       data: {
@@ -121,6 +154,13 @@
   }
 
   function barByCategory(canvas, labels, values, color) {
+    if (!window.Chart) {
+      renderFallback(
+        canvas,
+        labels.map((l, i) => [l, values[i]]),
+      );
+      return null;
+    }
     return new Chart(canvas, {
       type: "bar",
       data: {

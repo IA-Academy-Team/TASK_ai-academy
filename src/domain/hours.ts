@@ -16,6 +16,24 @@ export function approvedHours(task: TaskForHours, logs: HourLog[]): number {
   return task.status === "completada" ? declaredHours(logs) : 0;
 }
 
+export interface OpenHoursItem {
+  estimate: string | null;
+  logs: HourLog[];
+}
+
+/**
+ * Horas abiertas de una tarea: lo que falta por registrar sobre su estimado,
+ * nunca negativo. Llamar solo con tareas no completadas ni canceladas — el
+ * caller filtra eso antes (ver teamLoad y /proyectos/:id).
+ */
+export function openHoursRemaining(items: OpenHoursItem[]): number {
+  return items.reduce(
+    (sum, item) =>
+      sum + Math.max(Number(item.estimate ?? 0) - declaredHours(item.logs), 0),
+    0,
+  );
+}
+
 function isVigente(task: TaskForHours): boolean {
   return task.status !== "cancelada";
 }

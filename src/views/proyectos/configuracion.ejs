@@ -71,7 +71,23 @@
       </table>
       </div>
     </section>
+
+    <% if (user.role === "admin") { %>
+    <section class="card pad">
+      <div class="sectiontitle"><h2>Zona de peligro</h2></div>
+      <p class="muted small">Elimina el proyecto junto con todas sus tareas y registros de horas. Esta acción no se puede deshacer.</p>
+      <form method="post" action="/proyectos/<%= project.id %>/eliminar" data-project-name="<%= project.name %>" onsubmit="return confirmDeleteProject(this)">
+        <button type="submit" class="btn danger">Eliminar proyecto</button>
+      </form>
+    </section>
+    <% } %>
   </main>
 </div>
+<script>
+function confirmDeleteProject(form) {
+  var name = form.getAttribute('data-project-name') || '';
+  return confirm('¿Eliminar el proyecto "' + name + '"? Se borran también sus tareas y registros. Esta acción no se puede deshacer.');
+}
+</script>
 </body>
 </html>
