@@ -24,10 +24,19 @@
 
     <% if (error) { %><div class="error">Revisa los campos obligatorios de la tarea.</div><% } %>
 
-    <% if (!project && !independent) { %>
+    <% if (!project && !independent && !pickingProject) { %>
     <section class="card pad">
-      <p class="subtitle" style="margin-top:0">Elige el proyecto, o creá una tarea independiente sin proyecto.</p>
+      <p class="subtitle" style="margin-top:0">¿La tarea es independiente o pertenece a un proyecto?</p>
+      <div class="foot-actions">
+        <a href="/tareas/nueva?project=independent" class="btn subtle" style="flex:1;justify-content:center">Tarea independiente</a>
+        <a href="/tareas/nueva?tipo=proyecto" class="btn primary" style="flex:1;justify-content:center">Pertenece a un proyecto</a>
+      </div>
+    </section>
+    <% } else if (!project && !independent) { %>
+    <section class="card pad">
+      <p class="subtitle" style="margin-top:0">Elige el proyecto.</p>
       <form method="get" action="/tareas/nueva" class="form-grid">
+        <input type="hidden" name="tipo" value="proyecto" />
         <div class="field full"><label>Proyecto</label>
           <select name="project">
             <option value="">Elige un proyecto</option>
@@ -35,7 +44,7 @@
           </select>
         </div>
         <div class="foot-actions full">
-          <a href="/tareas/nueva?project=independent" class="btn subtle">Tarea independiente</a>
+          <a href="/tareas/nueva" class="btn subtle">&larr; Atrás</a>
           <button type="submit" class="btn primary">Continuar</button>
         </div>
       </form>

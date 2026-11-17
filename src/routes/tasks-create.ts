@@ -30,14 +30,16 @@ tasksCreateRouter.get("/tareas/nueva", async (req, res) => {
 
   const projectParam =
     typeof req.query.project === "string" ? req.query.project : null;
+  const pickingProject = req.query.tipo === "proyecto";
   const error = req.query.error === "1";
 
   if (!projectParam) {
-    const projects = await listProjects();
+    const projects = pickingProject ? await listProjects() : [];
     res.render("tareas/nueva", {
       user: req.user,
       project: null,
       independent: false,
+      pickingProject,
       allUsers: [],
       allTasks: [],
       projects,
