@@ -8,6 +8,7 @@ import {
   isNull,
   lt,
   lte,
+  ne,
   notInArray,
   or,
 } from "drizzle-orm";
@@ -36,6 +37,37 @@ export const REQUESTABLE_SUPPORT_STATUSES = [
   "bloqueada",
 ];
 
+// Una persona no puede tener más de 4h de tareas estimadas el mismo día —
+// regla de negocio para evitar sobrecarga visible en el plan semanal.
+const DAILY_ESTIMATE_LIMIT_HOURS = 4;
+
+async function assertDailyEstimateLimit(
+  ownerId: string,
+  due: string,
+  estimate: number,
+  excludeTaskId?: string,
+): Promise<void> {
+  const conditions = [
+    eq(tasks.ownerId, ownerId),
+    eq(tasks.due, due),
+    notInArray(tasks.status, ["completada", "cancelada"]),
+  ];
+  if (excludeTaskId) conditions.push(ne(tasks.id, excludeTaskId));
+
+  const rows = await db
+    .select({ estimate: tasks.estimate })
+    .from(tasks)
+    .where(and(...conditions));
+
+  const existingHours = rows.reduce((sum, r) => sum + Number(r.estimate), 0);
+  if (existingHours + estimate > DAILY_ESTIMATE_LIMIT_HOURS) {
+    throw new HttpError(
+      400,
+      `la persona ya tiene ${existingHours}h estimadas para el ${due} — el máximo es ${DAILY_ESTIMATE_LIMIT_HOURS}h por día`,
+    );
+  }
+}
+
 export async function createTask(input: {
   projectId: string | null;
   title: string;
@@ -60,6 +92,12 @@ export async function createTask(input: {
       );
     }
   }
+
+  await assertDailyEstimateLimit(
+    input.ownerId,
+    input.due,
+    Number(input.estimate),
+  );
 
   const row = await db.transaction(async (tx) => {
     // La secuencia (order) y el bloqueo de fila solo aplican a tareas
@@ -350,6 +388,24 @@ export async function listLogsByTaskIds(taskIds: string[]) {
   return byTask;
 }
 
+// Misma forma que listSupport, pero para varias tareas en una sola consulta
+// — usado para marcar en un listado si el usuario actual es apoyo de cada tarea.
+export async function listSupportUserIdsByTaskIds(taskIds: string[]) {
+  if (taskIds.length === 0) return new Map<string, string[]>();
+  const rows = await db
+    .select({ taskId: taskSupport.taskId, userId: taskSupport.userId })
+    .from(taskSupport)
+    .where(inArray(taskSupport.taskId, taskIds));
+
+  const byTask = new Map<string, string[]>();
+  for (const row of rows) {
+    const list = byTask.get(row.taskId) ?? [];
+    list.push(row.userId);
+    byTask.set(row.taskId, list);
+  }
+  return byTask;
+}
+
 export async function countTasksForOwner(ownerId: string, statuses: string[]) {
   const [{ value }] = await db
     .select({ value: count() })
@@ -573,6 +629,13 @@ export async function updateTask(
       );
     }
   }
+
+  await assertDailyEstimateLimit(
+    patch.ownerId ?? task.ownerId,
+    patch.due ?? task.due,
+    Number(patch.estimate ?? task.estimate),
+    id,
+  );
 
   const keys = Object.keys(patch) as (keyof UpdateTaskPatch)[];
   const before: Record<string, unknown> = {};

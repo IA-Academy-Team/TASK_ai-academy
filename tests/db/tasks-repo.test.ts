@@ -11,8 +11,10 @@ import {
   logHours,
   teamLoad,
   transitionTask,
+  updateTask,
 } from "../../src/db/tasks-repo.ts";
 import { auth } from "../../src/lib/auth.ts";
+import { HttpError } from "../../src/lib/http-error.ts";
 
 async function makeUser(email: string) {
   await auth.api.signUpEmail({
@@ -352,7 +354,7 @@ describe("teamLoad", () => {
       ownerId: leader.id,
       priority: "media",
       weight: 1,
-      estimate: "6",
+      estimate: "4",
       dependencyId: null,
       due: "2026-01-10",
       supportIds: [],
@@ -384,7 +386,189 @@ describe("teamLoad", () => {
 
     const rows = await teamLoad();
     const row = rows.find((r) => r.userId === leader.id);
-    expect(row?.openHours).toBe(6 + (4 - 1));
+    expect(row?.openHours).toBe(4 + (4 - 1));
     expect(untouched.status).toBe("pendiente");
+  });
+});
+
+describe("límite de 4h estimadas por día", () => {
+  it("createTask rechaza una tarea que haría superar 4h estimadas el mismo día", async () => {
+    const leader = await makeUser("daily-limit1@test.local");
+    const project = await makeProject(leader.id);
+
+    await createTask({
+      projectId: project.id,
+      title: "Tarea A",
+      deliverable: "E",
+      description: "",
+      ownerId: leader.id,
+      priority: "media",
+      weight: 1,
+      estimate: "3",
+      dependencyId: null,
+      due: "2026-01-10",
+      supportIds: [],
+      actorId: leader.id,
+    });
+
+    await expect(
+      createTask({
+        projectId: project.id,
+        title: "Tarea B",
+        deliverable: "E",
+        description: "",
+        ownerId: leader.id,
+        priority: "media",
+        weight: 1,
+        estimate: "2",
+        dependencyId: null,
+        due: "2026-01-10",
+        supportIds: [],
+        actorId: leader.id,
+      }),
+    ).rejects.toThrow(HttpError);
+  });
+
+  it("createTask permite tareas del mismo día que en total no superan 4h", async () => {
+    const leader = await makeUser("daily-limit2@test.local");
+    const project = await makeProject(leader.id);
+
+    await createTask({
+      projectId: project.id,
+      title: "Tarea A",
+      deliverable: "E",
+      description: "",
+      ownerId: leader.id,
+      priority: "media",
+      weight: 1,
+      estimate: "2.5",
+      dependencyId: null,
+      due: "2026-01-10",
+      supportIds: [],
+      actorId: leader.id,
+    });
+
+    const second = await createTask({
+      projectId: project.id,
+      title: "Tarea B",
+      deliverable: "E",
+      description: "",
+      ownerId: leader.id,
+      priority: "media",
+      weight: 1,
+      estimate: "1.5",
+      dependencyId: null,
+      due: "2026-01-10",
+      supportIds: [],
+      actorId: leader.id,
+    });
+
+    expect(second.status).toBe("pendiente");
+  });
+
+  it("createTask ignora tareas canceladas al calcular el total del día", async () => {
+    const leader = await makeUser("daily-limit3@test.local");
+    const project = await makeProject(leader.id);
+
+    const first = await createTask({
+      projectId: project.id,
+      title: "Tarea cancelada",
+      deliverable: "E",
+      description: "",
+      ownerId: leader.id,
+      priority: "media",
+      weight: 1,
+      estimate: "4",
+      dependencyId: null,
+      due: "2026-01-10",
+      supportIds: [],
+      actorId: leader.id,
+    });
+    await transitionTask(first.id, "cancelada", leader.id, {
+      note: "no aplica",
+    });
+
+    const second = await createTask({
+      projectId: project.id,
+      title: "Tarea nueva",
+      deliverable: "E",
+      description: "",
+      ownerId: leader.id,
+      priority: "media",
+      weight: 1,
+      estimate: "4",
+      dependencyId: null,
+      due: "2026-01-10",
+      supportIds: [],
+      actorId: leader.id,
+    });
+
+    expect(second.status).toBe("pendiente");
+  });
+
+  it("updateTask rechaza mover una tarea a un día donde el responsable ya supera 4h", async () => {
+    const leader = await makeUser("daily-limit4@test.local");
+    const project = await makeProject(leader.id);
+
+    await createTask({
+      projectId: project.id,
+      title: "Tarea A",
+      deliverable: "E",
+      description: "",
+      ownerId: leader.id,
+      priority: "media",
+      weight: 1,
+      estimate: "4",
+      dependencyId: null,
+      due: "2026-01-10",
+      supportIds: [],
+      actorId: leader.id,
+    });
+    const toMove = await createTask({
+      projectId: project.id,
+      title: "Tarea B",
+      deliverable: "E",
+      description: "",
+      ownerId: leader.id,
+      priority: "media",
+      weight: 1,
+      estimate: "1",
+      dependencyId: null,
+      due: "2026-01-11",
+      supportIds: [],
+      actorId: leader.id,
+    });
+
+    await expect(
+      updateTask(toMove.id, { due: "2026-01-10" }, leader.id, "reprogramar"),
+    ).rejects.toThrow(HttpError);
+  });
+
+  it("updateTask permite editar la propia tarea sin contarla dos veces", async () => {
+    const leader = await makeUser("daily-limit5@test.local");
+    const project = await makeProject(leader.id);
+
+    const task = await createTask({
+      projectId: project.id,
+      title: "Tarea A",
+      deliverable: "E",
+      description: "",
+      ownerId: leader.id,
+      priority: "media",
+      weight: 1,
+      estimate: "3",
+      dependencyId: null,
+      due: "2026-01-10",
+      supportIds: [],
+      actorId: leader.id,
+    });
+
+    const updated = await updateTask(
+      task.id,
+      { estimate: "4" },
+      leader.id,
+      "ajuste",
+    );
+    expect(Number(updated?.estimate)).toBe(4);
   });
 });

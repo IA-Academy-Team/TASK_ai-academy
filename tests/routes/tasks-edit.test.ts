@@ -89,7 +89,7 @@ describe("GET/POST /tareas/:id/editar", () => {
         ownerId: me.id,
         priority: "alta",
         weight: "2",
-        estimate: "6",
+        estimate: "4",
         due: "2026-01-15",
       });
     expect(res.status).toBe(303);
