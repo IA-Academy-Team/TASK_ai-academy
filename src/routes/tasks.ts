@@ -1,5 +1,4 @@
 import { Router } from "express";
-import { listByTaskEnriched } from "../db/audit-repo.ts";
 import { getProject, listAllActiveUsers } from "../db/projects-repo.ts";
 import {
   getTask,
@@ -32,7 +31,6 @@ tasksRouter.get("/tareas/:id", async (req, res) => {
     ? await getTask(task.dependencyId)
     : null;
   const totalHours = logs.reduce((sum, l) => sum + Number(l.hours), 0);
-  const recentChanges = (await listByTaskEnriched(task.id)).slice(0, 3);
 
   // Sin proyecto no hay líder que delegue — el responsable hace de líder.
   const isLeaderOrAdmin =
@@ -48,12 +46,8 @@ tasksRouter.get("/tareas/:id", async (req, res) => {
     users,
     dependency,
     totalHours,
-    recentChanges,
     user: req.user,
     isLeaderOrAdmin,
-    isOwnerOrSupport:
-      req.user.id === task.ownerId ||
-      support.some((s) => s.userId === req.user?.id),
     canRequestSupport:
       (req.user.id === task.ownerId || isLeaderOrAdmin) &&
       ["pendiente", "activa", "bloqueada"].includes(task.status),

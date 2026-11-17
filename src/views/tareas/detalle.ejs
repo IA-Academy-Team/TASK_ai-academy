@@ -27,68 +27,100 @@
           <% if (justUpdated && task.status === 'completada') { %><svg class="badge-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12l5 5L20 7" /></svg><% } %><%= task.status %>
         </span>
         <% if (isLeaderOrAdmin && task.status !== 'completada' && task.status !== 'cancelada') { %>
-        <a class="btn subtle" href="/tareas/<%= task.id %>/editar">Editar</a>
+        <a class="btn subtle icon-only" title="Editar" href="/tareas/<%= task.id %>/editar"><%- include('../partials/icon', { kind: 'edit', size: 14 }) %></a>
         <% } %>
       </div>
     </div>
 
     <% if (error) { %><div class="error"><%= error %></div><% } %>
 
-    <div class="form-grid">
-      <section class="card pad">
-        <div class="sectiontitle"><h2>Detalle</h2></div>
-        <% if (task.description) { %><p class="small"><%= task.description %></p><% } %>
-        <div class="detail-row"><span>Responsable</span><strong><% const owner = users.find(function(u){return u.id===task.ownerId}); %><%= owner ? owner.name : task.ownerId %></strong></div>
-        <div class="detail-row"><span>Apoyo</span><strong><%= support.length ? support.map(function(s){ const u = users.find(function(x){return x.id===s.userId}); return u ? u.name : s.userId }).join(', ') : 'Ninguno' %></strong></div>
-        <div class="detail-row"><span>Peso</span><strong><%= task.weight %></strong></div>
-        <div class="detail-row"><span>Estimado</span><strong><%= task.estimate %> h</strong></div>
-        <div class="detail-row"><span>Horas registradas</span><strong><%= totalHours %> h</strong></div>
-        <div class="detail-row"><span>Vence</span><strong><%= task.due %><% if (task.dueTime) { %> · <%= task.dueTime %><% } %></strong></div>
-        <% if (dependency) { %><div class="detail-row"><span>Depende de</span><strong>#<%= dependency.order %> <%= dependency.title %> (<%= dependency.status %>)</strong></div><% } %>
-        <% if (task.evidence) { %><div class="detail-row"><span>Evidencia</span><strong><%= task.evidence %></strong></div><% } %>
-        <% if (task.approvedAt) { %><div class="detail-row"><span>Aprobada</span><strong><%= task.approvedAt %></strong></div><% } %>
+    <section class="card pad">
+      <div class="sectiontitle"><h2>Detalle</h2></div>
+      <% if (task.description) { %><p class="small"><%= task.description %></p><% } %>
+      <div class="detail-row"><span>Responsable</span><strong><% const owner = users.find(function(u){return u.id===task.ownerId}); %><%= owner ? owner.name : task.ownerId %></strong></div>
+      <div class="detail-row"><span>Apoyo</span><strong><%= support.length ? support.map(function(s){ const u = users.find(function(x){return x.id===s.userId}); return u ? u.name : s.userId }).join(', ') : 'Ninguno' %></strong></div>
+      <div class="detail-row"><span>Estimado</span><strong><%= task.estimate %> h</strong></div>
+      <div class="detail-row"><span>Horas registradas</span><strong><%= totalHours %> h</strong></div>
+      <div class="detail-row"><span>Vence</span><strong><%= task.due %><% if (task.dueTime) { %> · <%= task.dueTime %><% } %></strong></div>
+      <% if (dependency) { %><div class="detail-row"><span>Depende de</span><strong>#<%= dependency.order %> <%= dependency.title %> (<%= dependency.status %>)</strong></div><% } %>
+      <% if (task.evidence) { %><div class="detail-row"><span>Evidencia</span><strong><%= task.evidence %></strong></div><% } %>
+      <% if (task.approvedAt) { %><div class="detail-row"><span>Aprobada</span><strong><%= task.approvedAt %></strong></div><% } %>
 
-        <div class="sectiontitle" style="margin-top:17px"><h2>Cambiar estado</h2></div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:17px">
+        <% if (task.status !== 'completada' && task.status !== 'cancelada') { %>
+        <button type="button" class="btn icon-only" title="Cambiar estado" onclick="document.getElementById('modal-cambiar-estado').classList.add('open')"><%- include('../partials/icon', { kind: 'swap', size: 14 }) %></button>
+        <% } %>
+        <% if (task.status === 'activa' && user.id === task.ownerId) { %>
+        <a class="btn primary icon-only" title="Entregar" href="/tareas/<%= task.id %>/entrega"><%- include('../partials/icon', { kind: 'check', size: 14 }) %></a>
+        <% } %>
+        <% if (canRequestSupport) { %>
+        <button type="button" class="btn icon-only" title="Solicitud de apoyo" onclick="document.getElementById('modal-solicitar-apoyo').classList.add('open')"><%- include('../partials/icon', { kind: 'handshake', size: 14 }) %></button>
+        <% } %>
+        <% if (user.id === task.ownerId) { %>
+        <button type="button" class="btn icon-only" title="Registrar horas" onclick="document.getElementById('modal-registrar-horas').classList.add('open')"><%- include('../partials/icon', { kind: 'clock', size: 14 }) %></button>
+        <% } else if (support.some(function(s){return s.userId === user.id}) && (task.status === 'activa' || task.status === 'revision')) { %>
+        <a class="btn icon-only" title="Registrar horas de apoyo" href="/tareas/<%= task.id %>/horas-apoyo"><%- include('../partials/icon', { kind: 'clock', size: 14 }) %></a>
+        <% } %>
+      </div>
+
+      <% if (logs.length > 0) { %>
+      <div class="sectiontitle" style="margin-top:17px"><h2>Horas registradas</h2></div>
+      <% logs.forEach(function(l) { %>
+      <div class="detail-row"><span><%= l.date %> (<%= l.role %>)</span><strong><%= l.hours %> h</strong></div>
+      <% }) %>
+      <% } %>
+    </section>
+
+    <div class="modal" id="modal-cambiar-estado">
+      <div class="modal-backdrop" onclick="document.getElementById('modal-cambiar-estado').classList.remove('open')"></div>
+      <div class="modal-panel">
+        <div class="drawer-header" style="padding:0 0 16px">
+          <h2>Cambiar estado</h2>
+          <button type="button" class="drawer-close" aria-label="Cerrar" onclick="document.getElementById('modal-cambiar-estado').classList.remove('open')"><%- include('../partials/icon', { kind: 'x', size: 18 }) %></button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
           <% if (task.status === 'pendiente') { %>
-          <form method="post" action="/tareas/<%= task.id %>/estado"><input type="hidden" name="status" value="activa" /><button class="btn primary" type="submit">Iniciar</button></form>
-          <form method="post" action="/tareas/<%= task.id %>/estado" style="display:flex;gap:6px"><input type="hidden" name="status" value="bloqueada" /><input name="note" placeholder="Motivo" required style="padding:8px;border:1px solid var(--line);border-radius:8px" /><button class="btn" type="submit">Bloquear</button></form>
-          <form method="post" action="/tareas/<%= task.id %>/estado" style="display:flex;gap:6px"><input type="hidden" name="status" value="cancelada" /><input name="note" placeholder="Motivo" required style="padding:8px;border:1px solid var(--line);border-radius:8px" /><button class="btn danger" type="submit">Cancelar</button></form>
-          <% } %>
-          <% if (task.status === 'activa' && user.id === task.ownerId) { %>
-          <a class="btn primary" href="/tareas/<%= task.id %>/entrega">Entregar</a>
+          <form method="post" action="/tareas/<%= task.id %>/estado"><input type="hidden" name="status" value="activa" /><button class="btn primary" type="submit" style="width:100%">Iniciar</button></form>
+          <form method="post" action="/tareas/<%= task.id %>/estado" style="display:flex;gap:6px"><input type="hidden" name="status" value="bloqueada" /><input name="note" placeholder="Motivo" required style="flex:1;padding:8px;border:1px solid var(--line);border-radius:8px" /><button class="btn" type="submit">Bloquear</button></form>
+          <form method="post" action="/tareas/<%= task.id %>/estado" style="display:flex;gap:6px"><input type="hidden" name="status" value="cancelada" /><input name="note" placeholder="Motivo" required style="flex:1;padding:8px;border:1px solid var(--line);border-radius:8px" /><button class="btn danger" type="submit">Cancelar</button></form>
           <% } %>
           <% if (task.status === 'activa') { %>
-          <form method="post" action="/tareas/<%= task.id %>/estado" style="display:flex;gap:6px"><input type="hidden" name="status" value="bloqueada" /><input name="note" placeholder="Motivo" required style="padding:8px;border:1px solid var(--line);border-radius:8px" /><button class="btn" type="submit">Bloquear</button></form>
-          <form method="post" action="/tareas/<%= task.id %>/estado" style="display:flex;gap:6px"><input type="hidden" name="status" value="cancelada" /><input name="note" placeholder="Motivo" required style="padding:8px;border:1px solid var(--line);border-radius:8px" /><button class="btn danger" type="submit">Cancelar</button></form>
+          <form method="post" action="/tareas/<%= task.id %>/estado" style="display:flex;gap:6px"><input type="hidden" name="status" value="bloqueada" /><input name="note" placeholder="Motivo" required style="flex:1;padding:8px;border:1px solid var(--line);border-radius:8px" /><button class="btn" type="submit">Bloquear</button></form>
+          <form method="post" action="/tareas/<%= task.id %>/estado" style="display:flex;gap:6px"><input type="hidden" name="status" value="cancelada" /><input name="note" placeholder="Motivo" required style="flex:1;padding:8px;border:1px solid var(--line);border-radius:8px" /><button class="btn danger" type="submit">Cancelar</button></form>
           <% } %>
           <% if (task.status === 'revision') { %>
             <% if (isLeaderOrAdmin) { %>
-            <form method="post" action="/tareas/<%= task.id %>/estado" onsubmit="return confirm('¿Aprobar esta tarea? Pasa a completada y no se puede deshacer.')">
+            <form method="post" action="/tareas/<%= task.id %>/estado" onsubmit="return confirm('¿Aprobar esta tarea? Pasa a completada y no se puede deshacer.')" style="display:flex;gap:6px">
               <input type="hidden" name="status" value="completada" />
-              <% if (!task.evidence) { %><input name="evidence" placeholder="Evidencia" required style="padding:8px;border:1px solid var(--line);border-radius:8px" />&nbsp;<% } %>
+              <% if (!task.evidence) { %><input name="evidence" placeholder="Evidencia" required style="flex:1;padding:8px;border:1px solid var(--line);border-radius:8px" /><% } %>
               <button class="btn primary" type="submit">Aprobar</button>
             </form>
-            <form method="post" action="/tareas/<%= task.id %>/estado" style="display:flex;gap:6px"><input type="hidden" name="status" value="activa" /><input name="note" placeholder="Observaciones" required style="padding:8px;border:1px solid var(--line);border-radius:8px" /><button class="btn" type="submit">Devolver a activa</button></form>
+            <form method="post" action="/tareas/<%= task.id %>/estado" style="display:flex;gap:6px"><input type="hidden" name="status" value="activa" /><input name="note" placeholder="Observaciones" required style="flex:1;padding:8px;border:1px solid var(--line);border-radius:8px" /><button class="btn" type="submit">Devolver a activa</button></form>
             <% } %>
           <% } %>
           <% if (task.status === 'bloqueada') { %>
-          <form method="post" action="/tareas/<%= task.id %>/estado"><input type="hidden" name="status" value="pendiente" /><button class="btn" type="submit">Desbloquear</button></form>
-          <form method="post" action="/tareas/<%= task.id %>/estado" style="display:flex;gap:6px"><input type="hidden" name="status" value="cancelada" /><input name="note" placeholder="Motivo" required style="padding:8px;border:1px solid var(--line);border-radius:8px" /><button class="btn danger" type="submit">Cancelar</button></form>
+          <form method="post" action="/tareas/<%= task.id %>/estado"><input type="hidden" name="status" value="pendiente" /><button class="btn" type="submit" style="width:100%">Desbloquear</button></form>
+          <form method="post" action="/tareas/<%= task.id %>/estado" style="display:flex;gap:6px"><input type="hidden" name="status" value="cancelada" /><input name="note" placeholder="Motivo" required style="flex:1;padding:8px;border:1px solid var(--line);border-radius:8px" /><button class="btn danger" type="submit">Cancelar</button></form>
           <% } %>
         </div>
-      </section>
+      </div>
+    </div>
 
-      <% if (canRequestSupport) { %>
-      <section class="card pad">
-        <div class="sectiontitle"><h2>Solicitar apoyo</h2></div>
+    <% if (canRequestSupport) { %>
+    <div class="modal" id="modal-solicitar-apoyo">
+      <div class="modal-backdrop" onclick="document.getElementById('modal-solicitar-apoyo').classList.remove('open')"></div>
+      <div class="modal-panel">
+        <div class="drawer-header" style="padding:0 0 16px">
+          <h2>Solicitud de apoyo</h2>
+          <button type="button" class="drawer-close" aria-label="Cerrar" onclick="document.getElementById('modal-solicitar-apoyo').classList.remove('open')"><%- include('../partials/icon', { kind: 'x', size: 18 }) %></button>
+        </div>
         <form method="post" action="/tareas/<%= task.id %>/apoyo" class="form-grid">
-          <div class="field"><label>Persona *</label>
+          <div class="field full"><label>Persona *</label>
             <select name="targetUserId" required>
               <% users.filter(function(u){return u.id !== task.ownerId}).forEach(function(u) { %><option value="<%= u.id %>"><%= u.name %></option><% }) %>
             </select>
           </div>
-          <div class="field"><label>Modalidad *</label>
+          <div class="field full"><label>Modalidad *</label>
             <select name="mode" required>
               <option value="invite">Invitar (la persona acepta)</option>
               <option value="apply">Pedir que el líder la asigne</option>
@@ -97,37 +129,62 @@
           <div class="field full"><label>Motivo</label><input name="reason" maxlength="1000" /></div>
           <div class="foot-actions full"><button type="submit" class="btn primary">Pedir apoyo</button></div>
         </form>
-      </section>
-      <% } %>
-
-      <section class="card pad">
-        <div class="sectiontitle"><h2>Registro de horas</h2></div>
-        <% logs.forEach(function(l) { %>
-        <div class="detail-row"><span><%= l.date %> (<%= l.role %>)</span><strong><%= l.hours %> h</strong></div>
-        <% }) %>
-        <% if (isOwnerOrSupport) { %>
-        <form method="post" action="/tareas/<%= task.id %>/horas" style="margin-top:14px">
-          <div class="field"><label>Fecha</label><input type="date" name="date" required /></div>
-          <div class="field"><label>Horas</label><input type="number" name="hours" min="0.5" step="0.5" max="24" required /></div>
-          <button class="btn primary" type="submit" style="margin-top:8px">Registrar</button>
-        </form>
-        <% } %>
-      </section>
-    </div>
-
-    <section class="card pad">
-      <div class="sectiontitle"><h2>Últimos cambios</h2></div>
-      <% if (recentChanges.length === 0) { %>
-      <%- include('../partials/empty-state', { text: 'Sin cambios registrados.' }) %>
-      <% } else { %>
-      <div class="feed">
-        <% recentChanges.forEach(function(c) { %>
-        <div class="detail-row"><span><%= c.actorName %> · <%= c.action %><% if (c.note) { %> · <%= c.note %><% } %></span><strong><%= c.createdAt %></strong></div>
-        <% }) %>
       </div>
-      <% } %>
-      <a class="btn subtle" href="/tareas/<%= task.id %>/auditoria" style="margin-top:10px;display:inline-block">Ver todo</a>
-    </section>
+    </div>
+    <% } %>
+
+    <% if (user.id === task.ownerId) { %>
+    <div class="modal" id="modal-registrar-horas">
+      <div class="modal-backdrop" onclick="document.getElementById('modal-registrar-horas').classList.remove('open')"></div>
+      <div class="modal-panel">
+        <div class="drawer-header" style="padding:0 0 16px">
+          <h2>Registrar horas</h2>
+          <button type="button" class="drawer-close" aria-label="Cerrar" onclick="document.getElementById('modal-registrar-horas').classList.remove('open')"><%- include('../partials/icon', { kind: 'x', size: 18 }) %></button>
+        </div>
+        <form method="post" action="/tareas/<%= task.id %>/horas" class="form-grid" id="form-registrar-horas">
+          <div class="field full"><label>Fecha *</label><input type="date" name="date" required /></div>
+          <div class="field"><label>Inicio *</label><input type="time" id="horas-inicio" required /></div>
+          <div class="field"><label>Fin *</label><input type="time" id="horas-fin" required /></div>
+          <input type="hidden" name="hours" id="horas-calculadas" />
+          <p class="subtitle full" id="horas-resultado">Horas: —</p>
+          <div class="foot-actions full"><button type="submit" class="btn primary" id="btn-registrar-horas" disabled>Registrar</button></div>
+        </form>
+      </div>
+    </div>
+    <script>
+    (function () {
+      var inicio = document.getElementById('horas-inicio');
+      var fin = document.getElementById('horas-fin');
+      var hidden = document.getElementById('horas-calculadas');
+      var resultado = document.getElementById('horas-resultado');
+      var btn = document.getElementById('btn-registrar-horas');
+      if (!inicio || !fin) return;
+      function recalc() {
+        if (!inicio.value || !fin.value) {
+          hidden.value = '';
+          resultado.textContent = 'Horas: —';
+          btn.disabled = true;
+          return;
+        }
+        var start = inicio.value.split(':').map(Number);
+        var end = fin.value.split(':').map(Number);
+        var minutes = (end[0] * 60 + end[1]) - (start[0] * 60 + start[1]);
+        if (minutes <= 0) {
+          hidden.value = '';
+          resultado.textContent = 'El fin debe ser posterior al inicio.';
+          btn.disabled = true;
+          return;
+        }
+        var hours = Math.round((minutes / 60) * 2) / 2;
+        hidden.value = String(hours);
+        resultado.textContent = 'Horas: ' + hours + ' h';
+        btn.disabled = false;
+      }
+      inicio.addEventListener('input', recalc);
+      fin.addEventListener('input', recalc);
+    })();
+    </script>
+    <% } %>
   </main>
 </div>
 </body>
