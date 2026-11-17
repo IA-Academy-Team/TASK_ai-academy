@@ -29,8 +29,9 @@
         </div>
         <div style="display:flex;gap:8px">
           <% if (isLeaderOrAdmin) { %>
-          <button type="button" class="btn" onclick="document.getElementById('modal-carga-masiva').classList.add('open')"><%- include('../partials/icon', { kind: 'upload', size: 14 }) %>Carga masiva</button>
-          <button type="button" class="btn primary" onclick="document.getElementById('drawer-nueva-tarea').classList.add('open')">+ Nueva tarea</button>
+          <button type="button" class="btn icon-only" title="Carga masiva" onclick="document.getElementById('modal-carga-masiva').classList.add('open')"><%- include('../partials/icon', { kind: 'upload', size: 14 }) %></button>
+          <button type="button" class="btn primary icon-only" title="Nueva tarea" onclick="document.getElementById('drawer-nueva-tarea').classList.add('open')"><%- include('../partials/icon', { kind: 'plus', size: 14 }) %></button>
+          <a class="btn icon-only" title="Configuración del proyecto" href="/proyectos/<%= project.id %>/configuracion"><%- include('../partials/icon', { kind: 'settings', size: 14 }) %></a>
           <% } %>
         </div>
       </div>
@@ -171,13 +172,7 @@
       function estadoHref(e) {
         var qs = [];
         if (e) qs.push('estado=' + e);
-        if (responsable) qs.push('responsable=' + responsable);
-        return '/proyectos/' + project.id + (qs.length ? '?' + qs.join('&') : '');
-      }
-      function responsableHref(id) {
-        var qs = [];
-        if (estado) qs.push('estado=' + estado);
-        if (id) qs.push('responsable=' + id);
+        responsable.forEach(function(id) { qs.push('responsable=' + id); });
         return '/proyectos/' + project.id + (qs.length ? '?' + qs.join('&') : '');
       }
     %>
@@ -191,19 +186,21 @@
     </div>
 
     <section class="card pad">
-      <div class="sectiontitle"><h2>Carga por persona</h2></div>
-      <div class="people-load-row">
-        <a href="<%= responsableHref(null) %>" class="person-load-chip <%= !responsable ? 'on' : '' %>">
+      <form method="get" action="/proyectos/<%= project.id %>" class="people-load-row" id="form-carga-por-persona">
+        <% if (estado) { %><input type="hidden" name="estado" value="<%= estado %>" /><% } %>
+        <label class="person-load-chip <%= responsable.length === 0 ? 'on' : '' %>">
+          <input type="checkbox" name="__todos" style="display:none" <%= responsable.length === 0 ? 'checked' : '' %> onclick="document.querySelectorAll('#form-carga-por-persona input[name=responsable]').forEach(function(cb){cb.checked=false}); this.form.submit()" />
           <span class="chip-avatar">·</span>Todos
-        </a>
+        </label>
         <% peopleLoad.forEach(function(p) { %>
-        <a href="<%= responsableHref(p.id) %>" class="person-load-chip <%= responsable === p.id ? 'on' : '' %>" title="<%= p.taskCount %> tareas abiertas · <%= p.openHours %> h declaradas">
+        <label class="person-load-chip <%= responsable.includes(p.id) ? 'on' : '' %>" title="<%= p.taskCount %> tareas abiertas · <%= p.openHours %> h declaradas">
+          <input type="checkbox" name="responsable" value="<%= p.id %>" style="display:none" <%= responsable.includes(p.id) ? 'checked' : '' %> onchange="this.form.submit()" />
           <span class="chip-avatar"><%= (p.name || '?').charAt(0).toUpperCase() %></span>
           <%= p.name %><% if (p.isLeader) { %> · líder<% } %>
           <strong><%= p.taskCount %></strong><small>· <%= p.openHours %> h</small>
-        </a>
+        </label>
         <% }) %>
-      </div>
+      </form>
     </section>
 
     <section class="card pad">
@@ -212,7 +209,7 @@
       <% } else { %>
       <div class="table-wrap">
       <table class="table">
-        <thead><tr><th>#</th><th>Tarea</th><th>Responsable</th><th>Prioridad</th><th>Estado</th><th>Vence</th></tr></thead>
+        <thead><tr><th>#</th><th>Tarea</th><th>Responsable</th><th>Prioridad</th><th>Estado</th><th>Vence</th><th></th></tr></thead>
         <tbody>
           <% tasks.forEach(function(t) { %>
           <tr onclick="location.href='/tareas/<%= t.id %>'" style="cursor:pointer">
@@ -222,6 +219,7 @@
             <td><span class="badge <%= t.priority %>"><%= t.priority %></span></td>
             <td><span class="badge <%= t.status %>"><%= t.status %></span></td>
             <td><%= t.due %></td>
+            <td><% if (supportTaskIdsForUser.has(t.id)) { %><span title="Sos apoyo en esta tarea"><%- include('../partials/icon', { kind: 'handshake', size: 14 }) %></span><% } %></td>
           </tr>
           <% }) %>
         </tbody>
@@ -230,11 +228,6 @@
       <% } %>
     </section>
 
-    <% if (isLeaderOrAdmin) { %>
-    <section class="card pad">
-      <a class="btn subtle" href="/proyectos/<%= project.id %>/configuracion">Configuración del proyecto</a>
-    </section>
-    <% } %>
   </main>
 </div>
 </body>

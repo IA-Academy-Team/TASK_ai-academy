@@ -10,6 +10,7 @@ import {
 import {
   countByStatus,
   listLogsByTaskIds,
+  listSupportUserIdsByTaskIds,
   listTasksByProject,
 } from "../db/tasks-repo.ts";
 import {
@@ -155,22 +156,36 @@ projectsRouter.get("/proyectos/:id", async (req, res) => {
     };
   });
 
-  const responsableFilter =
-    typeof req.query.responsable === "string" &&
-    candidates.some((p) => p.id === req.query.responsable)
-      ? req.query.responsable
-      : null;
+  const responsableRaw = req.query.responsable;
+  const responsableIds = Array.isArray(responsableRaw)
+    ? responsableRaw.filter((v): v is string => typeof v === "string")
+    : typeof responsableRaw === "string" && responsableRaw
+      ? [responsableRaw]
+      : [];
+  const responsableFilter = responsableIds.filter((id) =>
+    candidates.some((p) => p.id === id),
+  );
 
   let tasksView = estadoParsed.data
     ? allTasks.filter((t) => t.status === estadoParsed.data)
     : allTasks;
-  if (responsableFilter) {
-    tasksView = tasksView.filter((t) => t.ownerId === responsableFilter);
+  if (responsableFilter.length > 0) {
+    tasksView = tasksView.filter((t) => responsableFilter.includes(t.ownerId));
   }
+
+  const supportByTask = await listSupportUserIdsByTaskIds(
+    tasksView.map((t) => t.id),
+  );
+  const supportTaskIdsForUser = new Set(
+    [...supportByTask.entries()]
+      .filter(([, userIds]) => userIds.includes(req.user?.id ?? ""))
+      .map(([taskId]) => taskId),
+  );
 
   res.render("proyectos/detalle", {
     project,
     tasks: tasksView,
+    supportTaskIdsForUser,
     allTasks,
     members,
     leader,
