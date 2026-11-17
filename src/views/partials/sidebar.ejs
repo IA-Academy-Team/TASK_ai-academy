@@ -21,7 +21,6 @@
       <%- include('./icon', { kind: 'handshake', size: 16 }) %><span class="navbtn-label">Solicitudes de apoyo</span>
       <% if (typeof sidebarCounts !== 'undefined' && sidebarCounts && sidebarCounts.supports > 0) { %><span class="navcount"><%= sidebarCounts.supports %></span><% } %>
     </a>
-    <a class="navbtn <%= active === 'productividad' ? 'on' : '' %>" href="/productividad" aria-label="Productividad"><%- include('./icon', { kind: 'chart', size: 16 }) %><span class="navbtn-label">Productividad</span></a>
   </div>
 
   <% if (user.role === "admin") { %>

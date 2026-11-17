@@ -4,9 +4,9 @@
     <% if (typeof actions !== 'undefined' && actions) { %>
     <% actions.forEach(function (a) { %>
       <% if (a.href) { %>
-      <a href="<%= a.href %>" class="btn <%= a.variant || 'primary' %>"><%= a.label %></a>
+      <a href="<%= a.href %>" class="btn <%= a.variant || 'primary' %><%= a.icon ? ' icon-only' : '' %>" <%= a.icon ? 'title="' + a.label + '"' : '' %>><% if (a.icon) { %><%- include('./icon', { kind: a.icon, size: 14 }) %><% } else { %><%= a.label %><% } %></a>
       <% } else { %>
-      <button type="button" class="btn <%= a.variant || 'primary' %>" onclick="<%= a.onclick %>"><%= a.label %></button>
+      <button type="button" class="btn <%= a.variant || 'primary' %><%= a.icon ? ' icon-only' : '' %>" onclick="<%= a.onclick %>" <%= a.icon ? 'title="' + a.label + '"' : '' %>><% if (a.icon) { %><%- include('./icon', { kind: a.icon, size: 14 }) %><% } else { %><%= a.label %><% } %></button>
       <% } %>
     <% }) %>
     <% } %>

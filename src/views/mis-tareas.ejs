@@ -14,7 +14,7 @@
 <div class="app">
   <%- include('partials/sidebar', { active: 'mis-tareas', user }) %>
   <main class="content">
-    <%- include('partials/navbar', { active: 'mis-tareas', actions: [{ label: '+ Crear tarea propia', href: '/tareas/nueva' }] }) %>
+    <%- include('partials/navbar', { active: 'mis-tareas', actions: [{ label: 'Crear tarea propia', href: '/tareas/nueva', icon: 'plus' }] }) %>
     <div class="topbar">
       <div>
         <h1 class="page-title">Mis tareas</h1>
@@ -22,7 +22,7 @@
       </div>
     </div>
 
-    <div class="kpi-row">
+    <div class="kpi-row kpi-row-compact">
       <div class="card kpi"><small>Total</small><strong><%= total %></strong></div>
       <div class="card kpi"><small>Vencidas</small><strong><%= vencidas %></strong></div>
       <div class="card kpi"><small>Urgentes</small><strong><%= urgentes %></strong></div>
@@ -45,16 +45,21 @@
     </div>
     <% } %>
 
-    <div class="filters">
-      <% ['todas','vencidas','urgentes','pendiente','activa','revision','bloqueada','completada','cancelada'].forEach(function(f) { %>
-      <a href="/mis-tareas?estado=<%= f %>&orden=<%= orden %>" class="<%= estado === f ? 'on' : '' %>"><%= f %></a>
-      <% }) %>
-    </div>
-    <div class="filters">
-      <% [['sequence','Manual'],['due','Vencimiento'],['priority','Prioridad']].forEach(function(o) { %>
-      <a href="/mis-tareas?estado=<%= estado %>&orden=<%= o[0] %>" class="<%= orden === o[0] ? 'on' : '' %>">Orden: <%= o[1] %></a>
-      <% }) %>
-    </div>
+    <section class="card pad">
+      <div class="filters">
+        <% ['todas','vencidas','urgentes','pendiente','activa','revision','bloqueada','completada','cancelada'].forEach(function(f) { %>
+        <a href="/mis-tareas?estado=<%= f %>&orden=<%= orden %>" class="<%= estado === f ? 'on' : '' %>"><%= f %></a>
+        <% }) %>
+      </div>
+      <div class="field" style="max-width:220px;margin-top:10px">
+        <label>Orden</label>
+        <select onchange="location.href='/mis-tareas?estado=<%= estado %>&orden=' + this.value">
+          <% [['sequence','Manual'],['due','Vencidas primero'],['priority','Por prioridad']].forEach(function(o) { %>
+          <option value="<%= o[0] %>" <%= orden === o[0] ? 'selected' : '' %>><%= o[1] %></option>
+          <% }) %>
+        </select>
+      </div>
+    </section>
 
     <section class="card pad">
       <% if (tasks.length === 0) { %>

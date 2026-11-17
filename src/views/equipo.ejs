@@ -14,7 +14,7 @@
 <div class="app">
   <%- include('partials/sidebar', { active: 'equipo', user }) %>
   <main class="content">
-    <%- include('partials/navbar', { active: 'equipo', actions: [{ label: 'Plan semanal', href: '/planeacion', variant: 'subtle' }] }) %>
+    <%- include('partials/navbar', { active: 'equipo', actions: [{ label: 'Plan semanal', href: '/planeacion', variant: 'subtle', icon: 'calendar' }] }) %>
     <div class="topbar">
       <div>
         <h1 class="page-title">Equipo y cargas</h1>
@@ -31,7 +31,7 @@
         <thead><tr><th>Persona</th><th>Pendientes</th><th>En ejecución</th><th>Apoyo</th><th>Horas abiertas</th><th>Carga vs. capacidad</th><th>Horas confirmadas del mes</th></tr></thead>
         <tbody>
           <% rows.forEach(function(r) { %>
-          <tr>
+          <tr style="cursor:pointer" onclick="aiacademyOpenPersonModal('<%= r.userId %>', '<%= r.name %>')">
             <td><%= r.name %></td>
             <td><%= r.pending %></td>
             <td><%= r.active %></td>
@@ -51,6 +51,93 @@
       </div>
       <% } %>
     </section>
+
+    <div class="modal" id="modal-persona-detalle">
+      <div class="modal-backdrop" onclick="document.getElementById('modal-persona-detalle').classList.remove('open')"></div>
+      <div class="modal-panel modal-panel-wide">
+        <div class="drawer-header" style="padding:0 0 16px">
+          <h2 id="persona-detalle-nombre">Persona</h2>
+          <button type="button" class="drawer-close" aria-label="Cerrar" onclick="document.getElementById('modal-persona-detalle').classList.remove('open')"><%- include('partials/icon', { kind: 'x', size: 18 }) %></button>
+        </div>
+        <div class="persona-detalle-layout">
+          <div class="persona-detalle-projects" id="persona-detalle-proyectos"><p class="muted small">Cargando…</p></div>
+          <div class="persona-detalle-tasks" id="persona-detalle-tareas"><p class="muted small">Elegí un proyecto.</p></div>
+        </div>
+      </div>
+    </div>
+    <script>
+    var aiacademyPersonaProjects = [];
+    function aiacademyOpenPersonModal(userId, name) {
+      document.getElementById('persona-detalle-nombre').textContent = name;
+      var projectsEl = document.getElementById('persona-detalle-proyectos');
+      var tasksEl = document.getElementById('persona-detalle-tareas');
+      projectsEl.replaceChildren();
+      tasksEl.replaceChildren();
+      var loading = document.createElement('p');
+      loading.className = 'muted small';
+      loading.textContent = 'Cargando…';
+      projectsEl.appendChild(loading);
+      document.getElementById('modal-persona-detalle').classList.add('open');
+
+      fetch('/equipo/' + encodeURIComponent(userId) + '/detalle')
+        .then(function (res) { if (!res.ok) throw new Error('request failed'); return res.json(); })
+        .then(function (data) {
+          aiacademyPersonaProjects = data.projects || [];
+          projectsEl.replaceChildren();
+          if (aiacademyPersonaProjects.length === 0) {
+            var empty = document.createElement('p');
+            empty.className = 'muted small';
+            empty.textContent = 'Sin proyectos ni tareas.';
+            projectsEl.appendChild(empty);
+            return;
+          }
+          aiacademyPersonaProjects.forEach(function (p, i) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'persona-detalle-project-btn';
+            btn.textContent = (p.code ? p.code + ' — ' : '') + p.name + ' (' + p.tasks.length + ')';
+            btn.onclick = function () { aiacademyShowProjectTasks(i, btn); };
+            projectsEl.appendChild(btn);
+          });
+          aiacademyShowProjectTasks(0, projectsEl.firstChild);
+        })
+        .catch(function () {
+          projectsEl.replaceChildren();
+          var err = document.createElement('p');
+          err.className = 'muted small';
+          err.textContent = 'No se pudo cargar. Probá de nuevo.';
+          projectsEl.appendChild(err);
+        });
+    }
+
+    function aiacademyShowProjectTasks(index, buttonEl) {
+      document.querySelectorAll('.persona-detalle-project-btn.on').forEach(function (b) { b.classList.remove('on'); });
+      if (buttonEl) buttonEl.classList.add('on');
+      var tasksEl = document.getElementById('persona-detalle-tareas');
+      tasksEl.replaceChildren();
+      var project = aiacademyPersonaProjects[index];
+      if (!project || project.tasks.length === 0) {
+        var empty = document.createElement('p');
+        empty.className = 'muted small';
+        empty.textContent = 'Sin tareas en este proyecto.';
+        tasksEl.appendChild(empty);
+        return;
+      }
+      project.tasks.forEach(function (t) {
+        var row = document.createElement('a');
+        row.className = 'persona-detalle-task-row';
+        row.href = '/tareas/' + t.id;
+        var title = document.createElement('span');
+        title.textContent = t.title + (t.role === 'apoyo' ? ' · apoyo' : '');
+        var badge = document.createElement('span');
+        badge.className = 'badge ' + t.status;
+        badge.textContent = t.status;
+        row.appendChild(title);
+        row.appendChild(badge);
+        tasksEl.appendChild(row);
+      });
+    }
+    </script>
   </main>
 </div>
 </body>
