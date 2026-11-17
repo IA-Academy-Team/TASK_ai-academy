@@ -20,10 +20,17 @@ export const createTaskSchema = z.object({
   priority: priorityEnum,
   estimate: z.coerce.number().positive().max(999),
   due: dateString,
+  // El input type="time" manda "" (no el campo ausente) cuando queda vacío
+  // — z.optional() no perdona ese "": sin el preprocess, crear una tarea sin
+  // hora de entrega rebotaba por el regex de abajo.
   dueTime: z
-    .string()
-    .regex(/^([01]\d|2[0-3]):[0-5]\d$/)
-    .optional()
+    .preprocess(
+      (v) => (v === "" ? undefined : v),
+      z
+        .string()
+        .regex(/^([01]\d|2[0-3]):[0-5]\d$/)
+        .optional(),
+    )
     .transform((v) => (v ? v : null)),
   support: z.union([z.string(), z.array(z.string())]).optional(),
 });
