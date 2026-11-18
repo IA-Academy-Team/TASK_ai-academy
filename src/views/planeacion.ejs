@@ -50,9 +50,9 @@
           <p class="kanban-empty">Sin tareas</p>
           <% } %>
           <% col.tasks.forEach(function(t) { %>
-          <div class="kanban-card prio-<%= t.priority %>" draggable="true" data-task-id="<%= t.id %>" data-status="<%= col.status %>" onclick="location.href='/tareas/<%= t.id %>'">
+          <div class="kanban-card prio-<%= t.priority %>" draggable="true" data-task-id="<%= t.id %>" data-status="<%= col.status %>" data-has-evidence="<%= t.hasEvidence ? '1' : '0' %>" onclick="location.href='/tareas/<%= t.id %>'">
             <span class="kanban-card-title"><%= t.title %></span>
-            <span class="kanban-card-meta"><%= t.ownerName %> · <%= t.estimate %> h</span>
+            <span class="kanban-card-meta"><span class="color-dot" style="background:<%= t.ownerColor %>"></span><%= t.ownerName %> · <%= t.estimate %> h</span>
             <span class="kanban-card-due">Vence <%= t.due %></span>
           </div>
           <% }) %>
@@ -60,14 +60,75 @@
       </div>
       <% }) %>
     </div>
+
+    <div class="modal" id="modal-kanban-field">
+      <div class="modal-backdrop" onclick="aiacademyCancelKanbanField()"></div>
+      <div class="modal-panel">
+        <div class="drawer-header" style="padding:0 0 16px">
+          <h2 id="kanban-field-title">Motivo</h2>
+          <button type="button" class="drawer-close" aria-label="Cerrar" onclick="aiacademyCancelKanbanField()"><%- include('partials/icon', { kind: 'x', size: 18 }) %></button>
+        </div>
+        <form id="form-kanban-field" onsubmit="return aiacademySubmitKanbanField(event)">
+          <div class="field full">
+            <label id="kanban-field-label" for="kanban-field-input">Motivo *</label>
+            <textarea id="kanban-field-input" maxlength="2000" required></textarea>
+          </div>
+          <div class="foot-actions full">
+            <button type="button" class="btn" onclick="aiacademyCancelKanbanField()">Cancelar</button>
+            <button type="submit" class="btn primary">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>
   </main>
 </div>
 <script>
+var aiacademyKanbanFieldCallback = null;
+
+function aiacademyOpenKanbanField(kind) {
+  return new Promise(function (resolve) {
+    aiacademyKanbanFieldCallback = resolve;
+    var isEvidencia = kind === 'evidencia';
+    document.getElementById('kanban-field-title').textContent = isEvidencia ? 'Evidencia del avance' : 'Motivo del bloqueo';
+    document.getElementById('kanban-field-label').textContent = (isEvidencia ? 'Evidencia' : 'Motivo') + ' *';
+    var input = document.getElementById('kanban-field-input');
+    input.value = '';
+    document.getElementById('modal-kanban-field').classList.add('open');
+    setTimeout(function () { input.focus(); }, 50);
+  });
+}
+
+function aiacademyCancelKanbanField() {
+  document.getElementById('modal-kanban-field').classList.remove('open');
+  if (aiacademyKanbanFieldCallback) {
+    var resolve = aiacademyKanbanFieldCallback;
+    aiacademyKanbanFieldCallback = null;
+    resolve(null);
+  }
+}
+
+function aiacademySubmitKanbanField(e) {
+  e.preventDefault();
+  var value = document.getElementById('kanban-field-input').value.trim();
+  if (!value) return false;
+  document.getElementById('modal-kanban-field').classList.remove('open');
+  if (aiacademyKanbanFieldCallback) {
+    var resolve = aiacademyKanbanFieldCallback;
+    aiacademyKanbanFieldCallback = null;
+    resolve(value);
+  }
+  return false;
+}
+
 (function () {
   var dragged = null;
 
   function needsNote(fromStatus, toStatus) {
     return toStatus === 'bloqueada' || (fromStatus === 'revision' && toStatus === 'activa');
+  }
+
+  function needsEvidence(toStatus, hasEvidence) {
+    return toStatus === 'revision' && !hasEvidence;
   }
 
   function updateCounts() {
@@ -88,19 +149,15 @@
     });
   }
 
-  function moveCard(card, zone, fromStatus, toStatus, taskId) {
-    var note = null;
-    if (needsNote(fromStatus, toStatus)) {
-      note = prompt('Esta transición necesita un motivo:');
-      if (!note) return;
-    }
-
+  function moveCard(card, zone, fromStatus, toStatus, taskId, extra) {
     var originalParent = card.parentElement;
     var originalNext = card.nextSibling;
+    var originalHasEvidence = card.getAttribute('data-has-evidence');
     var emptyPlaceholder = zone.querySelector('.kanban-empty');
     if (emptyPlaceholder) emptyPlaceholder.remove();
     zone.appendChild(card);
     card.setAttribute('data-status', toStatus);
+    if (extra.evidence) card.setAttribute('data-has-evidence', '1');
     updateCounts();
 
     function revert() {
@@ -110,11 +167,13 @@
         originalParent.appendChild(card);
       }
       card.setAttribute('data-status', fromStatus);
+      card.setAttribute('data-has-evidence', originalHasEvidence);
       updateCounts();
     }
 
     var body = { status: toStatus };
-    if (note) body.note = note;
+    if (extra.note) body.note = extra.note;
+    if (extra.evidence) body.evidence = extra.evidence;
     fetch('/tareas/' + taskId + '/estado', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
@@ -138,6 +197,28 @@
         revert();
         showErrorAlert('No se pudo mover la tarea', 'Revisá tu conexión e intentá de nuevo.');
       });
+  }
+
+  function handleDrop(card, zone, fromStatus, toStatus, taskId) {
+    var hasEvidence = card.getAttribute('data-has-evidence') === '1';
+
+    if (needsEvidence(toStatus, hasEvidence)) {
+      aiacademyOpenKanbanField('evidencia').then(function (value) {
+        if (!value) return;
+        moveCard(card, zone, fromStatus, toStatus, taskId, { evidence: value });
+      });
+      return;
+    }
+
+    if (needsNote(fromStatus, toStatus)) {
+      aiacademyOpenKanbanField('motivo').then(function (value) {
+        if (!value) return;
+        moveCard(card, zone, fromStatus, toStatus, taskId, { note: value });
+      });
+      return;
+    }
+
+    moveCard(card, zone, fromStatus, toStatus, taskId, {});
   }
 
   document.querySelectorAll('.kanban-card').forEach(function (card) {
@@ -170,7 +251,7 @@
       var fromStatus = dragged.getAttribute('data-status');
       var toStatus = zone.closest('.kanban-column').getAttribute('data-status');
       if (fromStatus === toStatus) return;
-      moveCard(dragged, zone, fromStatus, toStatus, taskId);
+      handleDrop(dragged, zone, fromStatus, toStatus, taskId);
     });
   });
 })();

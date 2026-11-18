@@ -23,6 +23,7 @@ export const user = pgTable("user", {
   isActive: boolean("is_active").default(true).notNull(),
   weeklyCapacityHours: integer("weekly_capacity_hours").default(40).notNull(),
   mustChangePassword: boolean("must_change_password").default(false).notNull(),
+  color: text("color").default("#7346CC").notNull(),
 });
 
 export const session = pgTable(

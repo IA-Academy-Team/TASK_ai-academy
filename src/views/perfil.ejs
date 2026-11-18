@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<link rel="icon" href="/static/brand/favicon.ico" sizes="any" />
+<link rel="icon" type="image/png" sizes="32x32" href="/static/brand/favicon-32x32.png" />
+<link rel="icon" type="image/png" sizes="16x16" href="/static/brand/favicon-16x16.png" />
+<title>Task by Academy — Mi perfil</title>
+<%- include('partials/theme-init') %>
+<%- include('partials/styles') %>
+</head>
+<body>
+<div class="app">
+  <%- include('partials/sidebar', { active: null, user }) %>
+  <main class="content">
+    <%- include('partials/navbar', { active: null, crumbs: [{ label: 'Mi perfil' }] }) %>
+    <div class="topbar">
+      <div>
+        <h1 class="page-title">Mi perfil</h1>
+        <p class="subtitle">Elegí el color con el que te van a identificar en el equipo, proyectos y tareas.</p>
+      </div>
+    </div>
+
+    <% if (saved) { %><div class="success" style="margin-bottom:14px">Color actualizado.</div><% } %>
+
+    <section class="card pad">
+      <div class="sectiontitle"><h2>Datos</h2></div>
+      <div class="detail-row"><span>Nombre</span><strong><%= user.name || '—' %></strong></div>
+      <div class="detail-row"><span>Email</span><strong><%= user.email %></strong></div>
+      <div class="detail-row"><span>Rol</span><strong><%= user.role %></strong></div>
+    </section>
+
+    <section class="card pad">
+      <div class="sectiontitle"><h2>Color distintivo</h2></div>
+      <form method="post" action="/perfil/color" id="form-perfil-color">
+        <div class="color-swatch-grid">
+          <% colors.forEach(function(c) { %>
+          <label class="color-swatch <%= user.color === c ? 'selected' : '' %>" style="background:<%= c %>">
+            <input type="radio" name="color" value="<%= c %>" <%= user.color === c ? 'checked' : '' %> onchange="this.form.submit()" />
+            <% if (user.color === c) { %><%- include('partials/icon', { kind: 'check', size: 16 }) %><% } %>
+          </label>
+          <% }) %>
+        </div>
+      </form>
+    </section>
+  </main>
+</div>
+</body>
+</html>

@@ -87,7 +87,7 @@
               <% allUsers.forEach(function(u) { %>
               <label class="person-chip">
                 <input type="checkbox" name="support" value="<%= u.id %>" onchange="aiacademyUpdateSupportSelection()" />
-                <span class="chip-avatar"><%= (u.name || '?').charAt(0).toUpperCase() %></span>
+                <span class="chip-avatar" style="background:<%= u.color || '#7346CC' %>;color:#fff"><%= (u.name || '?').charAt(0).toUpperCase() %></span>
                 <%= u.name %>
               </label>
               <% }) %>

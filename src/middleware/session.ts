@@ -8,6 +8,7 @@ type SessionUser = {
   role: string;
   isActive: boolean;
   mustChangePassword: boolean;
+  color: string;
 };
 
 declare module "express-serve-static-core" {
@@ -29,6 +30,7 @@ export async function attachSession(
     isActive?: boolean;
     role: string;
     mustChangePassword?: boolean;
+    color?: string;
   };
   if (session?.user && extra.isActive !== false) {
     req.user = {
@@ -38,6 +40,7 @@ export async function attachSession(
       role: extra.role,
       isActive: true,
       mustChangePassword: extra.mustChangePassword === true,
+      color: extra.color || "#7346CC",
     };
   }
 

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   groupTasksByColumn,
   KANBAN_STATUSES,
+  kanbanTransitionNeedsEvidence,
   kanbanTransitionNeedsNote,
 } from "../../src/domain/kanban.ts";
 
@@ -16,6 +17,8 @@ function task(
     due: "2026-01-01",
     estimate: 1,
     ownerName: "Ana",
+    ownerColor: "#7346CC",
+    hasEvidence: false,
     ...overrides,
   };
 }
@@ -83,5 +86,19 @@ describe("kanbanTransitionNeedsNote", () => {
 
   it("no pide motivo para enviar a revisión", () => {
     expect(kanbanTransitionNeedsNote("activa", "revision")).toBe(false);
+  });
+});
+
+describe("kanbanTransitionNeedsEvidence", () => {
+  it("pide evidencia al entrar a revisión sin evidencia cargada", () => {
+    expect(kanbanTransitionNeedsEvidence("revision", false)).toBe(true);
+  });
+
+  it("no pide evidencia si la tarea ya la tiene", () => {
+    expect(kanbanTransitionNeedsEvidence("revision", true)).toBe(false);
+  });
+
+  it("no pide evidencia para otras columnas", () => {
+    expect(kanbanTransitionNeedsEvidence("activa", false)).toBe(false);
   });
 });

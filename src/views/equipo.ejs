@@ -32,7 +32,7 @@
         <tbody>
           <% rows.forEach(function(r) { %>
           <tr style="cursor:pointer" onclick="aiacademyOpenPersonModal('<%= r.userId %>', '<%= r.name %>')">
-            <td><%= r.name %></td>
+            <td style="display:flex;align-items:center;gap:8px"><span class="chip-avatar" style="--chip-bg:<%= r.color || '#7346CC' %>;--chip-fg:#fff"><%= (r.name || '?').charAt(0).toUpperCase() %></span><%= r.name %></td>
             <td><%= r.pending %></td>
             <td><%= r.active %></td>
             <td><%= r.support %></td>

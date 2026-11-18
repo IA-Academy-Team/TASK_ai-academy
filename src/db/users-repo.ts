@@ -33,6 +33,15 @@ export async function deleteUser(id: string) {
   await db.delete(user).where(eq(user.id, id));
 }
 
+export async function updateUserColor(userId: string, color: string) {
+  const [row] = await db
+    .update(user)
+    .set({ color, updatedAt: new Date() })
+    .where(eq(user.id, userId))
+    .returning();
+  return row;
+}
+
 export async function getUserActivityCounts(id: string) {
   const [{ value: ledProjects }] = await db
     .select({ value: count() })

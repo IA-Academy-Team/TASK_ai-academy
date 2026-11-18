@@ -161,7 +161,7 @@
                 <% users.forEach(function(u) { %>
                 <label class="person-chip">
                   <input type="checkbox" name="members" value="<%= u.id %>" onchange="updateNewProjectMembersLabel()" />
-                  <span class="chip-avatar"><%= (u.name || '?').charAt(0).toUpperCase() %></span>
+                  <span class="chip-avatar" style="background:<%= u.color || '#7346CC' %>;color:#fff"><%= (u.name || '?').charAt(0).toUpperCase() %></span>
                   <%= u.name %>
                 </label>
                 <% }) %>

@@ -23,11 +23,47 @@
     </div>
 
     <div class="kpi-row kpi-row-compact">
-      <div class="card kpi"><small>Total</small><strong><%= total %></strong></div>
-      <div class="card kpi"><small>Vencidas</small><strong><%= vencidas %></strong></div>
-      <div class="card kpi"><small>Urgentes</small><strong><%= urgentes %></strong></div>
-      <div class="card kpi"><small>Completadas</small><strong><%= completadas %></strong></div>
+      <div class="card kpi card--interactive" onclick="document.getElementById('modal-kpi-total').classList.add('open')"><small>Total</small><strong><%= total %></strong></div>
+      <div class="card kpi card--interactive" onclick="document.getElementById('modal-kpi-vencidas').classList.add('open')"><small>Vencidas</small><strong><%= vencidas %></strong></div>
+      <div class="card kpi card--interactive" onclick="document.getElementById('modal-kpi-urgentes').classList.add('open')"><small>Urgentes</small><strong><%= urgentes %></strong></div>
+      <div class="card kpi card--interactive" onclick="document.getElementById('modal-kpi-completadas').classList.add('open')"><small>Completadas</small><strong><%= completadas %></strong></div>
     </div>
+
+    <% [
+      { id: 'modal-kpi-total', title: 'Total', rows: kpiTotalRows },
+      { id: 'modal-kpi-vencidas', title: 'Vencidas', rows: kpiVencidasRows },
+      { id: 'modal-kpi-urgentes', title: 'Urgentes', rows: kpiUrgentesRows },
+      { id: 'modal-kpi-completadas', title: 'Completadas', rows: kpiCompletadasRows },
+    ].forEach(function(m) { %>
+    <div class="modal" id="<%= m.id %>">
+      <div class="modal-backdrop" onclick="document.getElementById('<%= m.id %>').classList.remove('open')"></div>
+      <div class="modal-panel">
+        <div class="drawer-header" style="padding:0 0 16px">
+          <h2><%= m.title %></h2>
+          <button type="button" class="drawer-close" aria-label="Cerrar" onclick="document.getElementById('<%= m.id %>').classList.remove('open')"><%- include('partials/icon', { kind: 'x', size: 18 }) %></button>
+        </div>
+        <% if (m.rows.length === 0) { %>
+        <%- include('partials/empty-state', { text: 'Nada para mostrar.' }) %>
+        <% } else { %>
+        <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Tarea</th><th>Proyecto</th><th>Estado</th><th>Vence</th></tr></thead>
+          <tbody>
+            <% m.rows.forEach(function(r) { %>
+            <tr onclick="location.href='/tareas/<%= r.id %>'" style="cursor:pointer">
+              <td><%= r.title %></td>
+              <td><%= r.projectName %></td>
+              <td><span class="badge <%= r.status %>"><%= r.status %></span></td>
+              <td><%= r.due %></td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+        </div>
+        <% } %>
+      </div>
+    </div>
+    <% }) %>
 
     <% var urgTotal = urgencyBuckets.vencidas + urgencyBuckets.urgentes + urgencyBuckets.enCurso + urgencyBuckets.completadas; %>
     <% if (urgTotal > 0) { %>

@@ -13,6 +13,7 @@ import { healthRouter } from "./routes/health.ts";
 import { mytasksRouter } from "./routes/mytasks.ts";
 import { notificationsRouter } from "./routes/notifications.ts";
 import { plannerRouter } from "./routes/planner.ts";
+import { profileRouter } from "./routes/profile.ts";
 import { projectSettingsRouter } from "./routes/project-settings.ts";
 import { projectsRouter } from "./routes/projects.ts";
 import { projectsImportRouter } from "./routes/projects-import.ts";
@@ -91,6 +92,7 @@ export function createApp() {
   });
 
   app.use(changePasswordRouter);
+  app.use(profileRouter);
   app.use(dashboardRouter);
   app.use(projectsImportRouter);
   app.use(projectsRouter);

@@ -802,6 +802,7 @@ export async function teamLoad() {
   return activeUsers.map((u) => ({
     userId: u.id,
     name: u.name,
+    color: u.color,
     pending: pendingByUser.get(u.id) ?? 0,
     active: activeByUser.get(u.id) ?? 0,
     support: supportByUser.get(u.id) ?? 0,

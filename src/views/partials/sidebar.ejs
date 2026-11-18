@@ -30,10 +30,10 @@
   <% } %>
 
   <div class="sidebar-bottom">
-    <div class="sidebar-user" aria-label="<%= user.name || user.email %>">
-      <span class="sidebar-avatar"><%= (user.name || user.email || "?").charAt(0).toUpperCase() %></span>
+    <a class="sidebar-user" href="/perfil" aria-label="Mi perfil — <%= user.name || user.email %>">
+      <span class="sidebar-avatar" style="background:<%= user.color || '#7346CC' %>"><%= (user.name || user.email || "?").charAt(0).toUpperCase() %></span>
       <span class="sidebar-user-name"><%= user.name || user.email %></span>
-    </div>
+    </a>
     <button type="button" class="navbtn" aria-label="Salir" onclick="aiacademySignOut(this)"><%- include('./icon', { kind: 'logout', size: 16 }) %><span class="navbtn-label">Salir</span></button>
   </div>
 </nav>

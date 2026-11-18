@@ -14,7 +14,7 @@
 <div class="app">
   <%- include('partials/sidebar', { active: 'inicio', user }) %>
   <main class="content">
-    <%- include('partials/navbar', { active: 'inicio', actions: [{ label: 'Crear tarea', href: '/tareas/nueva', icon: 'plus' }, { label: 'Notificaciones', href: '/notificaciones', variant: 'subtle', icon: 'bell' }] }) %>
+    <%- include('partials/navbar', { active: 'inicio', actions: [{ label: 'Crear tarea', href: '/tareas/nueva', icon: 'plus' }] }) %>
     <div class="topbar">
       <div>
         <h1 class="page-title">Hola, <%= user.name || user.email %></h1>

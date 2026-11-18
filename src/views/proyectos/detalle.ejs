@@ -128,7 +128,7 @@
                   <% allUsers.forEach(function(u) { %>
                   <label class="person-chip">
                     <input type="checkbox" name="support" value="<%= u.id %>" />
-                    <span class="chip-avatar"><%= (u.name || '?').charAt(0).toUpperCase() %></span>
+                    <span class="chip-avatar" style="background:<%= u.color || '#7346CC' %>;color:#fff"><%= (u.name || '?').charAt(0).toUpperCase() %></span>
                     <%= u.name %>
                   </label>
                   <% }) %>
@@ -195,7 +195,7 @@
         <% peopleLoad.forEach(function(p) { %>
         <label class="person-load-chip <%= responsable.includes(p.id) ? 'on' : '' %>" title="<%= p.taskCount %> tareas abiertas · <%= p.openHours %> h declaradas">
           <input type="checkbox" name="responsable" value="<%= p.id %>" style="display:none" <%= responsable.includes(p.id) ? 'checked' : '' %> onchange="this.form.submit()" />
-          <span class="chip-avatar"><%= (p.name || '?').charAt(0).toUpperCase() %></span>
+          <span class="chip-avatar" style="--chip-bg:<%= p.color || '#7346CC' %>;--chip-fg:#fff"><%= (p.name || '?').charAt(0).toUpperCase() %></span>
           <%= p.name %><% if (p.isLeader) { %> · líder<% } %>
           <strong><%= p.taskCount %></strong><small>· <%= p.openHours %> h</small>
         </label>

@@ -24,6 +24,9 @@ export const auth = betterAuth({
         defaultValue: false,
         input: false,
       },
+      // Color distintivo elegido por cada usuario en /perfil — a diferencia
+      // de role/isActive, este campo SÍ lo puede setear el propio usuario.
+      color: { type: "string", defaultValue: "#7346CC", input: true },
     },
   },
 });

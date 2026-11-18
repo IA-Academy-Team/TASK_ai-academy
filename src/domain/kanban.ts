@@ -29,6 +29,16 @@ export function kanbanTransitionNeedsNote(
   );
 }
 
+// Entrar a revisión sin evidencia ya cargada exige una — mismo chequeo que
+// transitionTask en el repo. Si la tarea ya tiene evidencia (por ejemplo
+// cargada al "Entregar") no hace falta pedirla de nuevo.
+export function kanbanTransitionNeedsEvidence(
+  toStatus: KanbanStatus,
+  hasEvidence: boolean,
+): boolean {
+  return toStatus === "revision" && !hasEvidence;
+}
+
 const PRIORITY_ORDER: Record<string, number> = {
   critica: 0,
   alta: 1,
@@ -48,6 +58,8 @@ export interface KanbanTaskInput {
   due: string;
   estimate: number;
   ownerName: string;
+  ownerColor: string;
+  hasEvidence: boolean;
 }
 
 export interface KanbanColumn {

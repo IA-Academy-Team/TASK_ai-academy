@@ -86,6 +86,7 @@ plannerRouter.get("/planeacion", async (req, res) => {
 
   const users = await listAllActiveUsers();
   const ownerNameById = new Map(users.map((u) => [u.id, u.name]));
+  const ownerColorById = new Map(users.map((u) => [u.id, u.color]));
 
   const columns = groupTasksByColumn(
     weekTasks.map((t) => ({
@@ -96,6 +97,8 @@ plannerRouter.get("/planeacion", async (req, res) => {
       due: t.due,
       estimate: Number(t.estimate),
       ownerName: ownerNameById.get(t.ownerId) ?? "",
+      ownerColor: ownerColorById.get(t.ownerId) ?? "#7346CC",
+      hasEvidence: Boolean(t.evidence),
     })),
   );
 

@@ -150,6 +150,7 @@ projectsRouter.get("/proyectos/:id", async (req, res) => {
     return {
       id: person.id,
       name: person.name,
+      color: person.color,
       isLeader: person.id === project.leaderId,
       taskCount: personOpenTasks.length,
       openHours,

@@ -81,29 +81,39 @@ mytasksRouter.get("/mis-tareas", async (req, res) => {
   const owned = await Promise.all(ownedRaw.map(toRankedRow));
   const support = await Promise.all(supportRaw.map(toRankedRow));
 
-  const total = owned.length;
-  const vencidas = owned.filter((r) =>
+  const totalRows = owned;
+  const vencidasRows = owned.filter((r) =>
     matchTaskState(r.task, "vencidas", today),
-  ).length;
-  const urgentes = owned.filter((r) =>
+  );
+  const urgentesRows = owned.filter((r) =>
     matchTaskState(r.task, "urgentes", today),
-  ).length;
-  const completadas = owned.filter(
-    (r) => r.task.status === "completada",
-  ).length;
+  );
+  const completadasRows = owned.filter((r) => r.task.status === "completada");
 
   const filtered = owned
     .filter((r) => matchTaskState(r.task, estado, today))
     .sort((a, b) => compareTasks(a.rank, b.rank, orden, today));
 
+  const toKpiRow = (r: (typeof owned)[number]) => ({
+    id: r.task.id,
+    title: r.task.title,
+    projectName: r.projectName || "Independiente",
+    status: r.task.status,
+    due: r.task.due,
+  });
+
   res.render("mis-tareas", {
     user: req.user,
     tasks: filtered,
     support,
-    total,
-    vencidas,
-    urgentes,
-    completadas,
+    total: totalRows.length,
+    vencidas: vencidasRows.length,
+    urgentes: urgentesRows.length,
+    completadas: completadasRows.length,
+    kpiTotalRows: totalRows.map(toKpiRow),
+    kpiVencidasRows: vencidasRows.map(toKpiRow),
+    kpiUrgentesRows: urgentesRows.map(toKpiRow),
+    kpiCompletadasRows: completadasRows.map(toKpiRow),
     estado,
     orden,
     showing: filtered.length,
