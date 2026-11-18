@@ -15,11 +15,25 @@
   <%- include('partials/sidebar', { active: 'equipo', user }) %>
   <main class="content">
     <%- include('partials/navbar', { active: 'equipo', actions: [{ label: 'Plan semanal', href: '/planeacion', variant: 'subtle', icon: 'calendar' }] }) %>
+    <%
+      var periodLabels = { dia: 'Diaria', semana: 'Semanal', mes: 'Mensual' };
+      var periodSubtitles = {
+        dia: 'Carga de tareas que vencen hoy.',
+        semana: 'Carga de tareas que vencen esta semana (lun-vie).',
+        mes: 'Carga de tareas que vencen este mes.',
+      };
+    %>
     <div class="topbar">
       <div>
         <h1 class="page-title">Equipo y cargas</h1>
-        <p class="subtitle">Capacidad de referencia: 40 h/semana por persona.</p>
+        <p class="subtitle"><%= periodSubtitles[period] %></p>
       </div>
+    </div>
+
+    <div class="filters" style="margin-bottom:14px">
+      <% ['dia', 'semana', 'mes'].forEach(function(p) { %>
+      <a href="/equipo?periodo=<%= p %>" class="<%= period === p ? 'on' : '' %>"><%= periodLabels[p] %></a>
+      <% }) %>
     </div>
 
     <section class="card pad">
@@ -28,7 +42,7 @@
       <% } else { %>
       <div class="table-wrap">
       <table class="table">
-        <thead><tr><th>Persona</th><th>Pendientes</th><th>En ejecución</th><th>Apoyo</th><th>Horas abiertas</th><th>Carga vs. capacidad</th><th>Horas confirmadas del mes</th></tr></thead>
+        <thead><tr><th>Persona</th><th>Pendientes</th><th>En ejecución</th><th>Apoyo</th><th>Carga <%= periodLabels[period].toLowerCase() %></th><th>Carga vs. capacidad</th><th>Horas confirmadas del mes</th></tr></thead>
         <tbody>
           <% rows.forEach(function(r) { %>
           <tr style="cursor:pointer" onclick="aiacademyOpenPersonModal('<%= r.userId %>', '<%= r.name %>')">
@@ -38,9 +52,9 @@
             <td><%= r.support %></td>
             <td><%= r.openHours %> h</td>
             <td>
-              <div class="load-bar" title="<%= r.openHours %> h de <%= r.weeklyCapacityHours %> h/semana">
+              <div class="load-bar" title="<%= r.openHours %> h de <%= r.capacity %> h (<%= periodLabels[period].toLowerCase() %>)">
                 <div class="bar"><span class="threshold-<%= r.threshold %>" style="width: <%= r.loadPct %>%"></span></div>
-                <small><%= r.openHours %>/<%= r.weeklyCapacityHours %> h</small>
+                <small><%= r.openHours %>/<%= r.capacity %> h</small>
               </div>
             </td>
             <td><%= r.confirmedMonthHours %> h</td>

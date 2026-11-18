@@ -29,6 +29,11 @@
         <% if (isLeaderOrAdmin && task.status !== 'completada' && task.status !== 'cancelada') { %>
         <a class="btn subtle icon-only" title="Editar" href="/tareas/<%= task.id %>/editar"><%- include('../partials/icon', { kind: 'edit', size: 14 }) %></a>
         <% } %>
+        <% if (canDelete) { %>
+        <form method="post" action="/tareas/<%= task.id %>/eliminar" style="display:inline" onsubmit="return confirm('¿Eliminar la tarea \'' + <%- JSON.stringify(task.title) %> + '\'? Se borran también sus horas, apoyo y auditoría. Esta acción no se puede deshacer.')">
+          <button type="submit" class="btn danger icon-only" title="Eliminar tarea"><%- include('../partials/icon', { kind: 'trash', size: 14 }) %></button>
+        </form>
+        <% } %>
       </div>
     </div>
 

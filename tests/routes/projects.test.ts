@@ -132,7 +132,7 @@ describe("GET/POST /proyectos", () => {
 });
 
 describe("POST /proyectos/:id/eliminar", () => {
-  it("admin elimina el proyecto; sus tareas sobreviven como independientes", async () => {
+  it("admin elimina el proyecto y sus tareas en cascada", async () => {
     const app = createApp();
     const { cookie, me } = await makeAdminCookie("projdel1@test.local");
     const project = await createProject({
@@ -168,9 +168,7 @@ describe("POST /proyectos/:id/eliminar", () => {
     expect(res.headers.location).toBe("/proyectos");
 
     expect(await getProject(project.id)).toBeUndefined();
-    const survivingTask = await getTask(task.id);
-    expect(survivingTask).toBeDefined();
-    expect(survivingTask?.projectId).toBeNull();
+    expect(await getTask(task.id)).toBeUndefined();
   });
 
   it("usuario comun no puede eliminar un proyecto (403)", async () => {

@@ -39,8 +39,10 @@ export const REQUESTABLE_SUPPORT_STATUSES = [
 ];
 
 // Una persona no puede tener más de 4h de tareas estimadas el mismo día —
-// regla de negocio para evitar sobrecarga visible en el plan semanal.
-const DAILY_ESTIMATE_LIMIT_HOURS = 4;
+// regla de negocio para evitar sobrecarga visible en el plan semanal. Se
+// exporta porque Equipo y cargas la reusa como referencia de capacidad
+// diaria en su filtro día/semana/mes.
+export const DAILY_ESTIMATE_LIMIT_HOURS = 4;
 
 async function assertDailyEstimateLimit(
   ownerId: string,
@@ -181,6 +183,12 @@ export async function getTask(id: string) {
   if (!isUuid(id)) return undefined;
   const [row] = await db.select().from(tasks).where(eq(tasks.id, id));
   return row;
+}
+
+// Sin entrada de auditoría: auditLog.taskId cascadea con la tarea, así que
+// un registro "se borró esta tarea" desaparecería junto con ella.
+export async function deleteTask(id: string) {
+  await db.delete(tasks).where(eq(tasks.id, id));
 }
 
 export async function listSupport(taskId: string) {
@@ -689,7 +697,7 @@ export async function listTasksForSupport(userId: string) {
     .orderBy(asc(tasks.due));
 }
 
-export async function teamLoad() {
+export async function teamLoad(dueRange?: { from: string; to: string }) {
   const activeUsers = await db
     .select()
     .from(user)
@@ -739,6 +747,8 @@ export async function teamLoad() {
           and(
             inArray(tasks.ownerId, userIds),
             notInArray(tasks.status, ["completada", "cancelada"]),
+            dueRange ? gte(tasks.due, dueRange.from) : undefined,
+            dueRange ? lte(tasks.due, dueRange.to) : undefined,
           ),
         ),
       db

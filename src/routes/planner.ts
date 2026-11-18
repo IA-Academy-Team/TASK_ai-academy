@@ -4,6 +4,7 @@ import {
   listTasksByProject,
   listTasksWithoutProject,
 } from "../db/tasks-repo.ts";
+import { fridayOf, mondayOf, toDateString } from "../domain/dates.ts";
 import { groupTasksByColumn } from "../domain/kanban.ts";
 
 export const plannerRouter = Router();
@@ -23,19 +24,6 @@ const MONTH_LABELS = [
   "dic",
 ];
 
-function mondayOf(date: Date): Date {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  d.setDate(d.getDate() + diff);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
-
-function toDateString(d: Date): string {
-  return d.toLocaleDateString("en-CA");
-}
-
 function weekRangeLabel(monday: Date, friday: Date): string {
   const sameMonth = monday.getMonth() === friday.getMonth();
   const start = `${monday.getDate()}${sameMonth ? "" : ` ${MONTH_LABELS[monday.getMonth()]}`}`;
@@ -52,8 +40,7 @@ plannerRouter.get("/planeacion", async (req, res) => {
   const weekOffset = Number.parseInt(String(req.query.semana ?? "0"), 10) || 0;
   const monday = mondayOf(new Date());
   monday.setDate(monday.getDate() + weekOffset * 7);
-  const friday = new Date(monday);
-  friday.setDate(friday.getDate() + 4);
+  const friday = fridayOf(monday);
   const mondayStr = toDateString(monday);
   const fridayStr = toDateString(friday);
 

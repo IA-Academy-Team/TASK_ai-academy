@@ -16,4 +16,27 @@ describe("GET /equipo", () => {
     const res = await supertest(app).get("/equipo");
     expect(res.status).toBe(302);
   });
+
+  it.each(["dia", "semana", "mes"])(
+    "responde 200 con periodo=%s",
+    async (periodo) => {
+      const app = createApp();
+      const cookie = await signUpAndGetCookie(
+        `team-period-${periodo}@test.local`,
+      );
+      const res = await supertest(app)
+        .get(`/equipo?periodo=${periodo}`)
+        .set("Cookie", cookie);
+      expect(res.status).toBe(200);
+    },
+  );
+
+  it("un periodo inválido cae al semanal por defecto (200)", async () => {
+    const app = createApp();
+    const cookie = await signUpAndGetCookie("team-period-bad@test.local");
+    const res = await supertest(app)
+      .get("/equipo?periodo=invalido")
+      .set("Cookie", cookie);
+    expect(res.status).toBe(200);
+  });
 });
