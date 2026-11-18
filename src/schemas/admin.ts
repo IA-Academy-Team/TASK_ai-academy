@@ -1,8 +1,10 @@
 import { z } from "zod";
+import { ROLES } from "../domain/roles.ts";
 
 export const createUserSchema = z.object({
   email: z.string().email(),
   name: z.string().min(1),
+  role: z.enum(ROLES),
 });
 
 // Contraseña inicial compartida para toda cuenta creada por un admin — no es

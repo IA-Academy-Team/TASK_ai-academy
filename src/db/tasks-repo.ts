@@ -13,6 +13,7 @@ import {
   or,
 } from "drizzle-orm";
 import { declaredHours, openHoursRemaining } from "../domain/hours.ts";
+import { isAdminRole } from "../domain/roles.ts";
 import { HttpError } from "../lib/http-error.ts";
 import { isUuid } from "../lib/uuid.ts";
 import { recordChange } from "./audit-repo.ts";
@@ -486,13 +487,12 @@ export async function listRequestableTasksForUser(
   role: string,
 ) {
   const statusFilter = inArray(tasks.status, REQUESTABLE_SUPPORT_STATUSES);
-  const scopeFilter =
-    role === "admin"
-      ? statusFilter
-      : and(
-          statusFilter,
-          or(eq(projects.leaderId, userId), eq(tasks.ownerId, userId)),
-        );
+  const scopeFilter = isAdminRole(role)
+    ? statusFilter
+    : and(
+        statusFilter,
+        or(eq(projects.leaderId, userId), eq(tasks.ownerId, userId)),
+      );
 
   return db
     .select({

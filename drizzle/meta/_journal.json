@@ -57,6 +57,13 @@
       "when": 1795010932253,
       "tag": "0007_famous_thor_girl",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1795014985166,
+      "tag": "0008_dashing_betty_ross",
+      "breakpoints": true
     }
   ]
 }

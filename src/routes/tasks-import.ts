@@ -2,6 +2,7 @@ import { Router } from "express";
 import multer from "multer";
 import { getProject, listAllActiveUsers } from "../db/projects-repo.ts";
 import { createTask } from "../db/tasks-repo.ts";
+import { isAdminRole } from "../domain/roles.ts";
 import { validateTaskImportRow } from "../domain/task-import.ts";
 import { HttpError } from "../lib/http-error.ts";
 import {
@@ -15,7 +16,7 @@ function isLeaderOrAdmin(
   user: { id: string; role: string },
   project: { leaderId: string } | undefined,
 ): boolean {
-  return user.role === "admin" || (!!project && user.id === project.leaderId);
+  return isAdminRole(user.role) || (!!project && user.id === project.leaderId);
 }
 
 type ImportResultRow =

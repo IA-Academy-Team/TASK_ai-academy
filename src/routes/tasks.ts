@@ -7,6 +7,7 @@ import {
   logHours,
   transitionTask,
 } from "../db/tasks-repo.ts";
+import { isAdminRole } from "../domain/roles.ts";
 import { HttpError } from "../lib/http-error.ts";
 import { logHoursSchema, transitionSchema } from "../schemas/task.ts";
 
@@ -34,7 +35,7 @@ tasksRouter.get("/tareas/:id", async (req, res) => {
 
   // Sin proyecto no hay líder que delegue — el responsable hace de líder.
   const isLeaderOrAdmin =
-    req.user.role === "admin" ||
+    isAdminRole(req.user.role) ||
     (!!project && req.user.id === project.leaderId) ||
     (!project && req.user.id === task.ownerId);
 
@@ -87,7 +88,7 @@ tasksRouter.post("/tareas/:id/estado", async (req, res, next) => {
 
     const project = await getProject(current.projectId);
     const isLeaderOrAdmin =
-      req.user.role === "admin" ||
+      isAdminRole(req.user.role) ||
       (!!project && req.user.id === project.leaderId) ||
       (!project && req.user.id === current.ownerId);
 

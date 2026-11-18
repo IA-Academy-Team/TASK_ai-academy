@@ -6,6 +6,7 @@ import { createProject } from "../../src/db/projects-repo.ts";
 import { getSidebarCounts } from "../../src/db/sidebar-repo.ts";
 import { createRequest } from "../../src/db/support-requests-repo.ts";
 import { createTask } from "../../src/db/tasks-repo.ts";
+import { DEFAULT_ROLE } from "../../src/domain/roles.ts";
 import { auth } from "../../src/lib/auth.ts";
 
 async function makeUser(email: string) {
@@ -20,7 +21,7 @@ describe("getSidebarCounts", () => {
   it("cuenta 0/0 para un usuario sin pendientes", async () => {
     const solo = await makeUser("sidebar-solo@test.local");
 
-    const counts = await getSidebarCounts(solo.id, "usuario");
+    const counts = await getSidebarCounts(solo.id, DEFAULT_ROLE);
 
     expect(counts).toEqual({ notifications: 0, supports: 0 });
   });
@@ -62,7 +63,7 @@ describe("getSidebarCounts", () => {
       reason: "necesito ayuda",
     });
 
-    const counts = await getSidebarCounts(target.id, "usuario");
+    const counts = await getSidebarCounts(target.id, DEFAULT_ROLE);
 
     expect(counts.supports).toBe(1);
   });

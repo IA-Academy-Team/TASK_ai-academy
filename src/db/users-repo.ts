@@ -1,5 +1,7 @@
-import { count, eq, or } from "drizzle-orm";
-import { user } from "./auth-schema.ts";
+import { hashPassword } from "better-auth/crypto";
+import { and, count, eq, or } from "drizzle-orm";
+import type { Role } from "../domain/roles.ts";
+import { account, user } from "./auth-schema.ts";
 import { db } from "./client.ts";
 import {
   auditLog,
@@ -31,6 +33,21 @@ export async function setMustChangePassword(id: string, value: boolean) {
 
 export async function deleteUser(id: string) {
   await db.delete(user).where(eq(user.id, id));
+}
+
+export async function setUserRole(id: string, role: Role) {
+  await db.update(user).set({ role }).where(eq(user.id, id));
+}
+
+// Reescribe la contraseña del usuario a mano (sin pasar por el flujo normal
+// de better-auth, que exige la contraseña actual) — solo un admin puede
+// llamar esta función, desde una ruta que ya pasa por authorize(ADMIN_ROLE).
+export async function resetUserPassword(id: string, newPassword: string) {
+  const hashed = await hashPassword(newPassword);
+  await db
+    .update(account)
+    .set({ password: hashed, updatedAt: new Date() })
+    .where(and(eq(account.userId, id), eq(account.providerId, "credential")));
 }
 
 export async function updateUserColor(userId: string, color: string) {

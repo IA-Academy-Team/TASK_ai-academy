@@ -14,8 +14,13 @@
 <div class="app">
   <%- include('../partials/sidebar', { active: 'usuarios', user }) %>
   <main class="content">
-    <%- include('../partials/navbar', { active: 'usuarios', actions: [{ label: '+ Crear usuario', onclick: "document.getElementById('create-user-modal').classList.add('open')" }] }) %>
-    <h1 class="page-title">Administración de usuarios</h1>
+    <%- include('../partials/navbar', { active: 'usuarios', actions: [{ label: 'Crear usuario', icon: 'plus', onclick: "document.getElementById('create-user-modal').classList.add('open')" }] }) %>
+    <div class="topbar">
+      <div>
+        <h1 class="page-title">Administración de usuarios</h1>
+        <p class="subtitle">Crear cuentas, asignar su rol y gestionar el acceso del equipo.</p>
+      </div>
+    </div>
 
     <section class="card pad">
       <div class="table-wrap">
@@ -26,7 +31,7 @@
           <tr>
             <td><%= u.name %></td>
             <td><%= u.email %></td>
-            <td><span class="badge <%= u.role %>"><%= u.role %></span></td>
+            <td><span class="badge <%= u.role %>"><%= roleLabels[u.role] || u.role %></span></td>
             <td><span class="badge <%= u.isActive ? '' : 'off' %>"><%= u.isActive ? 'activo' : 'inactivo' %></span></td>
             <td>
               <% if (u.isActive || u.id !== user.id) { %>
@@ -37,6 +42,7 @@
                   <form method="post" action="/admin/usuarios/<%= u.id %>/desactivar"><button type="submit" class="row-menu-item">Desactivar</button></form>
                   <% } %>
                   <% if (u.id !== user.id) { %>
+                  <form method="post" action="/admin/usuarios/<%= u.id %>/restablecer-password" onsubmit="return confirm('¿Restablecer la contraseña de <%= u.name %> a la genérica? Va a tener que cambiarla al volver a iniciar sesión.')"><button type="submit" class="row-menu-item">Restablecer contraseña</button></form>
                   <button type="button" class="row-menu-item row-menu-item-danger" data-user-id="<%= u.id %>" data-user-name="<%= u.name %>" onclick="openDeleteModal(this)">Eliminar</button>
                   <% } %>
                 </div>
@@ -62,6 +68,11 @@
         <form method="post" action="/admin/usuarios" class="form-grid">
           <div class="field full"><label>Nombre *</label><input name="name" placeholder="Nombre" required /></div>
           <div class="field full"><label>Email *</label><input name="email" type="email" placeholder="email@aiacademy.local" required /></div>
+          <div class="field full"><label>Rol *</label>
+            <select name="role" required>
+              <% roles.forEach(function(r) { %><option value="<%= r %>"><%= roleLabels[r] %></option><% }) %>
+            </select>
+          </div>
           <div class="foot-actions full">
             <button type="button" class="btn" onclick="document.getElementById('create-user-modal').classList.remove('open')">Cancelar</button>
             <button type="submit" class="btn primary">Crear usuario</button>

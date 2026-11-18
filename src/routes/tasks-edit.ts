@@ -6,6 +6,7 @@ import {
   listTasksWithoutProject,
   updateTask,
 } from "../db/tasks-repo.ts";
+import { isAdminRole } from "../domain/roles.ts";
 import { HttpError } from "../lib/http-error.ts";
 import { updateTaskSchema } from "../schemas/task.ts";
 
@@ -18,7 +19,7 @@ function isLeaderOrAdmin(
   ownerId: string,
 ): boolean {
   return (
-    user.role === "admin" ||
+    isAdminRole(user.role) ||
     (!!project && user.id === project.leaderId) ||
     (!project && user.id === ownerId)
   );

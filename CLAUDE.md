@@ -1,7 +1,8 @@
 # AI Academy — Centro de Control
 
 Herramienta interna de gestión de proyectos y tareas para el equipo de AI Academy, con login, roles
-globales `admin`/`usuario`, y un líder por proyecto. Cada tarea tiene responsable, apoyo, prioridad,
+globales `administrador`/`trainer`/`colaborador`/`practicante` (solo `administrador` tiene permisos
+elevados — los otros tres son organizacionales), y un líder por proyecto. Cada tarea tiene responsable, apoyo, prioridad,
 horas estimadas/registradas, dependencia, y un workflow de estado con límites de WIP por proyecto
 (`pendiente → activa → revisión → completada`, más `bloqueada`/`cancelada`).
 
@@ -45,7 +46,8 @@ Las vistas renderizan desde `src/views/**/*.ejs`, con el shell compartido en
 
 **Rutas de página.** `/proyectos` (lista) → `/proyectos/nuevo` (crear) → `/proyectos/:id` (detalle:
 tareas del proyecto + formulario de nueva tarea + configuración si sos líder/admin) → `/tareas/:id`
-(detalle de una tarea: workflow de estado, registro de horas). `/admin/usuarios` solo para `admin`.
+(detalle de una tarea: workflow de estado, registro de horas). `/admin/usuarios` solo para
+`administrador`.
 
 **Límites.**
 
@@ -65,7 +67,8 @@ tareas del proyecto + formulario de nueva tarea + configuración si sos líder/a
 | Schema de auth (user/session/account/verification) | generado por `pnpm auth:generate` en `src/db/auth-schema.ts` — **nunca editar a mano**; cambiar `src/lib/auth.ts` y regenerar |
 | Acceso a variables de entorno | `.env`, cargado vía `node --env-file=.env` / `tsx --env-file=.env` en cada entry point; `drizzle-kit` y el CLI `auth` cargan `.env` por su cuenta (verificado) |
 | Sesión/usuario actual | `src/middleware/session.ts` — un solo `attachSession()`, usado en todas partes; nunca leer la cookie de auth directamente en una ruta |
-| Chequeo de rol | `src/middleware/authorize.ts` — `authorize("admin")`; nunca `req.user.role === "admin"` inline |
+| Roles de usuario | `src/domain/roles.ts` — `ROLES`, `ADMIN_ROLE`, `isAdminRole()`; nunca el string `"administrador"` suelto |
+| Chequeo de rol para una ruta protegida | `src/middleware/authorize.ts` — `authorize(ADMIN_ROLE)`; nunca `req.user.role === ADMIN_ROLE` inline en una ruta |
 | Tokens de diseño | las variables CSS de abajo — ningún hex crudo en una vista |
 
 ## Reglas de código

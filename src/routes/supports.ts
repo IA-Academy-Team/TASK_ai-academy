@@ -14,6 +14,7 @@ import {
   REQUESTABLE_SUPPORT_STATUSES,
 } from "../db/tasks-repo.ts";
 import { getUser } from "../db/users-repo.ts";
+import { isAdminRole } from "../domain/roles.ts";
 import { HttpError } from "../lib/http-error.ts";
 import { publish } from "../lib/sse-hub.ts";
 import { requestSupportSchema } from "../schemas/task.ts";
@@ -41,7 +42,7 @@ async function assertCanResolveRequest(
     return;
   }
 
-  if (user.role === "admin") return;
+  if (isAdminRole(user.role)) return;
   const task = await getTask(request.taskId);
   const project = task ? await getProject(task.projectId) : undefined;
   // Sin proyecto no hay líder que delegue — el responsable hace de líder.
@@ -64,7 +65,7 @@ supportsRouter.get("/solicitudes", async (req, res) => {
 
   const [forMe, forLeader, requestable, allUsers] = await Promise.all([
     listPendingForUserEnriched(req.user.id),
-    req.user.role === "admin"
+    isAdminRole(req.user.role)
       ? Promise.resolve([])
       : listPendingApplyForLeader(req.user.id),
     listRequestableTasksForUser(req.user.id, req.user.role),
@@ -123,7 +124,7 @@ supportsRouter.post("/tareas/:id/apoyo", async (req, res) => {
   }
   const project = await getProject(task.projectId);
   const isLeaderOrAdmin =
-    req.user.role === "admin" ||
+    isAdminRole(req.user.role) ||
     (!!project && req.user.id === project.leaderId);
   if (req.user.id !== task.ownerId && !isLeaderOrAdmin) {
     throw new HttpError(

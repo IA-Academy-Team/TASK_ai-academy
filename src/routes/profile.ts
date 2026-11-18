@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { updateUserColor } from "../db/users-repo.ts";
+import { ROLE_LABELS } from "../domain/roles.ts";
 import { USER_COLORS } from "../domain/user-colors.ts";
 import { HttpError } from "../lib/http-error.ts";
 import { updateProfileColorSchema } from "../schemas/profile.ts";
@@ -15,6 +16,7 @@ profileRouter.get("/perfil", (req, res) => {
   res.render("perfil", {
     user: req.user,
     colors: USER_COLORS,
+    roleLabels: ROLE_LABELS,
     saved: req.query.guardado === "1",
   });
 });

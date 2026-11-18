@@ -1,4 +1,5 @@
 import { eq } from "drizzle-orm";
+import { ADMIN_ROLE } from "../domain/roles.ts";
 import { auth } from "../lib/auth.ts";
 import { user } from "./auth-schema.ts";
 import { db } from "./client.ts";
@@ -48,7 +49,7 @@ async function main() {
     });
     await db
       .update(user)
-      .set({ role: "admin" })
+      .set({ role: ADMIN_ROLE })
       .where(eq(user.email, ADMIN_EMAIL));
     admin = await getUserByEmail(ADMIN_EMAIL);
   }

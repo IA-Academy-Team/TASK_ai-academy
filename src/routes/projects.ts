@@ -20,6 +20,7 @@ import {
   weightedProgress,
 } from "../domain/hours.ts";
 import { projectRiskInfo } from "../domain/project-risk.ts";
+import { ADMIN_ROLE, isAdminRole } from "../domain/roles.ts";
 import { HttpError } from "../lib/http-error.ts";
 import { authorize } from "../middleware/authorize.ts";
 import { createProjectSchema, toArray } from "../schemas/project.ts";
@@ -69,7 +70,7 @@ projectsRouter.get("/proyectos", async (req, res) => {
   });
 });
 
-projectsRouter.post("/proyectos", authorize("admin"), async (req, res) => {
+projectsRouter.post("/proyectos", authorize(ADMIN_ROLE), async (req, res) => {
   const parsed = createProjectSchema.safeParse(req.body);
   if (!parsed.success) {
     res.redirect(303, "/proyectos?error=1");
@@ -92,7 +93,7 @@ projectsRouter.post("/proyectos", authorize("admin"), async (req, res) => {
 
 projectsRouter.post(
   "/proyectos/:id/eliminar",
-  authorize("admin"),
+  authorize(ADMIN_ROLE),
   async (req, res) => {
     const project = await getProject(String(req.params.id));
     if (!project) {
@@ -198,7 +199,7 @@ projectsRouter.get("/proyectos/:id", async (req, res) => {
     responsable: responsableFilter,
     user: req.user,
     isLeaderOrAdmin:
-      req.user.role === "admin" || req.user.id === project.leaderId,
+      isAdminRole(req.user.role) || req.user.id === project.leaderId,
     error: null,
   });
 });

@@ -28,7 +28,7 @@
       <div class="sectiontitle"><h2>Datos</h2></div>
       <div class="detail-row"><span>Nombre</span><strong><%= user.name || '—' %></strong></div>
       <div class="detail-row"><span>Email</span><strong><%= user.email %></strong></div>
-      <div class="detail-row"><span>Rol</span><strong><%= user.role %></strong></div>
+      <div class="detail-row"><span>Rol</span><strong><span class="badge <%= user.role %>"><%= roleLabels[user.role] || user.role %></span></strong></div>
     </section>
 
     <section class="card pad">

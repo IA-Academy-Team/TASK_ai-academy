@@ -7,6 +7,7 @@ import {
   updateSettings,
 } from "../db/projects-repo.ts";
 import { getTask, listTasksByProject, moveTask } from "../db/tasks-repo.ts";
+import { isAdminRole } from "../domain/roles.ts";
 import { HttpError } from "../lib/http-error.ts";
 import {
   moveTaskSchema,
@@ -20,7 +21,7 @@ function requireLeaderOrAdmin(
   user: { id: string; role: string },
   project: { leaderId: string },
 ) {
-  if (user.role !== "admin" && user.id !== project.leaderId) {
+  if (!isAdminRole(user.role) && user.id !== project.leaderId) {
     throw new HttpError(
       403,
       "solo el líder del proyecto o un admin pueden editar la configuración",

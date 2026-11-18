@@ -5,6 +5,7 @@ import {
   listAllActiveUsers,
 } from "../db/projects-repo.ts";
 import { validateProjectImportRow } from "../domain/project-import.ts";
+import { ADMIN_ROLE } from "../domain/roles.ts";
 import { HttpError } from "../lib/http-error.ts";
 import {
   buildProjectImportTemplate,
@@ -25,7 +26,7 @@ const upload = multer({
 
 projectsImportRouter.get(
   "/proyectos/plantilla.xlsx",
-  authorize("admin"),
+  authorize(ADMIN_ROLE),
   async (_req, res) => {
     const buffer = await buildProjectImportTemplate();
     res.setHeader(
@@ -42,7 +43,7 @@ projectsImportRouter.get(
 
 projectsImportRouter.post(
   "/proyectos/importar",
-  authorize("admin"),
+  authorize(ADMIN_ROLE),
   upload.single("file"),
   async (req, res) => {
     if (!req.file) {

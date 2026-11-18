@@ -16,7 +16,7 @@
   <main class="content">
     <%
       var projectsNavActions = [{ label: 'Crear tarea', href: '/tareas/nueva', variant: 'subtle', icon: 'plus' }];
-      if (user.role === "admin") {
+      if (user.role === "administrador") {
         projectsNavActions.push({ label: 'Carga masiva', onclick: "document.getElementById('modal-carga-masiva-proyectos').classList.add('open')", variant: 'subtle', icon: 'upload' });
         projectsNavActions.push({ label: 'Nuevo proyecto', onclick: "document.getElementById('new-project-modal').classList.add('open')", icon: 'folder-plus' });
       }
@@ -72,7 +72,7 @@
     </div>
     <% } %>
 
-    <% if (user.role === "admin") { %>
+    <% if (user.role === "administrador") { %>
     <div class="modal" id="modal-carga-masiva-proyectos">
       <div class="modal-backdrop" onclick="document.getElementById('modal-carga-masiva-proyectos').classList.remove('open')"></div>
       <div class="modal-panel modal-panel-wide">

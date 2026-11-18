@@ -1,3 +1,4 @@
+import { isAdminRole } from "../domain/roles.ts";
 import {
   listPendingApplyForLeader,
   listPendingForUserEnriched,
@@ -18,7 +19,7 @@ export async function getSidebarCounts(
   role: string,
 ): Promise<SidebarCounts> {
   const today = new Date().toLocaleDateString("en-CA");
-  const leaderId = role === "admin" ? null : userId;
+  const leaderId = isAdminRole(role) ? null : userId;
 
   const [reviewPending, overdue, budgetPending, forMe, forLeader] =
     await Promise.all([
@@ -26,7 +27,7 @@ export async function getSidebarCounts(
       listOverdueForOwner(userId, today),
       listBudgetPendingForLeader(leaderId),
       listPendingForUserEnriched(userId),
-      role === "admin"
+      isAdminRole(role)
         ? Promise.resolve([])
         : listPendingApplyForLeader(userId),
     ]);

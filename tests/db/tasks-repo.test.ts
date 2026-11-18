@@ -13,6 +13,7 @@ import {
   transitionTask,
   updateTask,
 } from "../../src/db/tasks-repo.ts";
+import { ADMIN_ROLE, DEFAULT_ROLE } from "../../src/domain/roles.ts";
 import { auth } from "../../src/lib/auth.ts";
 import { HttpError } from "../../src/lib/http-error.ts";
 
@@ -298,19 +299,22 @@ describe("tasks-repo", () => {
       actorId: leader.id,
     });
 
-    const forLeader = await listRequestableTasksForUser(leader.id, "usuario");
+    const forLeader = await listRequestableTasksForUser(
+      leader.id,
+      DEFAULT_ROLE,
+    );
     expect(forLeader.map((t) => t.id)).toContain(task.id);
 
-    const forOwner = await listRequestableTasksForUser(owner.id, "usuario");
+    const forOwner = await listRequestableTasksForUser(owner.id, DEFAULT_ROLE);
     expect(forOwner.map((t) => t.id)).toContain(task.id);
 
     const forStranger = await listRequestableTasksForUser(
       stranger.id,
-      "usuario",
+      DEFAULT_ROLE,
     );
     expect(forStranger.map((t) => t.id)).not.toContain(task.id);
 
-    const forAdmin = await listRequestableTasksForUser(stranger.id, "admin");
+    const forAdmin = await listRequestableTasksForUser(stranger.id, ADMIN_ROLE);
     expect(forAdmin.map((t) => t.id)).toContain(task.id);
   });
 
@@ -335,7 +339,7 @@ describe("tasks-repo", () => {
       note: "ya no aplica",
     });
 
-    const result = await listRequestableTasksForUser(leader.id, "usuario");
+    const result = await listRequestableTasksForUser(leader.id, DEFAULT_ROLE);
     expect(result.map((t) => t.id)).not.toContain(task.id);
   });
 });

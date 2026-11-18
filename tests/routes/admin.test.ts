@@ -5,6 +5,7 @@ import { createApp } from "../../src/app.ts";
 import { user } from "../../src/db/auth-schema.ts";
 import { db } from "../../src/db/client.ts";
 import { createProject } from "../../src/db/projects-repo.ts";
+import { ADMIN_ROLE } from "../../src/domain/roles.ts";
 import { signUpAndGetCookie } from "../helpers/auth.ts";
 
 describe("admin usuarios", () => {
@@ -12,7 +13,10 @@ describe("admin usuarios", () => {
     const app = createApp();
     const email = "adminx1@test.local";
     const cookie = await signUpAndGetCookie(email);
-    await db.update(user).set({ role: "admin" }).where(eq(user.email, email));
+    await db
+      .update(user)
+      .set({ role: ADMIN_ROLE })
+      .where(eq(user.email, email));
 
     const res = await supertest(app)
       .get("/admin/usuarios")
@@ -29,11 +33,14 @@ describe("admin usuarios", () => {
     expect(res.status).toBe(403);
   });
 
-  it("POST /admin/usuarios crea con role usuario", async () => {
+  it("POST /admin/usuarios crea con el rol elegido", async () => {
     const app = createApp();
     const email = "adminx3@test.local";
     const cookie = await signUpAndGetCookie(email);
-    await db.update(user).set({ role: "admin" }).where(eq(user.email, email));
+    await db
+      .update(user)
+      .set({ role: ADMIN_ROLE })
+      .where(eq(user.email, email));
 
     const res = await supertest(app)
       .post("/admin/usuarios")
@@ -41,8 +48,8 @@ describe("admin usuarios", () => {
       .type("form")
       .send({
         email: "nuevo1@test.local",
-        password: "supersecret999",
         name: "Nuevo",
+        role: "trainer",
       });
     expect(res.status).toBe(303);
 
@@ -50,14 +57,17 @@ describe("admin usuarios", () => {
       .select()
       .from(user)
       .where(eq(user.email, "nuevo1@test.local"));
-    expect(created.role).toBe("usuario");
+    expect(created.role).toBe("trainer");
   });
 
   it("POST /admin/usuarios/:id/desactivar pone isActive=false", async () => {
     const app = createApp();
     const email = "adminx4@test.local";
     const cookie = await signUpAndGetCookie(email);
-    await db.update(user).set({ role: "admin" }).where(eq(user.email, email));
+    await db
+      .update(user)
+      .set({ role: ADMIN_ROLE })
+      .where(eq(user.email, email));
 
     await signUpAndGetCookie("target1@test.local");
     const [target] = await db
@@ -81,7 +91,10 @@ describe("admin usuarios", () => {
     const app = createApp();
     const email = "adminx4c@test.local";
     const cookie = await signUpAndGetCookie(email);
-    await db.update(user).set({ role: "admin" }).where(eq(user.email, email));
+    await db
+      .update(user)
+      .set({ role: ADMIN_ROLE })
+      .where(eq(user.email, email));
     const [self] = await db.select().from(user).where(eq(user.email, email));
 
     const res = await supertest(app)
@@ -97,7 +110,10 @@ describe("admin usuarios", () => {
     const app = createApp();
     const email = "adminx4b@test.local";
     const cookie = await signUpAndGetCookie(email);
-    await db.update(user).set({ role: "admin" }).where(eq(user.email, email));
+    await db
+      .update(user)
+      .set({ role: ADMIN_ROLE })
+      .where(eq(user.email, email));
 
     const targetCookie = await signUpAndGetCookie("target1b@test.local");
     const [target] = await db
@@ -120,7 +136,10 @@ describe("admin usuarios", () => {
     const app = createApp();
     const email = "adminx5@test.local";
     const cookie = await signUpAndGetCookie(email);
-    await db.update(user).set({ role: "admin" }).where(eq(user.email, email));
+    await db
+      .update(user)
+      .set({ role: ADMIN_ROLE })
+      .where(eq(user.email, email));
 
     await signUpAndGetCookie("target2@test.local");
     const [target] = await db
@@ -144,7 +163,10 @@ describe("admin usuarios", () => {
     const app = createApp();
     const email = "adminx6@test.local";
     const cookie = await signUpAndGetCookie(email);
-    await db.update(user).set({ role: "admin" }).where(eq(user.email, email));
+    await db
+      .update(user)
+      .set({ role: ADMIN_ROLE })
+      .where(eq(user.email, email));
     const [self] = await db.select().from(user).where(eq(user.email, email));
 
     const res = await supertest(app)
@@ -162,7 +184,7 @@ describe("admin usuarios", () => {
     const adminCookie = await signUpAndGetCookie(adminEmail);
     await db
       .update(user)
-      .set({ role: "admin" })
+      .set({ role: ADMIN_ROLE })
       .where(eq(user.email, adminEmail));
 
     await signUpAndGetCookie("leader1@test.local");
@@ -203,7 +225,7 @@ describe("admin usuarios", () => {
     const adminCookie = await signUpAndGetCookie(adminEmail);
     await db
       .update(user)
-      .set({ role: "admin" })
+      .set({ role: ADMIN_ROLE })
       .where(eq(user.email, adminEmail));
     const [admin] = await db
       .select()
@@ -244,5 +266,93 @@ describe("admin usuarios", () => {
       .from(user)
       .where(eq(user.email, "actor1@test.local"));
     expect(after).toBeDefined();
+  });
+
+  it("usuario comun no puede restablecer contraseñas (403)", async () => {
+    const app = createApp();
+    const cookie = await signUpAndGetCookie("noadmin-reset@test.local");
+    await signUpAndGetCookie("target-reset1@test.local");
+    const [target] = await db
+      .select()
+      .from(user)
+      .where(eq(user.email, "target-reset1@test.local"));
+
+    const res = await supertest(app)
+      .post(`/admin/usuarios/${target.id}/restablecer-password`)
+      .set("Cookie", cookie);
+    expect(res.status).toBe(403);
+  });
+
+  it("admin restablece la contraseña de otro usuario a la genérica", async () => {
+    const { GENERIC_PASSWORD } = await import("../../src/schemas/admin.ts");
+
+    const app = createApp();
+    const adminEmail = "adminx9@test.local";
+    const adminCookie = await signUpAndGetCookie(adminEmail);
+    await db
+      .update(user)
+      .set({ role: ADMIN_ROLE })
+      .where(eq(user.email, adminEmail));
+
+    const targetEmail = "target-reset2@test.local";
+    await signUpAndGetCookie(targetEmail, "unaPasswordVieja1");
+    const [target] = await db
+      .select()
+      .from(user)
+      .where(eq(user.email, targetEmail));
+
+    const res = await supertest(app)
+      .post(`/admin/usuarios/${target.id}/restablecer-password`)
+      .set("Cookie", adminCookie);
+    expect(res.status).toBe(303);
+
+    const [after] = await db
+      .select()
+      .from(user)
+      .where(eq(user.email, targetEmail));
+    expect(after.mustChangePassword).toBe(true);
+
+    const oldPasswordRes = await supertest(app)
+      .post("/api/auth/sign-in/email")
+      .send({ email: targetEmail, password: "unaPasswordVieja1" });
+    expect(oldPasswordRes.status).toBe(401);
+
+    const newPasswordRes = await supertest(app)
+      .post("/api/auth/sign-in/email")
+      .send({ email: targetEmail, password: GENERIC_PASSWORD });
+    expect(newPasswordRes.status).toBe(200);
+  });
+
+  it("admin no puede restablecer su propia contraseña desde esta ruta", async () => {
+    const app = createApp();
+    const email = "adminx10@test.local";
+    const cookie = await signUpAndGetCookie(email);
+    await db
+      .update(user)
+      .set({ role: ADMIN_ROLE })
+      .where(eq(user.email, email));
+    const [self] = await db.select().from(user).where(eq(user.email, email));
+
+    const res = await supertest(app)
+      .post(`/admin/usuarios/${self.id}/restablecer-password`)
+      .set("Cookie", cookie);
+    expect(res.status).toBe(400);
+  });
+
+  it("POST /admin/usuarios sin rol responde 400", async () => {
+    const app = createApp();
+    const email = "adminx11@test.local";
+    const cookie = await signUpAndGetCookie(email);
+    await db
+      .update(user)
+      .set({ role: ADMIN_ROLE })
+      .where(eq(user.email, email));
+
+    const res = await supertest(app)
+      .post("/admin/usuarios")
+      .set("Cookie", cookie)
+      .type("form")
+      .send({ email: "sinrol@test.local", name: "Sin Rol" });
+    expect(res.status).toBe(400);
   });
 });

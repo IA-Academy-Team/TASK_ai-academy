@@ -66,12 +66,13 @@ test("flujo completo: login, crear proyecto, crear tarea, workflow de estado, cr
 
   // 5. admin crea usuario
   await page.goto("/admin/usuarios");
+  await page.click('button:has-text("Crear usuario")');
   await page.fill('input[name="name"]', "Usuario E2E");
   await page.fill('input[name="email"]', userEmail);
-  await page.fill('input[name="password"]', "supersecret123");
+  await page.selectOption('select[name="role"]', "colaborador");
   await page.click('button:has-text("Crear usuario")');
   await page.waitForURL("**/admin/usuarios");
 
   const userRow = page.locator("tr", { hasText: userEmail });
-  await expect(userRow.locator(".badge").first()).toHaveText("usuario");
+  await expect(userRow.locator(".badge").first()).toHaveText("Colaborador");
 });

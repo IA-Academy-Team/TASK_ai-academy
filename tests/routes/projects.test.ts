@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { createApp } from "../../src/app.ts";
 import { user } from "../../src/db/auth-schema.ts";
 import { db } from "../../src/db/client.ts";
+import { ADMIN_ROLE } from "../../src/domain/roles.ts";
 import { signUpAndGetCookie } from "../helpers/auth.ts";
 
 describe("GET/POST /proyectos", () => {
@@ -26,7 +27,7 @@ describe("GET/POST /proyectos", () => {
     const cookie = await signUpAndGetCookie("proj2@test.local");
     await db
       .update(user)
-      .set({ role: "admin" })
+      .set({ role: ADMIN_ROLE })
       .where(eq(user.email, "proj2@test.local"));
     const [me] = await db
       .select()
@@ -88,7 +89,7 @@ describe("GET/POST /proyectos", () => {
     const cookie = await signUpAndGetCookie("proj5@test.local");
     await db
       .update(user)
-      .set({ role: "admin" })
+      .set({ role: ADMIN_ROLE })
       .where(eq(user.email, "proj5@test.local"));
     const [me] = await db
       .select()

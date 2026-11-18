@@ -5,6 +5,7 @@ import {
   listOverdueForOwner,
   listReviewPendingForLeader,
 } from "../db/tasks-repo.ts";
+import { isAdminRole } from "../domain/roles.ts";
 import { subscribe, unsubscribe } from "../lib/sse-hub.ts";
 
 const SSE_HEARTBEAT_MS = 25_000;
@@ -45,7 +46,7 @@ notificationsRouter.get("/notificaciones/resumen", async (req, res) => {
   }
 
   const today = new Date().toLocaleDateString("en-CA");
-  const leaderId = req.user.role === "admin" ? null : req.user.id;
+  const leaderId = isAdminRole(req.user.role) ? null : req.user.id;
 
   const [reviewPending, overdue, supportPending, budgetPending] =
     await Promise.all([
@@ -94,7 +95,7 @@ notificationsRouter.get("/notificaciones", async (req, res) => {
   }
 
   const today = new Date().toLocaleDateString("en-CA");
-  const leaderId = req.user.role === "admin" ? null : req.user.id;
+  const leaderId = isAdminRole(req.user.role) ? null : req.user.id;
 
   const [reviewPending, overdue, supportPending, budgetPending] =
     await Promise.all([

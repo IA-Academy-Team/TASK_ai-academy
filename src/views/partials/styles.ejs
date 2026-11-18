@@ -169,8 +169,10 @@ select,.field select{appearance:none;-webkit-appearance:none;-moz-appearance:non
 .badge.alta{color:var(--orange);background:var(--orangelight)}
 .badge.media{color:var(--blue);background:var(--bluelight)}
 .badge.baja{color:var(--green);background:var(--greenlight)}
-.badge.admin{background:var(--lav);color:var(--primary)}
-.badge.usuario{background:var(--bluelight);color:var(--blue)}
+.badge.administrador{background:var(--lav);color:var(--primary)}
+.badge.trainer{background:var(--bluelight);color:var(--blue)}
+.badge.colaborador{background:var(--greenlight);color:var(--green)}
+.badge.practicante{background:var(--orangelight);color:var(--orange)}
 .badge.off{background:var(--redlight);color:var(--red)}
 .project-card{padding:20px;display:flex;flex-direction:column;min-height:200px;cursor:pointer;border-left:3px solid var(--line);transition:border-color var(--duration-fast) var(--ease-standard),transform var(--duration-fast) var(--ease-standard)}
 .project-card:hover{border-color:var(--accent);transform:translateY(-1px)}
@@ -301,8 +303,8 @@ select,.field select{appearance:none;-webkit-appearance:none;-moz-appearance:non
 .plan-project-select{min-width:240px;padding:11px 36px 11px 14px;min-height:44px;border:1px solid var(--line);border-radius:var(--radius-control);background-color:var(--paper);color:var(--ink);font-size:12px;font-weight:700;box-shadow:var(--shadow-1);transition:border-color var(--t-fast) var(--ease),box-shadow var(--t-fast) var(--ease)}
 .plan-project-select:hover{border-color:var(--accent)}
 .plan-project-select:focus-visible{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent)}
-.week-nav{display:flex;flex-direction:column;align-items:center;gap:8px;padding:10px 18px 12px;border:1px solid var(--line);border-radius:var(--radius-card);background:var(--paper);box-shadow:var(--shadow-1)}
-.week-nav-label{font-size:10px;font-weight:760;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.week-nav{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;width:230px;flex:0 0 auto;padding:10px 18px 12px;border:1px solid var(--line);border-radius:var(--radius-card);background:var(--paper);box-shadow:var(--shadow-1)}
+.week-nav-label{font-size:10px;font-weight:760;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .week-nav-controls{display:flex;align-items:center;gap:10px}
 .week-nav-btn{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;border:1px solid var(--line);background:var(--paper);color:var(--primary);transition:background var(--t-fast) var(--ease),border-color var(--t-fast) var(--ease),transform var(--t-fast) var(--ease)}
 .week-nav-btn:hover{background:var(--lav);border-color:var(--accent);transform:scale(1.06)}

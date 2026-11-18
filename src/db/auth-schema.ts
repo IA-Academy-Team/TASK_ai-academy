@@ -19,7 +19,7 @@ export const user = pgTable("user", {
     .defaultNow()
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
-  role: text("role").default("usuario").notNull(),
+  role: text("role").default("colaborador").notNull(),
   isActive: boolean("is_active").default(true).notNull(),
   weeklyCapacityHours: integer("weekly_capacity_hours").default(40).notNull(),
   mustChangePassword: boolean("must_change_password").default(false).notNull(),

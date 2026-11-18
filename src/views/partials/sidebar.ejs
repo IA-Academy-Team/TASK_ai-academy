@@ -22,7 +22,7 @@
     </a>
   </div>
 
-  <% if (user.role === "admin") { %>
+  <% if (user.role === "administrador") { %>
   <div class="navgroup">
     <span class="navlabel">Admin</span>
     <a class="navbtn <%= active === 'usuarios' ? 'on' : '' %>" href="/admin/usuarios" aria-label="Administración"><%- include('./icon', { kind: 'shield', size: 16 }) %><span class="navbtn-label">Administración</span></a>

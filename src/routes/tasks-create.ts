@@ -9,6 +9,7 @@ import {
   listTasksByProject,
   listTasksWithoutProject,
 } from "../db/tasks-repo.ts";
+import { isAdminRole } from "../domain/roles.ts";
 import { HttpError } from "../lib/http-error.ts";
 import { toArray } from "../schemas/project.ts";
 import { createTaskSchema } from "../schemas/task.ts";
@@ -19,7 +20,7 @@ function isLeaderOrAdmin(
   user: { id: string; role: string },
   project: { leaderId: string } | undefined,
 ): boolean {
-  return user.role === "admin" || (!!project && user.id === project.leaderId);
+  return isAdminRole(user.role) || (!!project && user.id === project.leaderId);
 }
 
 tasksCreateRouter.get("/tareas/nueva", async (req, res) => {
@@ -123,7 +124,7 @@ tasksCreateRouter.post("/tareas", async (req, res) => {
   // independiente creada por un usuario siempre es para una misma. Un admin
   // sí puede elegir responsable aunque la tarea sea independiente.
   const ownerId =
-    isIndependent && req.user.role !== "admin"
+    isIndependent && !isAdminRole(req.user.role)
       ? req.user.id
       : parsed.data.ownerId;
 

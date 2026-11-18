@@ -3,6 +3,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import * as authSchema from "../db/auth-schema.ts";
 import { db } from "../db/client.ts";
 import * as appSchema from "../db/schema.ts";
+import { DEFAULT_ROLE } from "../domain/roles.ts";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -16,7 +17,7 @@ export const auth = betterAuth({
   rateLimit: { enabled: true },
   user: {
     additionalFields: {
-      role: { type: "string", defaultValue: "usuario", input: false },
+      role: { type: "string", defaultValue: DEFAULT_ROLE, input: false },
       isActive: { type: "boolean", defaultValue: true, input: false },
       weeklyCapacityHours: { type: "number", defaultValue: 40, input: false },
       mustChangePassword: {

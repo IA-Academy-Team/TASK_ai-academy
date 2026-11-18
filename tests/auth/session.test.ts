@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { createApp } from "../../src/app.ts";
 import { user } from "../../src/db/auth-schema.ts";
 import { db } from "../../src/db/client.ts";
+import { ADMIN_ROLE, DEFAULT_ROLE } from "../../src/domain/roles.ts";
 import { signUpAndGetCookie } from "../helpers/auth.ts";
 
 async function signUp(email: string, password: string) {
@@ -13,7 +14,7 @@ async function signUp(email: string, password: string) {
 }
 
 async function makeAdmin(email: string) {
-  await db.update(user).set({ role: "admin" }).where(eq(user.email, email));
+  await db.update(user).set({ role: ADMIN_ROLE }).where(eq(user.email, email));
 }
 
 describe("session and authorize", () => {
@@ -30,13 +31,13 @@ describe("session and authorize", () => {
       res.json({ role: req.user?.role, isActive: req.user?.isActive });
     });
     const res = await supertest(app).get("/__whoami").set("Cookie", cookie);
-    expect(res.body).toEqual({ role: "usuario", isActive: true });
+    expect(res.body).toEqual({ role: DEFAULT_ROLE, isActive: true });
   });
 
-  it("authorize('admin') responde 403 para role usuario", async () => {
+  it("authorize(ADMIN_ROLE) responde 403 para el rol por defecto", async () => {
     const { app, cookie } = await signUp("user2@test.local", "supersecret2");
     const { authorize } = await import("../../src/middleware/authorize.ts");
-    app.get("/__admin-only", authorize("admin"), (_req, res) =>
+    app.get("/__admin-only", authorize(ADMIN_ROLE), (_req, res) =>
       res.json({ ok: true }),
     );
     app.use(
@@ -67,13 +68,13 @@ describe("session and authorize", () => {
     expect(res.headers.location).toBe("/login");
   });
 
-  it("admin creado via makeAdmin tiene role admin", async () => {
+  it("admin creado via makeAdmin tiene role administrador", async () => {
     const { cookie } = await signUp("admin1@test.local", "supersecret3");
     await makeAdmin("admin1@test.local");
     const app2 = createApp();
     app2.get("/__whoami2", (req, res) => res.json({ role: req.user?.role }));
     const res = await supertest(app2).get("/__whoami2").set("Cookie", cookie);
-    expect(res.body).toEqual({ role: "admin" });
+    expect(res.body).toEqual({ role: ADMIN_ROLE });
   });
 
   it("POST /api/auth/sign-up/email (alta pública) responde 404", async () => {

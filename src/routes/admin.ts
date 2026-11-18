@@ -1,50 +1,66 @@
+import type { Request, Response } from "express";
 import { Router } from "express";
 import {
   deactivateUser,
   deleteUser,
   getUserActivityCounts,
   listAllUsers,
+  resetUserPassword,
   setMustChangePassword,
+  setUserRole,
 } from "../db/users-repo.ts";
+import { ADMIN_ROLE, ROLE_LABELS, ROLES } from "../domain/roles.ts";
 import { auth } from "../lib/auth.ts";
 import { authorize } from "../middleware/authorize.ts";
 import { createUserSchema, GENERIC_PASSWORD } from "../schemas/admin.ts";
 
 export const adminRouter = Router();
 
-adminRouter.get("/admin/usuarios", authorize("admin"), async (req, res) => {
+async function renderUsersPage(
+  req: Request,
+  res: Response,
+  options: { status?: number; error?: string | null } = {},
+) {
   const users = await listAllUsers();
-  res.render("admin/usuarios", {
+  res.status(options.status ?? 200).render("admin/usuarios", {
     users,
+    roles: ROLES,
+    roleLabels: ROLE_LABELS,
     user: req.user,
-    error: null,
+    error: options.error ?? null,
     genericPassword: GENERIC_PASSWORD,
   });
+}
+
+adminRouter.get("/admin/usuarios", authorize(ADMIN_ROLE), async (req, res) => {
+  await renderUsersPage(req, res);
 });
 
-adminRouter.post("/admin/usuarios", authorize("admin"), async (req, res) => {
+adminRouter.post("/admin/usuarios", authorize(ADMIN_ROLE), async (req, res) => {
   const parsed = createUserSchema.safeParse(req.body);
   if (!parsed.success) {
-    const users = await listAllUsers();
-    res.status(400).render("admin/usuarios", {
-      users,
-      user: req.user,
-      error: "Email y nombre son obligatorios.",
-      genericPassword: GENERIC_PASSWORD,
+    await renderUsersPage(req, res, {
+      status: 400,
+      error: "Email, nombre y rol son obligatorios.",
     });
     return;
   }
 
   const created = await auth.api.signUpEmail({
-    body: { ...parsed.data, password: GENERIC_PASSWORD },
+    body: {
+      email: parsed.data.email,
+      name: parsed.data.name,
+      password: GENERIC_PASSWORD,
+    },
   });
+  await setUserRole(created.user.id, parsed.data.role);
   await setMustChangePassword(created.user.id, true);
   res.redirect(303, "/admin/usuarios");
 });
 
 adminRouter.post(
   "/admin/usuarios/:id/desactivar",
-  authorize("admin"),
+  authorize(ADMIN_ROLE),
   async (req, res) => {
     if (!req.user) {
       res.redirect(303, "/login");
@@ -53,12 +69,9 @@ adminRouter.post(
     const id = String(req.params.id);
 
     if (id === req.user.id) {
-      const users = await listAllUsers();
-      res.status(400).render("admin/usuarios", {
-        users,
-        user: req.user,
+      await renderUsersPage(req, res, {
+        status: 400,
         error: "No podés desactivar tu propia cuenta.",
-        genericPassword: GENERIC_PASSWORD,
       });
       return;
     }
@@ -69,8 +82,8 @@ adminRouter.post(
 );
 
 adminRouter.post(
-  "/admin/usuarios/:id/eliminar",
-  authorize("admin"),
+  "/admin/usuarios/:id/restablecer-password",
+  authorize(ADMIN_ROLE),
   async (req, res) => {
     if (!req.user) {
       res.redirect(303, "/login");
@@ -79,12 +92,33 @@ adminRouter.post(
     const id = String(req.params.id);
 
     if (id === req.user.id) {
-      const users = await listAllUsers();
-      res.status(400).render("admin/usuarios", {
-        users,
-        user: req.user,
+      await renderUsersPage(req, res, {
+        status: 400,
+        error: "No podés restablecer tu propia contraseña desde acá.",
+      });
+      return;
+    }
+
+    await resetUserPassword(id, GENERIC_PASSWORD);
+    await setMustChangePassword(id, true);
+    res.redirect(303, "/admin/usuarios");
+  },
+);
+
+adminRouter.post(
+  "/admin/usuarios/:id/eliminar",
+  authorize(ADMIN_ROLE),
+  async (req, res) => {
+    if (!req.user) {
+      res.redirect(303, "/login");
+      return;
+    }
+    const id = String(req.params.id);
+
+    if (id === req.user.id) {
+      await renderUsersPage(req, res, {
+        status: 400,
         error: "No podés eliminar tu propia cuenta.",
-        genericPassword: GENERIC_PASSWORD,
       });
       return;
     }
@@ -92,13 +126,10 @@ adminRouter.post(
     const activity = await getUserActivityCounts(id);
     const hasActivity = Object.values(activity).some((n) => n > 0);
     if (hasActivity) {
-      const users = await listAllUsers();
-      res.status(400).render("admin/usuarios", {
-        users,
-        user: req.user,
+      await renderUsersPage(req, res, {
+        status: 400,
         error:
           "No se puede eliminar: el usuario tiene actividad registrada en el sistema (proyectos, tareas, horas, solicitudes de apoyo o historial). Desactivalo en su lugar.",
-        genericPassword: GENERIC_PASSWORD,
       });
       return;
     }
