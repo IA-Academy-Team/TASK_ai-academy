@@ -18,7 +18,7 @@
       var projectsNavActions = [{ label: 'Crear tarea', href: '/tareas/nueva', variant: 'subtle', icon: 'plus' }];
       if (user.role === "admin") {
         projectsNavActions.push({ label: 'Carga masiva', onclick: "document.getElementById('modal-carga-masiva-proyectos').classList.add('open')", variant: 'subtle', icon: 'upload' });
-        projectsNavActions.push({ label: 'Nuevo proyecto', onclick: "document.getElementById('new-project-modal').classList.add('open')", icon: 'plus' });
+        projectsNavActions.push({ label: 'Nuevo proyecto', onclick: "document.getElementById('new-project-modal').classList.add('open')", icon: 'folder-plus' });
       }
     %>
     <%- include('../partials/navbar', { active: 'proyectos', actions: projectsNavActions }) %>

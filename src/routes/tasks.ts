@@ -56,70 +56,86 @@ tasksRouter.get("/tareas/:id", async (req, res) => {
   });
 });
 
-tasksRouter.post("/tareas/:id/estado", async (req, res) => {
+tasksRouter.post("/tareas/:id/estado", async (req, res, next) => {
   if (!req.user) {
     res.redirect("/login");
     return;
   }
 
-  const parsed = transitionSchema.safeParse(req.body);
-  if (!parsed.success) {
-    throw new HttpError(400, "transición inválida");
-  }
+  // El tablero kanban llama esta misma ruta por fetch (Accept: application/json)
+  // para no navegar lejos del tablero en cada arrastre — ver planeacion.ejs.
+  const wantsJson = req.accepts(["html", "json"]) === "json";
 
-  const current = await getTask(req.params.id);
-  if (!current) {
-    throw new HttpError(404, "tarea no encontrada");
-  }
-
-  const motivoObligatorio =
-    parsed.data.status === "cancelada" ||
-    parsed.data.status === "bloqueada" ||
-    (current.status === "revision" && parsed.data.status === "activa");
-  if (motivoObligatorio && !parsed.data.note) {
-    throw new HttpError(400, "hace falta un motivo para esta transición");
-  }
-
-  const project = await getProject(current.projectId);
-  const isLeaderOrAdmin =
-    req.user.role === "admin" ||
-    (!!project && req.user.id === project.leaderId) ||
-    (!project && req.user.id === current.ownerId);
-
-  if (parsed.data.status === "completada") {
-    if (!isLeaderOrAdmin) {
-      throw new HttpError(
-        403,
-        "solo el líder del proyecto o un admin pueden aprobar la tarea",
-      );
+  try {
+    const parsed = transitionSchema.safeParse(req.body);
+    if (!parsed.success) {
+      throw new HttpError(400, "transición inválida");
     }
-  } else {
-    const support = await listSupport(current.id);
-    const isOwnerOrSupport =
-      req.user.id === current.ownerId ||
-      support.some((s) => s.userId === req.user?.id);
-    if (!isLeaderOrAdmin && !isOwnerOrSupport) {
-      throw new HttpError(
-        403,
-        "solo el responsable, el apoyo o el líder del proyecto pueden cambiar el estado",
-      );
+
+    const current = await getTask(req.params.id);
+    if (!current) {
+      throw new HttpError(404, "tarea no encontrada");
     }
-  }
 
-  const updated = await transitionTask(
-    req.params.id,
-    parsed.data.status,
-    req.user.id,
-    {
-      evidence: parsed.data.evidence,
-      note: parsed.data.note,
-    },
-  );
-  if (!updated) {
-    throw new HttpError(404, "tarea no encontrada");
-  }
+    const motivoObligatorio =
+      parsed.data.status === "cancelada" ||
+      parsed.data.status === "bloqueada" ||
+      (current.status === "revision" && parsed.data.status === "activa");
+    if (motivoObligatorio && !parsed.data.note) {
+      throw new HttpError(400, "hace falta un motivo para esta transición");
+    }
 
-  res.redirect(303, `/tareas/${req.params.id}?updated=1`);
+    const project = await getProject(current.projectId);
+    const isLeaderOrAdmin =
+      req.user.role === "admin" ||
+      (!!project && req.user.id === project.leaderId) ||
+      (!project && req.user.id === current.ownerId);
+
+    if (parsed.data.status === "completada") {
+      if (!isLeaderOrAdmin) {
+        throw new HttpError(
+          403,
+          "solo el líder del proyecto o un admin pueden aprobar la tarea",
+        );
+      }
+    } else {
+      const support = await listSupport(current.id);
+      const isOwnerOrSupport =
+        req.user.id === current.ownerId ||
+        support.some((s) => s.userId === req.user?.id);
+      if (!isLeaderOrAdmin && !isOwnerOrSupport) {
+        throw new HttpError(
+          403,
+          "solo el responsable, el apoyo o el líder del proyecto pueden cambiar el estado",
+        );
+      }
+    }
+
+    const updated = await transitionTask(
+      req.params.id,
+      parsed.data.status,
+      req.user.id,
+      {
+        evidence: parsed.data.evidence,
+        note: parsed.data.note,
+      },
+    );
+    if (!updated) {
+      throw new HttpError(404, "tarea no encontrada");
+    }
+
+    if (wantsJson) {
+      res.json({ success: true, status: updated.status });
+      return;
+    }
+    res.redirect(303, `/tareas/${req.params.id}?updated=1`);
+  } catch (err) {
+    if (wantsJson && err instanceof HttpError) {
+      res.status(err.status).json({ success: false, error: err.message });
+      return;
+    }
+    next(err);
+  }
 });
 
 tasksRouter.post("/tareas/:id/horas", async (req, res) => {

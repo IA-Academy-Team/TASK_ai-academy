@@ -14,7 +14,7 @@
 <div class="app">
   <%- include('partials/sidebar', { active: 'inicio', user }) %>
   <main class="content">
-    <%- include('partials/navbar', { active: 'inicio' }) %>
+    <%- include('partials/navbar', { active: 'inicio', actions: [{ label: 'Crear tarea', href: '/tareas/nueva', icon: 'plus' }, { label: 'Notificaciones', href: '/notificaciones', variant: 'subtle', icon: 'bell' }] }) %>
     <div class="topbar">
       <div>
         <h1 class="page-title">Hola, <%= user.name || user.email %></h1>
@@ -23,25 +23,55 @@
     </div>
 
     <div class="kpi-row">
-      <div class="card kpi">
+      <div class="card kpi card--interactive" onclick="document.getElementById('modal-kpi-proyectos').classList.add('open')">
         <span class="kpi-icon"><%- include('partials/icon', { kind: 'folder', size: 18 }) %></span>
         <small>Proyectos activos</small>
         <strong><%= activeProjects %></strong>
         <p>En toda la organización</p>
       </div>
-      <div class="card kpi">
+      <div class="card kpi card--interactive" onclick="document.getElementById('modal-kpi-mis-activas').classList.add('open')">
         <span class="kpi-icon"><%- include('partials/icon', { kind: 'check', size: 18 }) %></span>
         <small>Mis tareas activas</small>
         <strong><%= myActiveTasks %></strong>
         <p>Activas o en revisión, a tu cargo</p>
       </div>
-      <div class="card kpi <%= myOverdueTasks === 0 ? 'kpi-positive' : '' %>">
+      <div class="card kpi card--interactive <%= myOverdueTasks === 0 ? 'kpi-positive' : '' %>" onclick="document.getElementById('modal-kpi-mis-vencidas').classList.add('open')">
         <span class="kpi-icon"><%- include('partials/icon', { kind: 'clock', size: 18 }) %></span>
         <small>Mis tareas vencidas</small>
         <strong><%= myOverdueTasks %></strong>
         <p><%= myOverdueTasks === 0 ? 'Todo al día' : 'Pasaron la fecha de vencimiento' %></p>
       </div>
     </div>
+
+    <% [
+      { id: 'modal-kpi-proyectos', title: 'Proyectos activos', rows: kpiProjects },
+      { id: 'modal-kpi-mis-activas', title: 'Mis tareas activas', rows: kpiMyActiveProjects },
+      { id: 'modal-kpi-mis-vencidas', title: 'Mis tareas vencidas', rows: kpiMyOverdueProjects },
+    ].forEach(function(m) { %>
+    <div class="modal" id="<%= m.id %>">
+      <div class="modal-backdrop" onclick="document.getElementById('<%= m.id %>').classList.remove('open')"></div>
+      <div class="modal-panel">
+        <div class="drawer-header" style="padding:0 0 16px">
+          <h2><%= m.title %></h2>
+          <button type="button" class="drawer-close" aria-label="Cerrar" onclick="document.getElementById('<%= m.id %>').classList.remove('open')"><%- include('partials/icon', { kind: 'x', size: 18 }) %></button>
+        </div>
+        <% if (m.rows.length === 0) { %>
+        <%- include('partials/empty-state', { text: 'Nada para mostrar.' }) %>
+        <% } else { %>
+        <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Proyecto</th><th>Responsable</th></tr></thead>
+          <tbody>
+            <% m.rows.forEach(function(r) { %>
+            <tr><td><%= r.code ? r.code + ' — ' + r.name : r.name %></td><td><%= r.leaderName || '—' %></td></tr>
+            <% }) %>
+          </tbody>
+        </table>
+        </div>
+        <% } %>
+      </div>
+    </div>
+    <% }) %>
 
     <div class="chart-row">
       <section class="card pad">

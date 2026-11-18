@@ -18,7 +18,7 @@
     <div class="topbar">
       <div>
         <h1 class="page-title">Plan semanal</h1>
-        <p class="subtitle">Lunes a viernes, por fecha límite.</p>
+        <p class="subtitle">Arrastrá una tarea entre columnas para cambiar su estado.</p>
       </div>
     </div>
 
@@ -27,49 +27,144 @@
         <option value="">Todos los proyectos</option>
         <% projects.forEach(function(p) { %><option value="<%= p.id %>" <%= projectFilter === p.id ? 'selected' : '' %>><%= p.code %> — <%= p.name %></option><% }) %>
       </select>
-      <input type="hidden" name="semana" value="<%= weekOffset %>" />
-
-      <div class="week-nav">
-        <span class="week-nav-label">Semana</span>
-        <div class="week-nav-controls">
-          <a href="/planeacion?semana=<%= weekOffset - 1 %>&proyecto=<%= projectFilter || '' %>" class="week-nav-btn week-nav-btn-prev" aria-label="Semana anterior"><%- include('partials/icon', { kind: 'chevron-right', size: 15 }) %></a>
-          <a href="/planeacion?semana=<%= weekOffset + 1 %>&proyecto=<%= projectFilter || '' %>" class="week-nav-btn" aria-label="Semana siguiente"><%- include('partials/icon', { kind: 'chevron-right', size: 15 }) %></a>
-        </div>
-      </div>
     </form>
 
-    <div>
-      <div class="week-calendar-grid">
-        <div class="week-calendar-timeaxis-spacer">
-          <div class="week-calendar-daylabel" style="visibility:hidden">·</div>
-          <div class="week-calendar-timeaxis" style="height:<%= gridHeight %>px">
-            <% marks.forEach(function(m) { %>
-            <span class="week-calendar-tick week-calendar-tick-<%= m.anchor %>" style="top:<%= m.top %>px"><%= m.label %></span>
-            <% }) %>
-          </div>
+    <div class="kanban-board">
+      <% columns.forEach(function(col) { %>
+      <div class="kanban-column" data-status="<%= col.status %>">
+        <div class="kanban-column-header">
+          <span><%= col.label %></span>
+          <span class="kanban-column-count"><%= col.tasks.length %></span>
         </div>
-        <% byDay.forEach(function(d) { %>
-        <div class="week-calendar-column">
-          <div class="week-calendar-daylabel <%= d.day === today ? 'is-today' : '' %>"><%= d.label %></div>
-          <div class="week-calendar-day <%= d.day === today ? 'is-today' : '' %>" style="height:<%= gridHeight %>px">
-            <% marks.forEach(function(m) { %><span class="week-calendar-gridline" style="top:<%= m.top %>px"></span><% }) %>
-            <% if (d.blocks.length === 0) { %>
-            <p class="week-calendar-empty">Sin tareas</p>
-            <% } else { %>
-            <% d.blocks.forEach(function(b) { %>
-            <a href="/tareas/<%= b.id %>" class="week-calendar-block prio-<%= b.priority %>" style="top:<%= b.topPx %>px;height:<%= b.heightPx %>px" tabindex="0" title="<%= b.title %> — <%= b.ownerName %> (<%= b.estimate %> h)">
-              <span class="week-calendar-block-title"><%= b.title %></span>
-              <span class="week-calendar-block-owner"><%= b.ownerName %></span>
-              <span class="week-calendar-block-hours"><%= b.estimate %> h</span>
-            </a>
-            <% }) %>
-            <% } %>
+        <div class="kanban-column-body" data-dropzone>
+          <% if (col.tasks.length === 0) { %>
+          <p class="kanban-empty">Sin tareas</p>
+          <% } %>
+          <% col.tasks.forEach(function(t) { %>
+          <div class="kanban-card prio-<%= t.priority %>" draggable="true" data-task-id="<%= t.id %>" data-status="<%= col.status %>" onclick="location.href='/tareas/<%= t.id %>'">
+            <span class="kanban-card-title"><%= t.title %></span>
+            <span class="kanban-card-meta"><%= t.ownerName %> · <%= t.estimate %> h</span>
+            <span class="kanban-card-due">Vence <%= t.due %></span>
           </div>
+          <% }) %>
         </div>
-        <% }) %>
       </div>
+      <% }) %>
     </div>
   </main>
 </div>
+<script>
+(function () {
+  var dragged = null;
+
+  function needsNote(fromStatus, toStatus) {
+    return toStatus === 'bloqueada' || (fromStatus === 'revision' && toStatus === 'activa');
+  }
+
+  function updateCounts() {
+    document.querySelectorAll('.kanban-column').forEach(function (col) {
+      var count = col.querySelectorAll('.kanban-card').length;
+      var countEl = col.querySelector('.kanban-column-count');
+      if (countEl) countEl.textContent = String(count);
+      var body = col.querySelector('.kanban-column-body');
+      var empty = body.querySelector('.kanban-empty');
+      if (count === 0 && !empty) {
+        var p = document.createElement('p');
+        p.className = 'kanban-empty';
+        p.textContent = 'Sin tareas';
+        body.appendChild(p);
+      } else if (count > 0 && empty) {
+        empty.remove();
+      }
+    });
+  }
+
+  function moveCard(card, zone, fromStatus, toStatus, taskId) {
+    var note = null;
+    if (needsNote(fromStatus, toStatus)) {
+      note = prompt('Esta transición necesita un motivo:');
+      if (!note) return;
+    }
+
+    var originalParent = card.parentElement;
+    var originalNext = card.nextSibling;
+    var emptyPlaceholder = zone.querySelector('.kanban-empty');
+    if (emptyPlaceholder) emptyPlaceholder.remove();
+    zone.appendChild(card);
+    card.setAttribute('data-status', toStatus);
+    updateCounts();
+
+    function revert() {
+      if (originalNext) {
+        originalParent.insertBefore(card, originalNext);
+      } else {
+        originalParent.appendChild(card);
+      }
+      card.setAttribute('data-status', fromStatus);
+      updateCounts();
+    }
+
+    var body = { status: toStatus };
+    if (note) body.note = note;
+    fetch('/tareas/' + taskId + '/estado', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(body),
+    })
+      .then(function (res) {
+        return res.json().catch(function () { return {}; }).then(function (data) {
+          return { ok: res.ok, data: data };
+        });
+      })
+      .then(function (result) {
+        if (!result.ok) {
+          revert();
+          showErrorAlert(
+            'No se pudo mover la tarea',
+            (result.data && result.data.error) || 'Intentá de nuevo.',
+          );
+        }
+      })
+      .catch(function () {
+        revert();
+        showErrorAlert('No se pudo mover la tarea', 'Revisá tu conexión e intentá de nuevo.');
+      });
+  }
+
+  document.querySelectorAll('.kanban-card').forEach(function (card) {
+    card.addEventListener('dragstart', function (e) {
+      dragged = card;
+      card.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', card.getAttribute('data-task-id') || '');
+    });
+    card.addEventListener('dragend', function () {
+      card.classList.remove('dragging');
+      dragged = null;
+    });
+  });
+
+  document.querySelectorAll('.kanban-column-body').forEach(function (zone) {
+    zone.addEventListener('dragover', function (e) {
+      if (!dragged) return;
+      e.preventDefault();
+      zone.classList.add('drag-over');
+    });
+    zone.addEventListener('dragleave', function () {
+      zone.classList.remove('drag-over');
+    });
+    zone.addEventListener('drop', function (e) {
+      e.preventDefault();
+      zone.classList.remove('drag-over');
+      if (!dragged) return;
+      var taskId = dragged.getAttribute('data-task-id');
+      var fromStatus = dragged.getAttribute('data-status');
+      var toStatus = zone.closest('.kanban-column').getAttribute('data-status');
+      if (fromStatus === toStatus) return;
+      moveCard(dragged, zone, fromStatus, toStatus, taskId);
+    });
+  });
+})();
+</script>
 </body>
 </html>

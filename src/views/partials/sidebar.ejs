@@ -9,7 +9,6 @@
     <span class="navlabel">Trabajo</span>
     <a class="navbtn <%= active === 'inicio' ? 'on' : '' %>" href="/" aria-label="Dashboard"><%- include('./icon', { kind: 'home', size: 16 }) %><span class="navbtn-label">Dashboard</span></a>
     <a class="navbtn <%= active === 'proyectos' ? 'on' : '' %>" href="/proyectos" aria-label="Proyectos"><%- include('./icon', { kind: 'folder', size: 16 }) %><span class="navbtn-label">Proyectos</span></a>
-    <a class="navbtn <%= active === 'crear-tarea' ? 'on' : '' %>" href="/tareas/nueva" aria-label="Crear tarea"><%- include('./icon', { kind: 'plus', size: 16 }) %><span class="navbtn-label">Crear tarea</span></a>
     <a class="navbtn <%= active === 'plan-semanal' ? 'on' : '' %>" href="/planeacion" aria-label="Plan semanal"><%- include('./icon', { kind: 'calendar', size: 16 }) %><span class="navbtn-label">Plan semanal</span></a>
     <a class="navbtn <%= active === 'mis-tareas' ? 'on' : '' %>" href="/mis-tareas" aria-label="Mis tareas"><%- include('./icon', { kind: 'check', size: 16 }) %><span class="navbtn-label">Mis tareas</span></a>
   </div>
