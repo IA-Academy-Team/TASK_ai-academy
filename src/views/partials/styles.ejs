@@ -301,6 +301,12 @@ select,.field select{appearance:none;-webkit-appearance:none;-moz-appearance:non
 .plan-project-select{min-width:240px;padding:11px 36px 11px 14px;min-height:44px;border:1px solid var(--line);border-radius:var(--radius-control);background-color:var(--paper);color:var(--ink);font-size:12px;font-weight:700;box-shadow:var(--shadow-1);transition:border-color var(--t-fast) var(--ease),box-shadow var(--t-fast) var(--ease)}
 .plan-project-select:hover{border-color:var(--accent)}
 .plan-project-select:focus-visible{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent)}
+.week-nav{display:flex;flex-direction:column;align-items:center;gap:8px;padding:10px 18px 12px;border:1px solid var(--line);border-radius:var(--radius-card);background:var(--paper);box-shadow:var(--shadow-1)}
+.week-nav-label{font-size:10px;font-weight:760;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.week-nav-controls{display:flex;align-items:center;gap:10px}
+.week-nav-btn{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;border:1px solid var(--line);background:var(--paper);color:var(--primary);transition:background var(--t-fast) var(--ease),border-color var(--t-fast) var(--ease),transform var(--t-fast) var(--ease)}
+.week-nav-btn:hover{background:var(--lav);border-color:var(--accent);transform:scale(1.06)}
+.week-nav-btn:active{transform:scale(.96)}
 .kanban-board{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;width:100%;align-items:start}
 .kanban-column{display:flex;flex-direction:column;min-width:0;border:1px solid var(--border);border-radius:var(--radius-card);background:var(--bg);overflow:hidden}
 .kanban-column-header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;font-size:11px;font-weight:760;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);border-bottom:2px solid var(--line);background:var(--paper)}

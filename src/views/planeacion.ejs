@@ -18,7 +18,7 @@
     <div class="topbar">
       <div>
         <h1 class="page-title">Plan semanal</h1>
-        <p class="subtitle">Arrastrá una tarea entre columnas para cambiar su estado.</p>
+        <p class="subtitle">Tareas que vencen de lunes a viernes. Arrastrá una tarjeta entre columnas para cambiar su estado.</p>
       </div>
     </div>
 
@@ -27,6 +27,15 @@
         <option value="">Todos los proyectos</option>
         <% projects.forEach(function(p) { %><option value="<%= p.id %>" <%= projectFilter === p.id ? 'selected' : '' %>><%= p.code %> — <%= p.name %></option><% }) %>
       </select>
+      <input type="hidden" name="semana" value="<%= weekOffset %>" />
+
+      <div class="week-nav">
+        <span class="week-nav-label">Semana del <%= weekLabel %></span>
+        <div class="week-nav-controls">
+          <a href="/planeacion?semana=<%= weekOffset - 1 %>&proyecto=<%= projectFilter || '' %>" class="week-nav-btn" aria-label="Semana anterior"><%- include('partials/icon', { kind: 'chevron-left', size: 15 }) %></a>
+          <a href="/planeacion?semana=<%= weekOffset + 1 %>&proyecto=<%= projectFilter || '' %>" class="week-nav-btn" aria-label="Semana siguiente"><%- include('partials/icon', { kind: 'chevron-right', size: 15 }) %></a>
+        </div>
+      </div>
     </form>
 
     <div class="kanban-board">

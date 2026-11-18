@@ -8,11 +8,54 @@ import { groupTasksByColumn } from "../domain/kanban.ts";
 
 export const plannerRouter = Router();
 
+const MONTH_LABELS = [
+  "ene",
+  "feb",
+  "mar",
+  "abr",
+  "may",
+  "jun",
+  "jul",
+  "ago",
+  "sep",
+  "oct",
+  "nov",
+  "dic",
+];
+
+function mondayOf(date: Date): Date {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  d.setDate(d.getDate() + diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function toDateString(d: Date): string {
+  return d.toLocaleDateString("en-CA");
+}
+
+function weekRangeLabel(monday: Date, friday: Date): string {
+  const sameMonth = monday.getMonth() === friday.getMonth();
+  const start = `${monday.getDate()}${sameMonth ? "" : ` ${MONTH_LABELS[monday.getMonth()]}`}`;
+  const end = `${friday.getDate()} ${MONTH_LABELS[friday.getMonth()]}`;
+  return `${start} – ${end}`;
+}
+
 plannerRouter.get("/planeacion", async (req, res) => {
   if (!req.user) {
     res.redirect("/login");
     return;
   }
+
+  const weekOffset = Number.parseInt(String(req.query.semana ?? "0"), 10) || 0;
+  const monday = mondayOf(new Date());
+  monday.setDate(monday.getDate() + weekOffset * 7);
+  const friday = new Date(monday);
+  friday.setDate(friday.getDate() + 4);
+  const mondayStr = toDateString(monday);
+  const fridayStr = toDateString(friday);
 
   const projects = await listProjects();
   const projectFilter =
@@ -34,11 +77,18 @@ plannerRouter.get("/planeacion", async (req, res) => {
     allTasks.push(...(await listTasksWithoutProject()));
   }
 
+  // El plan semanal muestra solo lo que vence de lunes a viernes de la
+  // semana elegida — el tablero sigue siendo por estado, esto solo acota
+  // qué tareas entran a cada columna.
+  const weekTasks = allTasks.filter(
+    (t) => t.due >= mondayStr && t.due <= fridayStr,
+  );
+
   const users = await listAllActiveUsers();
   const ownerNameById = new Map(users.map((u) => [u.id, u.name]));
 
   const columns = groupTasksByColumn(
-    allTasks.map((t) => ({
+    weekTasks.map((t) => ({
       id: t.id,
       title: t.title,
       priority: t.priority,
@@ -54,5 +104,7 @@ plannerRouter.get("/planeacion", async (req, res) => {
     projects,
     projectFilter,
     columns,
+    weekOffset,
+    weekLabel: weekRangeLabel(monday, friday),
   });
 });
