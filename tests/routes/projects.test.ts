@@ -4,8 +4,17 @@ import { describe, expect, it } from "vitest";
 import { createApp } from "../../src/app.ts";
 import { user } from "../../src/db/auth-schema.ts";
 import { db } from "../../src/db/client.ts";
+import { createProject, getProject } from "../../src/db/projects-repo.ts";
+import { createTask, getTask } from "../../src/db/tasks-repo.ts";
 import { ADMIN_ROLE } from "../../src/domain/roles.ts";
 import { signUpAndGetCookie } from "../helpers/auth.ts";
+
+async function makeAdminCookie(email: string) {
+  const cookie = await signUpAndGetCookie(email);
+  await db.update(user).set({ role: ADMIN_ROLE }).where(eq(user.email, email));
+  const [me] = await db.select().from(user).where(eq(user.email, email));
+  return { cookie, me };
+}
 
 describe("GET/POST /proyectos", () => {
   it("autenticado, GET /proyectos responde 200", async () => {
@@ -117,6 +126,82 @@ describe("GET/POST /proyectos", () => {
     const cookie = await signUpAndGetCookie("proj4@test.local");
     const res = await supertest(app)
       .get("/proyectos/no-es-un-uuid")
+      .set("Cookie", cookie);
+    expect(res.status).toBe(404);
+  });
+});
+
+describe("POST /proyectos/:id/eliminar", () => {
+  it("admin elimina el proyecto; sus tareas sobreviven como independientes", async () => {
+    const app = createApp();
+    const { cookie, me } = await makeAdminCookie("projdel1@test.local");
+    const project = await createProject({
+      name: "Proyecto a borrar",
+      code: "DEL-1",
+      objective: "Probar el borrado",
+      leaderId: me.id,
+      start: "2026-01-01",
+      due: "2026-02-01",
+      limitActive: 2,
+      limitReview: 2,
+      memberIds: [],
+    });
+    const task = await createTask({
+      projectId: project.id,
+      title: "Tarea del proyecto a borrar",
+      deliverable: "E",
+      description: "",
+      ownerId: me.id,
+      priority: "media",
+      weight: 1,
+      estimate: "1",
+      dependencyId: null,
+      due: "2026-01-10",
+      supportIds: [],
+      actorId: me.id,
+    });
+
+    const res = await supertest(app)
+      .post(`/proyectos/${project.id}/eliminar`)
+      .set("Cookie", cookie);
+    expect(res.status).toBe(303);
+    expect(res.headers.location).toBe("/proyectos");
+
+    expect(await getProject(project.id)).toBeUndefined();
+    const survivingTask = await getTask(task.id);
+    expect(survivingTask).toBeDefined();
+    expect(survivingTask?.projectId).toBeNull();
+  });
+
+  it("usuario comun no puede eliminar un proyecto (403)", async () => {
+    const app = createApp();
+    const { me } = await makeAdminCookie("projdel2-owner@test.local");
+    const project = await createProject({
+      name: "Proyecto protegido",
+      code: "DEL-2",
+      objective: "No se debe poder borrar sin ser admin",
+      leaderId: me.id,
+      start: "2026-01-01",
+      due: "2026-02-01",
+      limitActive: 2,
+      limitReview: 2,
+      memberIds: [],
+    });
+
+    const cookie = await signUpAndGetCookie("projdel2-attacker@test.local");
+    const res = await supertest(app)
+      .post(`/proyectos/${project.id}/eliminar`)
+      .set("Cookie", cookie);
+    expect(res.status).toBe(403);
+
+    expect(await getProject(project.id)).toBeDefined();
+  });
+
+  it("admin, eliminar un proyecto inexistente responde 404", async () => {
+    const app = createApp();
+    const { cookie } = await makeAdminCookie("projdel3@test.local");
+    const res = await supertest(app)
+      .post("/proyectos/00000000-0000-0000-0000-000000000000/eliminar")
       .set("Cookie", cookie);
     expect(res.status).toBe(404);
   });

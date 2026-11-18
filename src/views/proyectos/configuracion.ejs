@@ -75,7 +75,7 @@
     <% if (user.role === "administrador") { %>
     <section class="card pad">
       <div class="sectiontitle"><h2>Zona de peligro</h2></div>
-      <p class="muted small">Elimina el proyecto junto con todas sus tareas y registros de horas. Esta acción no se puede deshacer.</p>
+      <p class="muted small">Elimina el proyecto y la lista de integrantes. Sus tareas no se borran: quedan como tareas independientes, con sus horas y su historial intactos. Esta acción no se puede deshacer.</p>
       <form method="post" action="/proyectos/<%= project.id %>/eliminar" data-project-name="<%= project.name %>" onsubmit="return confirmDeleteProject(this)">
         <button type="submit" class="btn danger">Eliminar proyecto</button>
       </form>
@@ -86,7 +86,7 @@
 <script>
 function confirmDeleteProject(form) {
   var name = form.getAttribute('data-project-name') || '';
-  return confirm('¿Eliminar el proyecto "' + name + '"? Se borran también sus tareas y registros. Esta acción no se puede deshacer.');
+  return confirm('¿Eliminar el proyecto "' + name + '"? Sus tareas pasan a ser independientes, no se borran. Esta acción no se puede deshacer.');
 }
 </script>
 </body>
