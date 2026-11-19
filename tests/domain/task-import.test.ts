@@ -15,6 +15,7 @@ function row(overrides: Partial<TaskImportRow> = {}): TaskImportRow {
     weight: "1",
     estimate: "4",
     due: "2026-12-01",
+    dueTime: "10:00",
     ...overrides,
   };
 }

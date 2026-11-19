@@ -1,4 +1,8 @@
-import { priorityEnum } from "../schemas/task.ts";
+import {
+  isValidTaskDueTime,
+  priorityEnum,
+  TASK_ESTIMATE_MAX_HOURS,
+} from "../schemas/task.ts";
 
 export const TASK_IMPORT_HEADERS = [
   "Título",
@@ -10,6 +14,7 @@ export const TASK_IMPORT_HEADERS = [
   "Peso (1-10)",
   "Horas estimadas",
   "Fecha límite (AAAA-MM-DD)",
+  "Hora de entrega (HH:MM)",
 ] as const;
 
 export interface TaskImportRow {
@@ -22,6 +27,7 @@ export interface TaskImportRow {
   weight: string;
   estimate: string;
   due: string;
+  dueTime: string;
 }
 
 export interface TaskImportResolved {
@@ -34,6 +40,7 @@ export interface TaskImportResolved {
   weight: number;
   estimate: number;
   due: string;
+  dueTime: string;
 }
 
 export interface TaskImportError {
@@ -115,11 +122,15 @@ export function validateTaskImportRow(
   }
 
   const estimate = Number(raw.estimate);
-  if (!Number.isFinite(estimate) || estimate <= 0 || estimate > 999) {
+  if (
+    !Number.isFinite(estimate) ||
+    estimate <= 0 ||
+    estimate > TASK_ESTIMATE_MAX_HOURS
+  ) {
     return {
       ok: false,
       row,
-      message: "las horas estimadas deben ser un número mayor a 0",
+      message: `las horas estimadas deben ser un número entre 0 y ${TASK_ESTIMATE_MAX_HOURS}`,
     };
   }
 
@@ -129,6 +140,22 @@ export function validateTaskImportRow(
       ok: false,
       row,
       message: `fecha límite inválida "${raw.due}" (usa AAAA-MM-DD)`,
+    };
+  }
+
+  const dueTime = raw.dueTime.trim();
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(dueTime)) {
+    return {
+      ok: false,
+      row,
+      message: `hora de entrega inválida "${raw.dueTime}" (usa HH:MM)`,
+    };
+  }
+  if (!isValidTaskDueTime(dueTime)) {
+    return {
+      ok: false,
+      row,
+      message: "la hora de entrega debe estar entre 08:00–12:00 o 14:00–18:00",
     };
   }
 
@@ -145,6 +172,7 @@ export function validateTaskImportRow(
       weight,
       estimate,
       due,
+      dueTime,
     },
   };
 }

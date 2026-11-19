@@ -110,6 +110,7 @@ tasksImportRouter.post(
           estimate: String(outcome.task.estimate),
           dependencyId: null,
           due: outcome.task.due,
+          dueTime: outcome.task.dueTime,
           supportIds: outcome.task.supportIds,
           actorId: req.user.id,
         });

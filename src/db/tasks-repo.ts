@@ -38,11 +38,12 @@ export const REQUESTABLE_SUPPORT_STATUSES = [
   "bloqueada",
 ];
 
-// Una persona no puede tener más de 4h de tareas estimadas el mismo día —
+// Una persona puede llevar tareas en simultáneo, pero no puede tener más de
+// 16h estimadas asignadas el mismo día.
 // regla de negocio para evitar sobrecarga visible en el plan semanal. Se
 // exporta porque Equipo y cargas la reusa como referencia de capacidad
 // diaria en su filtro día/semana/mes.
-export const DAILY_ESTIMATE_LIMIT_HOURS = 4;
+export const DAILY_ESTIMATE_LIMIT_HOURS = 16;
 
 async function assertDailyEstimateLimit(
   ownerId: string,
@@ -606,6 +607,7 @@ export interface UpdateTaskPatch {
   priority?: string;
   dependencyId?: string | null;
   due?: string;
+  dueTime?: string | null;
   ownerId?: string;
 }
 

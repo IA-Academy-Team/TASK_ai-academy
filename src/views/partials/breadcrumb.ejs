@@ -32,7 +32,10 @@ if (topLevelLabels[active]) {
   trail.push({ label: topLevelLabels[active], href: topLevelHrefs[active] });
 }
 extraCrumbs.forEach(function (c) {
-  trail.push(c);
+  var previous = trail[trail.length - 1];
+  if (!previous || previous.label !== c.label) {
+    trail.push(c);
+  }
 });
 %>
 <nav class="breadcrumb" aria-label="Volver atrás">

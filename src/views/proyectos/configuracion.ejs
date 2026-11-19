@@ -58,12 +58,12 @@
             <td><span class="badge <%= t.status %>"><%= t.status %></span></td>
             <td style="display:flex;gap:6px">
               <% if (i > 0) { %>
-              <form method="post" action="/proyectos/<%= project.id %>/tareas/<%= t.id %>/mover"><input type="hidden" name="direction" value="subir" /><button class="btn subtle" type="submit">↑</button></form>
+              <form method="post" action="/proyectos/<%= project.id %>/tareas/<%= t.id %>/mover"><input type="hidden" name="direction" value="subir" /><button class="btn subtle" type="submit">Subir</button></form>
               <% } %>
               <% if (i < tasks.length - 1) { %>
-              <form method="post" action="/proyectos/<%= project.id %>/tareas/<%= t.id %>/mover"><input type="hidden" name="direction" value="bajar" /><button class="btn subtle" type="submit">↓</button></form>
+              <form method="post" action="/proyectos/<%= project.id %>/tareas/<%= t.id %>/mover"><input type="hidden" name="direction" value="bajar" /><button class="btn subtle" type="submit">Bajar</button></form>
               <% } %>
-              <a class="btn subtle icon-only" title="Editar" href="/tareas/<%= t.id %>/editar"><%- include('../partials/icon', { kind: 'edit', size: 14 }) %></a>
+              <a class="btn subtle" href="/tareas/<%= t.id %>/editar"><%- include('../partials/icon', { kind: 'edit', size: 14 }) %>Editar</a>
             </td>
           </tr>
           <% }) %>

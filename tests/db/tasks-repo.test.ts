@@ -433,8 +433,8 @@ describe("teamLoad", () => {
   });
 });
 
-describe("límite de 4h estimadas por día", () => {
-  it("createTask rechaza una tarea que haría superar 4h estimadas el mismo día", async () => {
+describe("límite de 16h estimadas por día", () => {
+  it("createTask rechaza una tarea que haría superar 16h estimadas el mismo día", async () => {
     const leader = await makeUser("daily-limit1@test.local");
     const project = await makeProject(leader.id);
 
@@ -446,7 +446,7 @@ describe("límite de 4h estimadas por día", () => {
       ownerId: leader.id,
       priority: "media",
       weight: 1,
-      estimate: "3",
+      estimate: "12",
       dependencyId: null,
       due: "2026-01-10",
       supportIds: [],
@@ -462,7 +462,7 @@ describe("límite de 4h estimadas por día", () => {
         ownerId: leader.id,
         priority: "media",
         weight: 1,
-        estimate: "2",
+        estimate: "5",
         dependencyId: null,
         due: "2026-01-10",
         supportIds: [],
@@ -471,7 +471,7 @@ describe("límite de 4h estimadas por día", () => {
     ).rejects.toThrow(HttpError);
   });
 
-  it("createTask permite tareas del mismo día que en total no superan 4h", async () => {
+  it("createTask permite tareas simultáneas del mismo día que en total no superan 16h", async () => {
     const leader = await makeUser("daily-limit2@test.local");
     const project = await makeProject(leader.id);
 
@@ -483,7 +483,7 @@ describe("límite de 4h estimadas por día", () => {
       ownerId: leader.id,
       priority: "media",
       weight: 1,
-      estimate: "2.5",
+      estimate: "8",
       dependencyId: null,
       due: "2026-01-10",
       supportIds: [],
@@ -498,7 +498,7 @@ describe("límite de 4h estimadas por día", () => {
       ownerId: leader.id,
       priority: "media",
       weight: 1,
-      estimate: "1.5",
+      estimate: "8",
       dependencyId: null,
       due: "2026-01-10",
       supportIds: [],
@@ -520,7 +520,7 @@ describe("límite de 4h estimadas por día", () => {
       ownerId: leader.id,
       priority: "media",
       weight: 1,
-      estimate: "4",
+      estimate: "16",
       dependencyId: null,
       due: "2026-01-10",
       supportIds: [],
@@ -538,7 +538,7 @@ describe("límite de 4h estimadas por día", () => {
       ownerId: leader.id,
       priority: "media",
       weight: 1,
-      estimate: "4",
+      estimate: "16",
       dependencyId: null,
       due: "2026-01-10",
       supportIds: [],
@@ -548,7 +548,7 @@ describe("límite de 4h estimadas por día", () => {
     expect(second.status).toBe("pendiente");
   });
 
-  it("updateTask rechaza mover una tarea a un día donde el responsable ya supera 4h", async () => {
+  it("updateTask rechaza mover una tarea a un día donde el responsable ya supera 16h", async () => {
     const leader = await makeUser("daily-limit4@test.local");
     const project = await makeProject(leader.id);
 
@@ -560,7 +560,7 @@ describe("límite de 4h estimadas por día", () => {
       ownerId: leader.id,
       priority: "media",
       weight: 1,
-      estimate: "4",
+      estimate: "16",
       dependencyId: null,
       due: "2026-01-10",
       supportIds: [],

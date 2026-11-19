@@ -91,6 +91,7 @@ describe("GET/POST /tareas/:id/editar", () => {
         weight: "2",
         estimate: "4",
         due: "2026-01-15",
+        dueTime: "10:00",
       });
     expect(res.status).toBe(303);
     expect(res.headers.location).toBe(`/tareas/${task.id}`);

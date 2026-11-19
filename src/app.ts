@@ -92,6 +92,22 @@ export function createApp() {
     res.render("login");
   });
 
+  // Toda página interna exige una sesión. Las rutas de autenticación, los
+  // archivos públicos y health ya se montaron antes de este guard. Los
+  // endpoints de notificaciones conservan 401 para que sus consumidores JS
+  // puedan distinguir una sesión vencida de una respuesta HTML.
+  app.use((req, res, next) => {
+    if (req.user) {
+      next();
+      return;
+    }
+    if (req.path.startsWith("/notificaciones/")) {
+      res.status(401).json({ error: "unauthorized" });
+      return;
+    }
+    res.redirect("/login");
+  });
+
   app.use(changePasswordRouter);
   app.use(profileRouter);
   app.use(dashboardRouter);

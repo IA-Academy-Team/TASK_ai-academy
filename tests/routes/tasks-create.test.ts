@@ -57,6 +57,7 @@ describe("GET/POST /tareas/nueva", () => {
         weight: "1",
         estimate: "4",
         due: "2026-01-10",
+        dueTime: "10:00",
       });
     expect(res.status).toBe(303);
     expect(res.headers.location).toBe(`/proyectos/${project.id}`);
@@ -76,6 +77,7 @@ describe("GET/POST /tareas/nueva", () => {
         priority: "media",
         estimate: "2",
         due: "2026-01-10",
+        dueTime: "10:00",
       });
     expect(res.status).toBe(303);
     expect(res.headers.location).toBe("/mis-tareas");
@@ -90,5 +92,45 @@ describe("GET/POST /tareas/nueva", () => {
       .send({ projectId: project.id, title: "" });
     expect(res.status).toBe(303);
     expect(res.headers.location).toContain("/tareas/nueva");
+  });
+
+  it("POST /tareas rechaza una entrega durante la pausa de mediodía", async () => {
+    const { app, cookie, me, project } = await setup("tc-lunch@test.local");
+    const res = await supertest(app)
+      .post("/tareas")
+      .set("Cookie", cookie)
+      .type("form")
+      .send({
+        projectId: project.id,
+        title: "Tarea fuera de horario",
+        deliverable: "Entregable",
+        ownerId: me.id,
+        priority: "media",
+        estimate: "4",
+        due: "2026-01-10",
+        dueTime: "12:30",
+      });
+    expect(res.status).toBe(303);
+    expect(res.headers.location).toContain("error=1");
+  });
+
+  it("POST /tareas rechaza más de 16 horas estimadas", async () => {
+    const { app, cookie, me, project } = await setup("tc-max@test.local");
+    const res = await supertest(app)
+      .post("/tareas")
+      .set("Cookie", cookie)
+      .type("form")
+      .send({
+        projectId: project.id,
+        title: "Tarea extensa",
+        deliverable: "Entregable",
+        ownerId: me.id,
+        priority: "media",
+        estimate: "16.5",
+        due: "2026-01-10",
+        dueTime: "10:00",
+      });
+    expect(res.status).toBe(303);
+    expect(res.headers.location).toContain("error=1");
   });
 });

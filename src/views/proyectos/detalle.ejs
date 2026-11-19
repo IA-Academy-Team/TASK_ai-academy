@@ -29,9 +29,9 @@
         </div>
         <div style="display:flex;gap:8px">
           <% if (isLeaderOrAdmin) { %>
-          <button type="button" class="btn icon-only" title="Carga masiva" onclick="document.getElementById('modal-carga-masiva').classList.add('open')"><%- include('../partials/icon', { kind: 'upload', size: 14 }) %></button>
-          <button type="button" class="btn primary icon-only" title="Nueva tarea" onclick="document.getElementById('drawer-nueva-tarea').classList.add('open')"><%- include('../partials/icon', { kind: 'plus', size: 14 }) %></button>
-          <a class="btn icon-only" title="Configuración del proyecto" href="/proyectos/<%= project.id %>/configuracion"><%- include('../partials/icon', { kind: 'settings', size: 14 }) %></a>
+          <button type="button" class="btn" onclick="document.getElementById('modal-carga-masiva').classList.add('open')"><%- include('../partials/icon', { kind: 'upload', size: 14 }) %>Carga masiva</button>
+          <button type="button" class="btn primary" onclick="document.getElementById('drawer-nueva-tarea').classList.add('open')"><%- include('../partials/icon', { kind: 'plus', size: 14 }) %>Nueva tarea</button>
+          <a class="btn" href="/proyectos/<%= project.id %>/configuracion"><%- include('../partials/icon', { kind: 'settings', size: 14 }) %>Configuración</a>
           <% } %>
         </div>
       </div>
@@ -148,8 +148,9 @@
           <div class="drawer-section">
             <h3>Planificación</h3>
             <div class="form-grid">
-              <div class="field"><label>Horas estimadas *</label><input type="number" name="estimate" min="0.5" step="0.5" required /></div>
+              <div class="field"><label>Horas estimadas *</label><input type="number" name="estimate" min="0.5" max="16" step="0.5" required /></div>
               <div class="field full"><label>Fecha límite *</label><input type="date" name="due" required /></div>
+              <div class="field full"><label>Hora de entrega *</label><input type="time" name="dueTime" min="08:00" max="18:00" required /><p class="task-helper">Jornada: 08:00–12:00 y 14:00–18:00.</p></div>
               <div class="field full"><label>Depende de</label>
                 <select name="dependencyId">
                   <option value="">Ninguna</option>

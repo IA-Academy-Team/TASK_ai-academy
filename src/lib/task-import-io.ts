@@ -14,6 +14,7 @@ const TEMPLATE_SAMPLE_ROW = [
   "1",
   "4",
   "2026-12-01",
+  "10:00",
 ];
 
 export async function buildTaskImportTemplate(): Promise<
@@ -57,7 +58,7 @@ export async function parseTaskImportFile(
   const rows: TaskImportRow[] = [];
   sheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
     if (rowNumber === 1) return;
-    const cells = Array.from({ length: 9 }, (_, i) => cellText(row, i + 1));
+    const cells = Array.from({ length: 10 }, (_, i) => cellText(row, i + 1));
     if (!cells.some(Boolean)) return;
     rows.push({
       title: cells[0],
@@ -69,6 +70,7 @@ export async function parseTaskImportFile(
       weight: cells[6],
       estimate: cells[7],
       due: cells[8],
+      dueTime: cells[9],
     });
   });
   return rows;

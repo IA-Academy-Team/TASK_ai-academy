@@ -11,6 +11,23 @@ export const statusEnum = z.enum([
   "cancelada",
 ]);
 
+export const TASK_ESTIMATE_MAX_HOURS = 16;
+
+export function isValidTaskDueTime(value: string): boolean {
+  return (
+    value >= "08:00" &&
+    value <= "18:00" &&
+    !(value >= "12:00" && value < "14:00")
+  );
+}
+
+const dueTimeSchema = z
+  .string()
+  .regex(/^([01]\d|2[0-3]):[0-5]\d$/)
+  .refine(isValidTaskDueTime, {
+    message: "la hora debe estar entre 08:00–12:00 o 14:00–18:00",
+  });
+
 export const createTaskSchema = z.object({
   projectId: z.preprocess(
     (value) => (value === "" ? undefined : value),
@@ -21,20 +38,9 @@ export const createTaskSchema = z.object({
   description: z.string().max(2000).optional().default(""),
   ownerId: z.string().min(1),
   priority: priorityEnum,
-  estimate: z.coerce.number().positive().max(999),
+  estimate: z.coerce.number().positive().max(TASK_ESTIMATE_MAX_HOURS),
   due: dateString,
-  // El input type="time" manda "" (no el campo ausente) cuando queda vacío
-  // — z.optional() no perdona ese "": sin el preprocess, crear una tarea sin
-  // hora de entrega rebotaba por el regex de abajo.
-  dueTime: z
-    .preprocess(
-      (v) => (v === "" ? undefined : v),
-      z
-        .string()
-        .regex(/^([01]\d|2[0-3]):[0-5]\d$/)
-        .optional(),
-    )
-    .transform((v) => (v ? v : null)),
+  dueTime: dueTimeSchema,
   support: z.union([z.string(), z.array(z.string())]).optional(),
 });
 
@@ -56,12 +62,13 @@ export const updateTaskSchema = z.object({
   description: z.string().max(2000).optional().default(""),
   ownerId: z.string().min(1),
   priority: priorityEnum,
-  estimate: z.coerce.number().positive().max(999),
+  estimate: z.coerce.number().positive().max(TASK_ESTIMATE_MAX_HOURS),
   dependencyId: z
     .string()
     .optional()
     .transform((v) => (v ? v : null)),
   due: dateString,
+  dueTime: dueTimeSchema,
 });
 
 export const requestSupportSchema = z.object({
