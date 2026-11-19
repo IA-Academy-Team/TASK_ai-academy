@@ -17,11 +17,35 @@ async function makeAdminCookie(email: string) {
 }
 
 describe("GET/POST /proyectos", () => {
+  it("admin, GET /proyectos/nuevo muestra el formulario persistente", async () => {
+    const app = createApp();
+    const { cookie } = await makeAdminCookie("project-new-admin@test.local");
+    const res = await supertest(app)
+      .get("/proyectos/nuevo")
+      .set("Cookie", cookie);
+    expect(res.status).toBe(200);
+    expect(res.text).toContain("Crear proyecto");
+    expect(res.text).toContain("aiacademy-project-create-draft");
+    expect(res.text).toContain("aiacademy-project-create-submitted");
+    expect(res.text).toContain("Proyectos activos");
+  });
+
+  it("usuario común no puede abrir /proyectos/nuevo", async () => {
+    const app = createApp();
+    const cookie = await signUpAndGetCookie("project-new-user@test.local");
+    const res = await supertest(app)
+      .get("/proyectos/nuevo")
+      .set("Cookie", cookie);
+    expect(res.status).toBe(403);
+  });
+
   it("autenticado, GET /proyectos responde 200", async () => {
     const app = createApp();
     const cookie = await signUpAndGetCookie("proj1@test.local");
     const res = await supertest(app).get("/proyectos").set("Cookie", cookie);
     expect(res.status).toBe(200);
+    expect(res.text).toContain("Crea proyectos nuevos");
+    expect(res.text).toContain("project-list-grid");
   });
 
   it("sin autenticar, GET /proyectos redirige a /login", async () => {
@@ -118,7 +142,7 @@ describe("GET/POST /proyectos", () => {
         limitReview: "2",
       });
     expect(res.status).toBe(303);
-    expect(res.headers.location).toBe("/proyectos?error=1");
+    expect(res.headers.location).toBe("/proyectos/nuevo?error=1");
   });
 
   it("GET /proyectos/:id con un id mal formado responde 404, no 500", async () => {
@@ -132,7 +156,7 @@ describe("GET/POST /proyectos", () => {
 });
 
 describe("POST /proyectos/:id/eliminar", () => {
-  it("admin elimina el proyecto; sus tareas sobreviven como independientes", async () => {
+  it("admin elimina el proyecto y sus tareas en cascada", async () => {
     const app = createApp();
     const { cookie, me } = await makeAdminCookie("projdel1@test.local");
     const project = await createProject({
@@ -168,9 +192,7 @@ describe("POST /proyectos/:id/eliminar", () => {
     expect(res.headers.location).toBe("/proyectos");
 
     expect(await getProject(project.id)).toBeUndefined();
-    const survivingTask = await getTask(task.id);
-    expect(survivingTask).toBeDefined();
-    expect(survivingTask?.projectId).toBeNull();
+    expect(await getTask(task.id)).toBeUndefined();
   });
 
   it("usuario comun no puede eliminar un proyecto (403)", async () => {

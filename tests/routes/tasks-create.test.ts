@@ -30,6 +30,8 @@ describe("GET/POST /tareas/nueva", () => {
     const { app, cookie } = await setup("tc1@test.local");
     const res = await supertest(app).get("/tareas/nueva").set("Cookie", cookie);
     expect(res.status).toBe(200);
+    expect(res.text).toContain("Tarea personal (sin proyecto)");
+    expect(res.text).toContain("Proyecto al que pertenece");
   });
 
   it("GET /tareas/nueva?project=:id muestra el formulario completo", async () => {
@@ -58,6 +60,25 @@ describe("GET/POST /tareas/nueva", () => {
       });
     expect(res.status).toBe(303);
     expect(res.headers.location).toBe(`/proyectos/${project.id}`);
+  });
+
+  it("POST /tareas crea una tarea personal sin proyecto", async () => {
+    const { app, cookie, me } = await setup("tc-personal@test.local");
+    const res = await supertest(app)
+      .post("/tareas")
+      .set("Cookie", cookie)
+      .type("form")
+      .send({
+        projectId: "",
+        title: "Tarea personal",
+        deliverable: "Entregable personal",
+        ownerId: me.id,
+        priority: "media",
+        estimate: "2",
+        due: "2026-01-10",
+      });
+    expect(res.status).toBe(303);
+    expect(res.headers.location).toBe("/mis-tareas");
   });
 
   it("POST /tareas con datos inválidos vuelve al formulario con error", async () => {

@@ -111,7 +111,7 @@ tasksEditRouter.post("/tareas/:id/editar", async (req, res) => {
       description: parsed.data.description,
       ownerId: parsed.data.ownerId,
       priority: parsed.data.priority,
-      weight: parsed.data.weight,
+      weight: task.weight,
       estimate: String(parsed.data.estimate),
       dependencyId: parsed.data.dependencyId,
       due: parsed.data.due,

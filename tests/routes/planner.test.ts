@@ -9,6 +9,11 @@ describe("GET /planeacion", () => {
     const cookie = await signUpAndGetCookie("pl1@test.local");
     const res = await supertest(app).get("/planeacion").set("Cookie", cookie);
     expect(res.status).toBe(200);
+    expect(res.text).toContain("Tareas de la semana por día");
+    expect(res.text).toContain("Lunes");
+    expect(res.text).toContain("week-day-body");
+    expect(res.text).toContain("Capacidad del equipo (referencia)");
+    expect(res.text).toContain("Reglas para evitar saturación");
   });
 
   it("responde 200 con filtro de semana y proyecto", async () => {

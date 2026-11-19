@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, count, desc, eq } from "drizzle-orm";
 import { HttpError } from "../lib/http-error.ts";
 import { isUuid } from "../lib/uuid.ts";
 import { recordChange } from "./audit-repo.ts";
@@ -63,6 +63,29 @@ export async function listPendingForUser(userId: string) {
       ),
     )
     .orderBy(desc(supportRequests.createdAt));
+}
+
+export async function countResolvedForUser(userId: string) {
+  const rows = await db
+    .select({ status: supportRequests.status, value: count() })
+    .from(supportRequests)
+    .where(
+      and(
+        eq(supportRequests.targetUserId, userId),
+        eq(supportRequests.status, "aceptada"),
+      ),
+    )
+    .groupBy(supportRequests.status);
+  const rejected = await db
+    .select({ value: count() })
+    .from(supportRequests)
+    .where(
+      and(
+        eq(supportRequests.targetUserId, userId),
+        eq(supportRequests.status, "rechazada"),
+      ),
+    );
+  return { accepted: rows[0]?.value ?? 0, rejected: rejected[0]?.value ?? 0 };
 }
 
 export async function listPendingForUserEnriched(userId: string) {

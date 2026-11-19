@@ -31,18 +31,20 @@ tasksCreateRouter.get("/tareas/nueva", async (req, res) => {
 
   const projectParam =
     typeof req.query.project === "string" ? req.query.project : null;
-  const pickingProject = req.query.tipo === "proyecto";
   const error = req.query.error === "1";
 
   if (!projectParam) {
-    const projects = pickingProject ? await listProjects() : [];
+    const [allUsers, allTasks, projects] = await Promise.all([
+      listAllActiveUsers(),
+      listTasksWithoutProject(),
+      listProjects(),
+    ]);
     res.render("tareas/nueva", {
       user: req.user,
       project: null,
-      independent: false,
-      pickingProject,
-      allUsers: [],
-      allTasks: [],
+      independent: true,
+      allUsers,
+      allTasks,
       projects,
       error,
     });
@@ -60,7 +62,7 @@ tasksCreateRouter.get("/tareas/nueva", async (req, res) => {
       independent: true,
       allUsers,
       allTasks,
-      projects: [],
+      projects: await listProjects(),
       error,
     });
     return;
@@ -71,9 +73,10 @@ tasksCreateRouter.get("/tareas/nueva", async (req, res) => {
     throw new HttpError(404, "proyecto no encontrado");
   }
 
-  const [allUsers, allTasks] = await Promise.all([
+  const [allUsers, allTasks, projects] = await Promise.all([
     listAllActiveUsers(),
     listTasksByProject(project.id),
+    listProjects(),
   ]);
 
   res.render("tareas/nueva", {
@@ -82,7 +85,7 @@ tasksCreateRouter.get("/tareas/nueva", async (req, res) => {
     independent: false,
     allUsers,
     allTasks,
-    projects: [],
+    projects,
     error,
   });
 });

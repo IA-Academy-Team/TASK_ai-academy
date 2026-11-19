@@ -9,6 +9,9 @@
 <title>Task by Academy — Proyectos</title>
 <%- include('../partials/theme-init') %>
 <%- include('../partials/styles') %>
+<style>
+.project-list-grid{grid-template-columns:repeat(auto-fill,minmax(330px,1fr));align-items:stretch}.project-card{min-height:374px;padding:20px;border-left-width:1px}.project-card .meta{justify-content:flex-start;gap:13px}.project-card .meta span{white-space:nowrap}.project-card-new{min-height:374px;border:1px dashed var(--accent);background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;color:var(--primary)}.project-card-new h2{margin:13px 0 6px;font-size:17px;color:var(--ink)}.project-card-new p{margin:0 0 18px;max-width:280px;color:var(--muted);font-size:11px;line-height:1.55}.project-card-new-icon{display:grid;place-items:center;width:38px;height:38px;border-radius:999px;background:var(--lav);font-size:22px}.project-card-new .btn{color:var(--primary);background:var(--lav);border-color:var(--lav)}@media (max-width:700px){.project-list-grid{grid-template-columns:1fr}.project-card,.project-card-new{min-height:auto}}
+</style>
 </head>
 <body>
 <div class="app">
@@ -18,21 +21,18 @@
       var projectsNavActions = [{ label: 'Crear tarea', href: '/tareas/nueva', variant: 'subtle', icon: 'plus' }];
       if (user.role === "administrador") {
         projectsNavActions.push({ label: 'Carga masiva', onclick: "document.getElementById('modal-carga-masiva-proyectos').classList.add('open')", variant: 'subtle', icon: 'upload' });
-        projectsNavActions.push({ label: 'Nuevo proyecto', onclick: "document.getElementById('new-project-modal').classList.add('open')", icon: 'folder-plus' });
+        projectsNavActions.push({ label: 'Crear proyecto', href: '/proyectos/nuevo', icon: 'folder-plus' });
       }
     %>
     <%- include('../partials/navbar', { active: 'proyectos', actions: projectsNavActions }) %>
     <div class="topbar">
       <div>
         <h1 class="page-title">Proyectos</h1>
-        <p class="subtitle">Centro de control de Task — cada proyecto agrupa sus propias tareas.</p>
+        <p class="subtitle">Crea proyectos nuevos y abre su lista de tareas ordenadas por dependencias.</p>
       </div>
     </div>
 
-    <% if (items.length === 0) { %>
-    <div class="card"><%- include('../partials/empty-state', { text: 'Sin proyectos todavía. Crea el primero.' }) %></div>
-    <% } else { %>
-    <div class="project-grid">
+    <div class="project-grid project-list-grid">
       <% items.forEach(function(p) { %>
       <a class="card project-card risk-<%= p.risk.level %>" href="/proyectos/<%= p.id %>">
         <div class="project-card-top">
@@ -53,7 +53,7 @@
           <span><%= p.due %></span>
         </div>
         <div class="bar-row">
-          <span><%= p.weightedPct %>% ponderado</span>
+          <span><%= p.weightedPct %>% de avance</span>
           <span><%= p.doneCount %>/<%= p.taskCount %> tareas</span>
         </div>
         <div class="bar"><span style="width: <%= p.weightedPct %>%"></span></div>
@@ -69,7 +69,17 @@
         </div>
       </a>
       <% }) %>
+      <% if (user.role === "administrador") { %>
+      <a class="project-card-new" href="/proyectos/nuevo">
+        <span class="project-card-new-icon">+</span>
+        <h2>Nuevo proyecto</h2>
+        <p>Empieza sin tareas y agrégalas una a una desde el proyecto.</p>
+        <span class="btn"><%- include('../partials/icon', { kind: 'plus', size: 14 }) %> Crear</span>
+      </a>
+      <% } %>
     </div>
+    <% if (items.length === 0 && user.role !== "administrador") { %>
+    <div class="card" style="margin-top:16px"><%- include('../partials/empty-state', { text: 'Todavía no hay proyectos visibles para vos.' }) %></div>
     <% } %>
 
     <% if (user.role === "administrador") { %>

@@ -9,6 +9,9 @@
 <title>Task by Academy — Solicitudes de apoyo</title>
 <%- include('../partials/theme-init') %>
 <%- include('../partials/styles') %>
+<style>
+.support-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px}.support-kpi{padding:19px;min-height:120px}.support-kpi small{font-size:11px;color:var(--muted)}.support-kpi strong{display:block;font-size:27px;margin:14px 0 8px}.support-kpi p{margin:0;font-size:10px;color:var(--muted)}.support-registered{padding:20px;margin-top:16px}.support-registered-head{display:flex;justify-content:space-between;gap:12px;margin-bottom:16px}.support-registered-head h2{margin:0;font-size:15px}.support-registered-head p{margin:0;font-size:11px;color:var(--muted)}.support-request-row{display:flex;align-items:center;gap:13px;padding:16px;border:1px solid var(--line);border-radius:var(--radius-control);margin-top:10px}.support-request-avatar{width:38px;height:38px;border-radius:999px;display:grid;place-items:center;background:var(--lav);color:var(--primary);font-size:12px;font-weight:800}.support-request-body{min-width:0;flex:1}.support-request-body strong,.support-request-body span{display:block}.support-request-body strong{font-size:13px}.support-request-body span{margin-top:5px;color:var(--muted);font-size:11px}.support-request-actions{display:flex;gap:8px;flex:0 0 auto}.support-hours-note{margin-top:16px;padding:15px;border:1px solid var(--line);border-radius:var(--radius-control);background:var(--lav);color:var(--primary);font-size:12px;line-height:1.55}@media(max-width:800px){.support-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.support-request-row{align-items:flex-start;flex-wrap:wrap}.support-request-actions{width:100%}}@media(max-width:520px){.support-kpis{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
 <div class="app">
@@ -18,11 +21,12 @@
     <div class="topbar">
       <div>
         <h1 class="page-title">Solicitudes de apoyo</h1>
-        <p class="subtitle">Pendientes para ti: <%= forMe.length %><% if (forLeader.length) { %> · Pendientes de resolver como líder: <%= forLeader.length %><% } %></p>
+        <p class="subtitle">Puedes invitar a un colaborador para que acepte o pedir al líder que asigne apoyo. El responsable principal no cambia.</p>
       </div>
     </div>
 
     <% if (error) { %><div class="error"><%= error %></div><% } %>
+    <section class="support-kpis"><article class="card support-kpi"><small>Solicitudes visibles</small><strong><%= visibleCount %></strong><p>De proyectos a los que perteneces</p></article><article class="card support-kpi"><small>Por resolver por mí</small><strong><%= pendingCount %></strong><p>Requieren aceptación o asignación</p></article><article class="card support-kpi"><small>Aceptadas</small><strong><%= acceptedCount %></strong><p>Apoyos confirmados</p></article><article class="card support-kpi"><small>Rechazadas</small><strong><%= rejectedCount %></strong><p>Sin asignación de apoyo</p></article></section>
 
     <section class="card pad">
       <div class="sectiontitle"><h2>Nueva solicitud</h2></div>
@@ -143,30 +147,12 @@
       <% } %>
     </section>
 
-    <section class="card pad">
-      <div class="sectiontitle"><h2>Para ti</h2></div>
+    <section class="card support-registered">
+      <div class="support-registered-head"><h2>Solicitudes registradas</h2><p>Selecciona una tarea para gestionar apoyos</p></div>
       <% if (forMe.length === 0) { %>
       <%- include('../partials/empty-state', { text: 'No tienes solicitudes pendientes.' }) %>
       <% } else { %>
-      <div class="table-wrap">
-      <table class="table">
-        <thead><tr><th>Tarea</th><th>Proyecto</th><th>Pide</th><th>Motivo</th><th></th></tr></thead>
-        <tbody>
-          <% forMe.forEach(function(row) { %>
-          <tr>
-            <td><a href="/tareas/<%= row.request.taskId %>"><%= row.taskTitle %></a></td>
-            <td><%= row.projectName || "Independiente" %></td>
-            <td><%= row.requestedByName || row.request.requestedBy %></td>
-            <td><%= row.request.reason %></td>
-            <td style="display:flex;gap:6px">
-              <form method="post" action="/solicitudes/<%= row.request.id %>/aceptar"><button class="btn primary" type="submit">Aceptar</button></form>
-              <form method="post" action="/solicitudes/<%= row.request.id %>/rechazar"><button class="btn danger" type="submit">Rechazar</button></form>
-            </td>
-          </tr>
-          <% }) %>
-        </tbody>
-      </table>
-      </div>
+      <% forMe.forEach(function(row) { %><article class="support-request-row"><span class="support-request-avatar"><%= (row.requestedByName || '?').charAt(0).toUpperCase() %></span><div class="support-request-body"><strong><%= row.taskTitle %> · <%= row.projectName || 'Independiente' %></strong><span>Solicita: <%= row.requestedByName || row.request.requestedBy %> · <%= row.request.reason || 'Sin motivo adicional' %></span></div><div class="support-request-actions"><a class="btn subtle" href="/tareas/<%= row.request.taskId %>">Ver tarea</a><form method="post" action="/solicitudes/<%= row.request.id %>/aceptar"><button class="btn primary" type="submit">Aceptar</button></form><form method="post" action="/solicitudes/<%= row.request.id %>/rechazar"><button class="btn danger" type="submit">Rechazar</button></form></div></article><% }) %>
       <% } %>
     </section>
 
@@ -194,6 +180,7 @@
       </div>
     </section>
     <% } %>
+    <p class="support-hours-note">Los apoyos pueden declarar sus propias horas. El resultado final suma horas del responsable y horas de apoyo por persona, sin duplicar registros.</p>
   </main>
 </div>
 </body>

@@ -5,7 +5,8 @@ import { createApp } from "../../src/app.ts";
 import { user } from "../../src/db/auth-schema.ts";
 import { db } from "../../src/db/client.ts";
 import { createProject } from "../../src/db/projects-repo.ts";
-import { createTask } from "../../src/db/tasks-repo.ts";
+import { createTask, getTask } from "../../src/db/tasks-repo.ts";
+import { ADMIN_ROLE } from "../../src/domain/roles.ts";
 import { signUpAndGetCookie } from "../helpers/auth.ts";
 
 async function setup(email: string) {
@@ -48,6 +49,10 @@ describe("GET/POST /tareas/:id", () => {
       .get(`/tareas/${task.id}`)
       .set("Cookie", cookie);
     expect(res.status).toBe(200);
+    expect(res.text).toContain("Ficha de la tarea");
+    expect(res.text).toContain("Editar / reprogramar");
+    expect(res.text).toContain("Solicitar apoyo");
+    expect(res.text).not.toContain("Peso del avance");
   });
 
   it("GET /tareas/:id con id inexistente responde 404", async () => {
@@ -220,5 +225,144 @@ describe("GET/POST /tareas/:id", () => {
       .type("form")
       .send({ date: "2026-01-02", hours: "3" });
     expect(res.status).toBe(303);
+  });
+});
+
+describe("POST /tareas/:id/eliminar", () => {
+  it("el responsable elimina su propia tarea y redirige al proyecto", async () => {
+    const { app, cookie, me, project } = await setup("taskdel1@test.local");
+    const task = await createTask({
+      projectId: project.id,
+      title: "T",
+      deliverable: "E",
+      description: "",
+      ownerId: me.id,
+      priority: "media",
+      weight: 1,
+      estimate: "4",
+      dependencyId: null,
+      due: "2026-01-10",
+      supportIds: [],
+      actorId: me.id,
+    });
+
+    const res = await supertest(app)
+      .post(`/tareas/${task.id}/eliminar`)
+      .set("Cookie", cookie);
+    expect(res.status).toBe(303);
+    expect(res.headers.location).toBe(`/proyectos/${project.id}`);
+    expect(await getTask(task.id)).toBeUndefined();
+  });
+
+  it("el responsable elimina una tarea independiente y redirige a /mis-tareas", async () => {
+    const { app, cookie, me } = await setup("taskdel2@test.local");
+    const task = await createTask({
+      projectId: null,
+      title: "Independiente",
+      deliverable: "E",
+      description: "",
+      ownerId: me.id,
+      priority: "media",
+      weight: 1,
+      estimate: "4",
+      dependencyId: null,
+      due: "2026-01-10",
+      supportIds: [],
+      actorId: me.id,
+    });
+
+    const res = await supertest(app)
+      .post(`/tareas/${task.id}/eliminar`)
+      .set("Cookie", cookie);
+    expect(res.status).toBe(303);
+    expect(res.headers.location).toBe("/mis-tareas");
+    expect(await getTask(task.id)).toBeUndefined();
+  });
+
+  it("un apoyo puede eliminar la tarea", async () => {
+    const { app, me, project } = await setup("taskdel3-owner@test.local");
+    const supportCookie = await signUpAndGetCookie(
+      "taskdel3-support@test.local",
+    );
+    const [supportUser] = await db
+      .select()
+      .from(user)
+      .where(eq(user.email, "taskdel3-support@test.local"));
+    const task = await createTask({
+      projectId: project.id,
+      title: "T",
+      deliverable: "E",
+      description: "",
+      ownerId: me.id,
+      priority: "media",
+      weight: 1,
+      estimate: "4",
+      dependencyId: null,
+      due: "2026-01-10",
+      supportIds: [supportUser.id],
+      actorId: me.id,
+    });
+
+    const res = await supertest(app)
+      .post(`/tareas/${task.id}/eliminar`)
+      .set("Cookie", supportCookie);
+    expect(res.status).toBe(303);
+    expect(await getTask(task.id)).toBeUndefined();
+  });
+
+  it("un tercero sin relación con la tarea responde 403", async () => {
+    const { app, me, project } = await setup("taskdel4-owner@test.local");
+    const strangerCookie = await signUpAndGetCookie(
+      "taskdel4-stranger@test.local",
+    );
+    const task = await createTask({
+      projectId: project.id,
+      title: "T",
+      deliverable: "E",
+      description: "",
+      ownerId: me.id,
+      priority: "media",
+      weight: 1,
+      estimate: "4",
+      dependencyId: null,
+      due: "2026-01-10",
+      supportIds: [],
+      actorId: me.id,
+    });
+
+    const res = await supertest(app)
+      .post(`/tareas/${task.id}/eliminar`)
+      .set("Cookie", strangerCookie);
+    expect(res.status).toBe(403);
+    expect(await getTask(task.id)).toBeDefined();
+  });
+
+  it("un admin puede eliminar cualquier tarea", async () => {
+    const { app, me, project } = await setup("taskdel5-owner@test.local");
+    const adminCookie = await signUpAndGetCookie("taskdel5-admin@test.local");
+    await db
+      .update(user)
+      .set({ role: ADMIN_ROLE })
+      .where(eq(user.email, "taskdel5-admin@test.local"));
+    const task = await createTask({
+      projectId: project.id,
+      title: "T",
+      deliverable: "E",
+      description: "",
+      ownerId: me.id,
+      priority: "media",
+      weight: 1,
+      estimate: "4",
+      dependencyId: null,
+      due: "2026-01-10",
+      supportIds: [],
+      actorId: me.id,
+    });
+
+    const res = await supertest(app)
+      .post(`/tareas/${task.id}/eliminar`)
+      .set("Cookie", adminCookie);
+    expect(res.status).toBe(303);
+    expect(await getTask(task.id)).toBeUndefined();
   });
 });

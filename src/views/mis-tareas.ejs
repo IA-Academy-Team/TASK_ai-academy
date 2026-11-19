@@ -9,25 +9,23 @@
 <title>Task by Academy — Mis tareas</title>
 <%- include('partials/theme-init') %>
 <%- include('partials/styles') %>
+<style>
+.my-task-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px}.my-task-kpi{min-height:120px;padding:19px}.my-task-kpi small{color:var(--muted);font-size:11px}.my-task-kpi strong{display:block;margin:14px 0 8px;font-size:27px;line-height:1}.my-task-kpi p{margin:0;color:var(--muted);font-size:10px}.my-task-panel{padding:20px;margin:0}.my-task-panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:15px}.my-task-panel-head h2{margin:0;font-size:15px}.my-task-panel-head p{margin:0;color:var(--muted);font-size:10.5px}.my-task-filter-box{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;padding:14px;border:1px solid var(--line);border-radius:var(--radius-control);background:var(--bg);margin-bottom:16px}.my-task-filter-label{display:block;margin:0 0 7px;font-size:10px;font-weight:800;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}.my-task-filters{display:flex;flex-wrap:wrap;gap:7px}.my-task-filters a{display:inline-flex;align-items:center;gap:7px;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--text);font-size:10px;font-weight:730}.my-task-filters a.on{background:var(--primary);border-color:var(--primary);color:var(--primary-text)}.my-task-filters b{padding:1px 5px;border-radius:5px;background:var(--lav);color:var(--primary);font-size:9px}.my-task-filters a.on b{background:color-mix(in srgb,var(--paper) 24%,transparent);color:var(--primary-text)}.my-task-order{width:180px;flex:0 0 auto}.my-task-order select{min-height:36px;font-size:11px}.my-task-table th{font-size:10px}.my-task-table td{padding-top:13px;padding-bottom:13px}.my-task-title{display:block;font-weight:760;color:var(--ink)}.my-task-deliverable{display:block;margin-top:3px;color:var(--muted);font-size:10px}@media (max-width:900px){.my-task-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.my-task-filter-box{align-items:stretch;flex-direction:column}.my-task-order{width:100%}}@media (max-width:540px){.my-task-kpis{grid-template-columns:1fr}.my-task-panel{padding:16px}.my-task-panel-head{align-items:flex-start;flex-direction:column}}
+</style>
 </head>
 <body>
 <div class="app">
   <%- include('partials/sidebar', { active: 'mis-tareas', user }) %>
   <main class="content">
-    <%- include('partials/navbar', { active: 'mis-tareas', actions: [{ label: 'Crear tarea propia', href: '/tareas/nueva', icon: 'plus' }] }) %>
+    <%- include('partials/navbar', { active: 'mis-tareas', actions: [{ label: 'Crear tarea propia', href: '/tareas/nueva', icon: 'plus', showLabel: true }] }) %>
     <div class="topbar">
       <div>
         <h1 class="page-title">Mis tareas</h1>
-        <p class="subtitle">Mostrando <%= showing %> de <%= of %> tareas vigentes</p>
+        <p class="subtitle">Responsabilidades de <%= user.name || 'tu cuenta' %>. Aquí puedes iniciar, entregar, solicitar apoyo o abrir cada actividad.</p>
       </div>
     </div>
 
-    <div class="kpi-row kpi-row-compact">
-      <div class="card kpi card--interactive" onclick="document.getElementById('modal-kpi-total').classList.add('open')"><small>Total</small><strong><%= total %></strong></div>
-      <div class="card kpi card--interactive" onclick="document.getElementById('modal-kpi-vencidas').classList.add('open')"><small>Vencidas</small><strong><%= vencidas %></strong></div>
-      <div class="card kpi card--interactive" onclick="document.getElementById('modal-kpi-urgentes').classList.add('open')"><small>Urgentes</small><strong><%= urgentes %></strong></div>
-      <div class="card kpi card--interactive" onclick="document.getElementById('modal-kpi-completadas').classList.add('open')"><small>Completadas</small><strong><%= completadas %></strong></div>
-    </div>
+    <section class="my-task-kpis"><article class="card my-task-kpi"><small>A mi cargo</small><strong><%= total %></strong><p>Responsable único</p></article><article class="card my-task-kpi"><small>En ejecución</small><strong><%= active %></strong><p>Trabajos activos</p></article><article class="card my-task-kpi"><small>Pendientes</small><strong><%= pending %></strong><p>Incluye tareas dependientes</p></article><article class="card my-task-kpi"><small>Apoyos aceptados</small><strong><%= supportCount %></strong><p>No cambian mi responsabilidad</p></article></section>
 
     <% [
       { id: 'modal-kpi-total', title: 'Total', rows: kpiTotalRows },
@@ -81,37 +79,42 @@
     </div>
     <% } %>
 
-    <section class="card pad">
-      <div class="filters">
-        <% ['todas','vencidas','urgentes','pendiente','activa','revision','bloqueada','completada','cancelada'].forEach(function(f) { %>
-        <a href="/mis-tareas?estado=<%= f %>&orden=<%= orden %>" class="<%= estado === f ? 'on' : '' %>"><%= f %></a>
+    <section class="card my-task-panel">
+      <div class="my-task-panel-head"><h2>Actividades donde soy responsable</h2><p>Haz clic para abrir la ficha de una tarea</p></div>
+      <div class="my-task-filter-box">
+        <div><span class="my-task-filter-label">Filtrar por estado</span><div class="my-task-filters">
+        <% [['todas','Todas',total],['vencidas','Vencidas',vencidas],['urgentes','Urgentes',urgentes],['activa','En ejecución',active],['revision','En validación',review],['pendiente','Pendientes',pending],['bloqueada','Bloqueadas',blocked],['completada','Finalizadas',completadas],['cancelada','Canceladas',cancelled]].forEach(function(f) { %>
+        <a href="/mis-tareas?estado=<%= f[0] %>&orden=<%= orden %>" class="<%= estado === f[0] ? 'on' : '' %>"><%= f[1] %> <b><%= f[2] %></b></a>
         <% }) %>
-      </div>
-      <div class="field" style="max-width:220px;margin-top:10px">
-        <label>Orden</label>
+        </div></div>
+      <div class="field my-task-order">
+        <label class="my-task-filter-label">Ordenar tareas</label>
         <select onchange="location.href='/mis-tareas?estado=<%= estado %>&orden=' + this.value">
           <% [['sequence','Manual'],['due','Vencidas primero'],['priority','Por prioridad']].forEach(function(o) { %>
           <option value="<%= o[0] %>" <%= orden === o[0] ? 'selected' : '' %>><%= o[1] %></option>
           <% }) %>
         </select>
       </div>
+      </div>
     </section>
 
-    <section class="card pad">
+    <section class="card my-task-panel">
       <% if (tasks.length === 0) { %>
       <%- include('partials/empty-state', { text: 'Sin tareas en esta vista.' }) %>
       <% } else { %>
       <div class="table-wrap">
-      <table class="table">
-        <thead><tr><th>Tarea</th><th>Proyecto</th><th>Prioridad</th><th>Estado</th><th>Vence</th></tr></thead>
+      <table class="table my-task-table">
+        <thead><tr><th>Orden</th><th>Tarea / entregable</th><th>Responsable único</th><th>Prioridad</th><th>Horas</th><th>Estado</th><th>Acción</th></tr></thead>
         <tbody>
           <% tasks.forEach(function(r) { %>
           <tr onclick="location.href='/tareas/<%= r.task.id %>'" style="cursor:pointer">
-            <td><%= r.task.title %></td>
-            <td><%= r.projectName || "Independiente" %></td>
+            <td>#<%= r.task.order %></td>
+            <td><span class="my-task-title"><%= r.task.title %></span><span class="my-task-deliverable"><%= r.projectName || "Independiente" %> · <%= r.task.deliverable %></span></td>
+            <td><%= user.name || user.email %></td>
             <td><span class="badge <%= r.task.priority %>"><%= r.task.priority %></span></td>
+            <td><%= r.task.estimate %> h</td>
             <td><span class="badge <%= r.task.status %>"><%= r.task.status %></span></td>
-            <td><%= r.task.due %></td>
+            <td><a class="btn subtle" href="/tareas/<%= r.task.id %>">Abrir</a></td>
           </tr>
           <% }) %>
         </tbody>

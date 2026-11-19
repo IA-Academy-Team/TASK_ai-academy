@@ -3,8 +3,10 @@ import { listAllActiveUsers, listProjects } from "../db/projects-repo.ts";
 import {
   listTasksByProject,
   listTasksWithoutProject,
+  teamLoad,
 } from "../db/tasks-repo.ts";
-import { groupTasksByColumn } from "../domain/kanban.ts";
+import { fridayOf, mondayOf, toDateString } from "../domain/dates.ts";
+import { groupTasksByWeekday } from "../domain/week-plan.ts";
 
 export const plannerRouter = Router();
 
@@ -23,19 +25,6 @@ const MONTH_LABELS = [
   "dic",
 ];
 
-function mondayOf(date: Date): Date {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  d.setDate(d.getDate() + diff);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
-
-function toDateString(d: Date): string {
-  return d.toLocaleDateString("en-CA");
-}
-
 function weekRangeLabel(monday: Date, friday: Date): string {
   const sameMonth = monday.getMonth() === friday.getMonth();
   const start = `${monday.getDate()}${sameMonth ? "" : ` ${MONTH_LABELS[monday.getMonth()]}`}`;
@@ -52,8 +41,7 @@ plannerRouter.get("/planeacion", async (req, res) => {
   const weekOffset = Number.parseInt(String(req.query.semana ?? "0"), 10) || 0;
   const monday = mondayOf(new Date());
   monday.setDate(monday.getDate() + weekOffset * 7);
-  const friday = new Date(monday);
-  friday.setDate(friday.getDate() + 4);
+  const friday = fridayOf(monday);
   const mondayStr = toDateString(monday);
   const fridayStr = toDateString(friday);
 
@@ -77,18 +65,20 @@ plannerRouter.get("/planeacion", async (req, res) => {
     allTasks.push(...(await listTasksWithoutProject()));
   }
 
-  // El plan semanal muestra solo lo que vence de lunes a viernes de la
-  // semana elegida — el tablero sigue siendo por estado, esto solo acota
-  // qué tareas entran a cada columna.
+  // El plan semanal muestra las tareas planificadas de lunes a viernes
+  // y las distribuye por fecha para que el equipo vea la carga de cada día.
   const weekTasks = allTasks.filter(
     (t) => t.due >= mondayStr && t.due <= fridayStr,
   );
 
-  const users = await listAllActiveUsers();
+  const [users, teamCapacity] = await Promise.all([
+    listAllActiveUsers(),
+    teamLoad({ from: mondayStr, to: fridayStr }),
+  ]);
   const ownerNameById = new Map(users.map((u) => [u.id, u.name]));
   const ownerColorById = new Map(users.map((u) => [u.id, u.color]));
 
-  const columns = groupTasksByColumn(
+  const days = groupTasksByWeekday(
     weekTasks.map((t) => ({
       id: t.id,
       title: t.title,
@@ -98,16 +88,25 @@ plannerRouter.get("/planeacion", async (req, res) => {
       estimate: Number(t.estimate),
       ownerName: ownerNameById.get(t.ownerId) ?? "",
       ownerColor: ownerColorById.get(t.ownerId) ?? "#7346CC",
-      hasEvidence: Boolean(t.evidence),
     })),
+    mondayStr,
   );
 
   res.render("planeacion", {
     user: req.user,
     projects,
     projectFilter,
-    columns,
+    days,
     weekOffset,
     weekLabel: weekRangeLabel(monday, friday),
+    teamCapacity: teamCapacity.map((person) => ({
+      ...person,
+      loadPct: person.weeklyCapacityHours
+        ? Math.min(
+            100,
+            Math.round((person.openHours / person.weeklyCapacityHours) * 100),
+          )
+        : 0,
+    })),
   });
 });

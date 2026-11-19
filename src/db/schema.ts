@@ -50,10 +50,10 @@ export const projectMembers = pgTable(
 export const tasks = pgTable("tasks", {
   id: uuid("id").primaryKey().defaultRandom(),
   // Nullable a propósito: una tarea puede anclarse a un proyecto o existir
-  // independiente, sin proyecto. "set null" para que borrar el proyecto
-  // deje la tarea huérfana (independiente) en vez de destruirla.
+  // independiente, sin proyecto. Cascade: borrar el proyecto borra también
+  // sus tareas (y, en cascada desde tasks.id, sus horas/apoyo/auditoría).
   projectId: uuid("project_id").references(() => projects.id, {
-    onDelete: "set null",
+    onDelete: "cascade",
   }),
   order: integer("order").notNull().default(1),
   title: text("title").notNull(),
@@ -117,8 +117,10 @@ export const taskLogs = pgTable("task_logs", {
 //         support_request_resolved
 export const auditLog = pgTable("audit_log", {
   id: uuid("id").primaryKey().defaultRandom(),
-  // Nullable igual que tasks.projectId — una tarea independiente también
-  // audita sus cambios, solo que sin proyecto asociado.
+  // Nullable: una tarea independiente también audita sus cambios, sin
+  // proyecto asociado. "set null" a propósito — a diferencia de
+  // tasks.projectId, el registro de auditoría a nivel proyecto (p. ej.
+  // project_settings_updated) sobrevive al proyecto como historial.
   projectId: uuid("project_id").references(() => projects.id, {
     onDelete: "set null",
   }),

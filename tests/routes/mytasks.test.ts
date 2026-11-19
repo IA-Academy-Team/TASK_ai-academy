@@ -21,6 +21,8 @@ describe("GET /mis-tareas", () => {
     const res = await supertest(app).get("/mis-tareas").set("Cookie", cookie);
     expect(res.status).toBe(200);
     expect(res.text).toContain("Sin tareas en esta vista");
+    expect(res.text).toContain("Actividades donde soy responsable");
+    expect(res.text).toContain("Apoyos aceptados");
   });
 
   it("responde 200 y lista una tarea propia", async () => {

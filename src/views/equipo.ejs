@@ -9,47 +9,68 @@
 <title>Task by Academy — Equipo y cargas</title>
 <%- include('partials/theme-init') %>
 <%- include('partials/styles') %>
+<style>
+.team-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px}.team-kpi{min-height:120px;padding:19px}.team-kpi small{font-size:11px;color:var(--muted)}.team-kpi strong{display:block;margin:14px 0 8px;font-size:27px;line-height:1}.team-kpi p{margin:0;font-size:10px;color:var(--muted)}.team-load-card{padding:20px;margin:0}.team-load-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}.team-load-head h2{margin:0;font-size:15px}.team-load-head p{margin:0;font-size:10.5px;color:var(--muted)}.team-load-table th{font-size:10px}.team-load-table td{padding-top:13px;padding-bottom:13px}.team-person{display:flex;align-items:center;gap:9px;font-weight:740}.team-person .chip-avatar{width:29px;height:29px}.team-load-note{margin:13px 0 0;color:var(--muted);font-size:10px;line-height:1.5}@media (max-width:900px){.team-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.team-load-head{align-items:flex-start;flex-direction:column}}@media (max-width:540px){.team-kpis{grid-template-columns:1fr}.team-load-card{padding:16px}}
+</style>
 </head>
 <body>
 <div class="app">
   <%- include('partials/sidebar', { active: 'equipo', user }) %>
   <main class="content">
-    <%- include('partials/navbar', { active: 'equipo', actions: [{ label: 'Plan semanal', href: '/planeacion', variant: 'subtle', icon: 'calendar' }] }) %>
+    <%- include('partials/navbar', { active: 'equipo', actions: [{ label: 'Ver plan semanal', href: '/planeacion', variant: 'subtle', icon: 'calendar', showLabel: true }] }) %>
+    <%
+      var periodLabels = { dia: 'Diaria', semana: 'Semanal', mes: 'Mensual' };
+      var periodSubtitles = {
+        dia: 'Carga de tareas que vencen hoy.',
+        semana: 'Carga de tareas que vencen esta semana (lun-vie).',
+        mes: 'Carga de tareas que vencen este mes.',
+      };
+    %>
     <div class="topbar">
       <div>
-        <h1 class="page-title">Equipo y cargas</h1>
-        <p class="subtitle">Capacidad de referencia: 40 h/semana por persona.</p>
+        <h1 class="page-title">Equipo y carga de trabajo</h1>
+        <p class="subtitle">Consulta responsables, tareas asignadas, esfuerzo estimado y horas confirmadas sin confundir tiempo trabajado con tiempo disponible.</p>
       </div>
     </div>
 
-    <section class="card pad">
+    <section class="team-kpis"><article class="card team-kpi"><small>Personas activas</small><strong><%= summary.people %></strong><p>Colaboradores en proyectos</p></article><article class="card team-kpi"><small>Tareas por ejecutar</small><strong><%= summary.pending %></strong><p>Asignadas y pendientes</p></article><article class="card team-kpi"><small>En ejecución</small><strong><%= summary.active %></strong><p>En todos los proyectos</p></article><article class="card team-kpi"><small>Horas presupuestadas abiertas</small><strong><%= summary.openHours %> h</strong><p>No representan horas reales</p></article></section>
+
+    <div class="filters" style="margin-bottom:14px">
+      <% ['dia', 'semana', 'mes'].forEach(function(p) { %>
+      <a href="/equipo?periodo=<%= p %>" class="<%= period === p ? 'on' : '' %>"><%= periodLabels[p] %></a>
+      <% }) %>
+    </div>
+
+    <section class="card team-load-card">
+      <div class="team-load-head"><h2>Carga por colaborador</h2><p>Referencia de capacidad: configurable por persona</p></div>
       <% if (rows.length === 0) { %>
       <%- include('partials/empty-state', { text: 'Sin usuarios activos.' }) %>
       <% } else { %>
       <div class="table-wrap">
-      <table class="table">
-        <thead><tr><th>Persona</th><th>Pendientes</th><th>En ejecución</th><th>Apoyo</th><th>Horas abiertas</th><th>Carga vs. capacidad</th><th>Horas confirmadas del mes</th></tr></thead>
+      <table class="table team-load-table">
+        <thead><tr><th>Colaborador</th><th>Principal / apoyo</th><th>Pendientes</th><th>En ejecución</th><th>Horas presupuestadas abiertas</th><th>Horas confirmadas (mes)</th><th>Capacidad ref./sem.</th></tr></thead>
         <tbody>
           <% rows.forEach(function(r) { %>
           <tr style="cursor:pointer" onclick="aiacademyOpenPersonModal('<%= r.userId %>', '<%= r.name %>')">
-            <td style="display:flex;align-items:center;gap:8px"><span class="chip-avatar" style="--chip-bg:<%= r.color || '#7346CC' %>;--chip-fg:#fff"><%= (r.name || '?').charAt(0).toUpperCase() %></span><%= r.name %></td>
+            <td><span class="team-person"><span class="chip-avatar" style="--chip-bg:<%= r.color || '#7346CC' %>;--chip-fg:#fff"><%= (r.name || '?').charAt(0).toUpperCase() %></span><%= r.name %></span></td>
+            <td><%= r.owned %> / <%= r.support %></td>
             <td><%= r.pending %></td>
             <td><%= r.active %></td>
-            <td><%= r.support %></td>
-            <td><%= r.openHours %> h</td>
             <td>
-              <div class="load-bar" title="<%= r.openHours %> h de <%= r.weeklyCapacityHours %> h/semana">
+              <div class="load-bar" title="<%= r.openHours %> h de <%= r.capacity %> h (<%= periodLabels[period].toLowerCase() %>)">
                 <div class="bar"><span class="threshold-<%= r.threshold %>" style="width: <%= r.loadPct %>%"></span></div>
-                <small><%= r.openHours %>/<%= r.weeklyCapacityHours %> h</small>
+                <small><%= r.openHours %> h</small>
               </div>
             </td>
             <td><%= r.confirmedMonthHours %> h</td>
+            <td><%= r.weeklyCapacityHours %> h</td>
           </tr>
           <% }) %>
         </tbody>
       </table>
       </div>
       <% } %>
+      <p class="team-load-note">La carga pendiente suma las horas presupuestadas de tareas aún no aprobadas y puede abarcar varias semanas; no se interpreta directamente como ocupación semanal.</p>
     </section>
 
     <div class="modal" id="modal-persona-detalle">

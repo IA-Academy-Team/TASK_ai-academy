@@ -27,7 +27,6 @@ import { createProjectSchema, toArray } from "../schemas/project.ts";
 import { statusEnum } from "../schemas/task.ts";
 
 export const projectsRouter = Router();
-
 projectsRouter.get("/proyectos", async (req, res) => {
   if (!req.user) {
     res.redirect("/login");
@@ -73,7 +72,7 @@ projectsRouter.get("/proyectos", async (req, res) => {
 projectsRouter.post("/proyectos", authorize(ADMIN_ROLE), async (req, res) => {
   const parsed = createProjectSchema.safeParse(req.body);
   if (!parsed.success) {
-    res.redirect(303, "/proyectos?error=1");
+    res.redirect(303, "/proyectos/nuevo?error=1");
     return;
   }
 
@@ -90,7 +89,6 @@ projectsRouter.post("/proyectos", authorize(ADMIN_ROLE), async (req, res) => {
 
   res.redirect(303, `/proyectos/${project.id}`);
 });
-
 projectsRouter.post(
   "/proyectos/:id/eliminar",
   authorize(ADMIN_ROLE),
@@ -130,9 +128,6 @@ projectsRouter.get("/proyectos/:id", async (req, res) => {
   const activeCount = await countByStatus(project.id, "activa");
   const reviewCount = await countByStatus(project.id, "revision");
 
-  // Carga por persona: tareas abiertas (sin contar completadas/canceladas) y
-  // lo que falta por registrar sobre su estimado — misma definición que
-  // "Equipo y cargas" (ver teamLoad), acotada a este proyecto.
   const candidates = leader
     ? [leader, ...members.filter((m) => m.id !== leader.id)]
     : members;

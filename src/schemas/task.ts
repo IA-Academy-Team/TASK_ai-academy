@@ -12,7 +12,10 @@ export const statusEnum = z.enum([
 ]);
 
 export const createTaskSchema = z.object({
-  projectId: z.string().min(1).optional(),
+  projectId: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z.string().min(1).optional(),
+  ),
   title: z.string().min(1).max(200),
   deliverable: z.string().min(1).max(300),
   description: z.string().max(2000).optional().default(""),
@@ -53,7 +56,6 @@ export const updateTaskSchema = z.object({
   description: z.string().max(2000).optional().default(""),
   ownerId: z.string().min(1),
   priority: priorityEnum,
-  weight: z.coerce.number().int().min(1).max(10),
   estimate: z.coerce.number().positive().max(999),
   dependencyId: z
     .string()

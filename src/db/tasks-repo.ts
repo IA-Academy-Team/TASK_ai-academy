@@ -39,8 +39,10 @@ export const REQUESTABLE_SUPPORT_STATUSES = [
 ];
 
 // Una persona no puede tener más de 4h de tareas estimadas el mismo día —
-// regla de negocio para evitar sobrecarga visible en el plan semanal.
-const DAILY_ESTIMATE_LIMIT_HOURS = 4;
+// regla de negocio para evitar sobrecarga visible en el plan semanal. Se
+// exporta porque Equipo y cargas la reusa como referencia de capacidad
+// diaria en su filtro día/semana/mes.
+export const DAILY_ESTIMATE_LIMIT_HOURS = 4;
 
 async function assertDailyEstimateLimit(
   ownerId: string,
@@ -181,6 +183,12 @@ export async function getTask(id: string) {
   if (!isUuid(id)) return undefined;
   const [row] = await db.select().from(tasks).where(eq(tasks.id, id));
   return row;
+}
+
+// Sin entrada de auditoría: auditLog.taskId cascadea con la tarea, así que
+// un registro "se borró esta tarea" desaparecería junto con ella.
+export async function deleteTask(id: string) {
+  await db.delete(tasks).where(eq(tasks.id, id));
 }
 
 export async function listSupport(taskId: string) {
@@ -689,7 +697,7 @@ export async function listTasksForSupport(userId: string) {
     .orderBy(asc(tasks.due));
 }
 
-export async function teamLoad() {
+export async function teamLoad(dueRange?: { from: string; to: string }) {
   const activeUsers = await db
     .select()
     .from(user)
@@ -703,56 +711,90 @@ export async function teamLoad() {
   // Una consulta agregada por métrica para todo el equipo a la vez, en vez de
   // 5 consultas por persona (N+1) — el resultado es idéntico, solo cambia
   // cómo se arma.
-  const [pendingRows, activeRows, supportRows, openTaskRows, monthLogRows] =
-    await Promise.all([
-      db
-        .select({ ownerId: tasks.ownerId, value: count() })
-        .from(tasks)
-        .where(
-          and(inArray(tasks.ownerId, userIds), eq(tasks.status, "pendiente")),
-        )
-        .groupBy(tasks.ownerId),
-      db
-        .select({ ownerId: tasks.ownerId, value: count() })
-        .from(tasks)
-        .where(and(inArray(tasks.ownerId, userIds), eq(tasks.status, "activa")))
-        .groupBy(tasks.ownerId),
-      db
-        .select({ userId: taskSupport.userId, value: count() })
-        .from(taskSupport)
-        .innerJoin(tasks, eq(tasks.id, taskSupport.taskId))
-        .where(
-          and(
-            inArray(taskSupport.userId, userIds),
-            notInArray(tasks.status, ["completada", "cancelada"]),
-          ),
-        )
-        .groupBy(taskSupport.userId),
-      db
-        .select({
-          taskId: tasks.id,
-          ownerId: tasks.ownerId,
-          estimate: tasks.estimate,
-        })
-        .from(tasks)
-        .where(
-          and(
-            inArray(tasks.ownerId, userIds),
-            notInArray(tasks.status, ["completada", "cancelada"]),
-          ),
+  const [
+    pendingRows,
+    activeRows,
+    ownedRows,
+    supportRows,
+    openTaskRows,
+    monthLogRows,
+  ] = await Promise.all([
+    db
+      .select({ ownerId: tasks.ownerId, value: count() })
+      .from(tasks)
+      .where(
+        and(
+          inArray(tasks.ownerId, userIds),
+          eq(tasks.status, "pendiente"),
+          dueRange ? gte(tasks.due, dueRange.from) : undefined,
+          dueRange ? lte(tasks.due, dueRange.to) : undefined,
         ),
-      db
-        .select({ userId: taskLogs.userId, hours: taskLogs.hours })
-        .from(taskLogs)
-        .innerJoin(tasks, eq(tasks.id, taskLogs.taskId))
-        .where(
-          and(
-            inArray(taskLogs.userId, userIds),
-            eq(tasks.status, "completada"),
-            gte(taskLogs.date, monthStart),
-          ),
+      )
+      .groupBy(tasks.ownerId),
+    db
+      .select({ ownerId: tasks.ownerId, value: count() })
+      .from(tasks)
+      .where(
+        and(
+          inArray(tasks.ownerId, userIds),
+          eq(tasks.status, "activa"),
+          dueRange ? gte(tasks.due, dueRange.from) : undefined,
+          dueRange ? lte(tasks.due, dueRange.to) : undefined,
         ),
-    ]);
+      )
+      .groupBy(tasks.ownerId),
+    db
+      .select({ ownerId: tasks.ownerId, value: count() })
+      .from(tasks)
+      .where(
+        and(
+          inArray(tasks.ownerId, userIds),
+          notInArray(tasks.status, ["completada", "cancelada"]),
+          dueRange ? gte(tasks.due, dueRange.from) : undefined,
+          dueRange ? lte(tasks.due, dueRange.to) : undefined,
+        ),
+      )
+      .groupBy(tasks.ownerId),
+    db
+      .select({ userId: taskSupport.userId, value: count() })
+      .from(taskSupport)
+      .innerJoin(tasks, eq(tasks.id, taskSupport.taskId))
+      .where(
+        and(
+          inArray(taskSupport.userId, userIds),
+          notInArray(tasks.status, ["completada", "cancelada"]),
+          dueRange ? gte(tasks.due, dueRange.from) : undefined,
+          dueRange ? lte(tasks.due, dueRange.to) : undefined,
+        ),
+      )
+      .groupBy(taskSupport.userId),
+    db
+      .select({
+        taskId: tasks.id,
+        ownerId: tasks.ownerId,
+        estimate: tasks.estimate,
+      })
+      .from(tasks)
+      .where(
+        and(
+          inArray(tasks.ownerId, userIds),
+          notInArray(tasks.status, ["completada", "cancelada"]),
+          dueRange ? gte(tasks.due, dueRange.from) : undefined,
+          dueRange ? lte(tasks.due, dueRange.to) : undefined,
+        ),
+      ),
+    db
+      .select({ userId: taskLogs.userId, hours: taskLogs.hours })
+      .from(taskLogs)
+      .innerJoin(tasks, eq(tasks.id, taskLogs.taskId))
+      .where(
+        and(
+          inArray(taskLogs.userId, userIds),
+          eq(tasks.status, "completada"),
+          gte(taskLogs.date, monthStart),
+        ),
+      ),
+  ]);
 
   // Horas abiertas = estimado - registrado (mínimo 0) de las tareas abiertas,
   // solo como responsable — el apoyo no suma acá. Necesita el registro por
@@ -796,6 +838,7 @@ export async function teamLoad() {
 
   const pendingByUser = countByUser(pendingRows);
   const activeByUser = countByUser(activeRows);
+  const ownedByUser = countByUser(ownedRows);
   const supportByUser = countByUser(supportRows);
   const monthLogsByUser = logsByUser(monthLogRows);
 
@@ -805,6 +848,7 @@ export async function teamLoad() {
     color: u.color,
     pending: pendingByUser.get(u.id) ?? 0,
     active: activeByUser.get(u.id) ?? 0,
+    owned: ownedByUser.get(u.id) ?? 0,
     support: supportByUser.get(u.id) ?? 0,
     openHours: openHoursRemaining(openTasksByUser.get(u.id) ?? []),
     confirmedMonthHours: declaredHours(monthLogsByUser.get(u.id) ?? []),

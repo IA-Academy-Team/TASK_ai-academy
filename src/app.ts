@@ -17,6 +17,7 @@ import { profileRouter } from "./routes/profile.ts";
 import { projectSettingsRouter } from "./routes/project-settings.ts";
 import { projectsRouter } from "./routes/projects.ts";
 import { projectsImportRouter } from "./routes/projects-import.ts";
+import { projectsNewRouter } from "./routes/projects-new.ts";
 import { reportsRouter } from "./routes/reports.ts";
 import { supportsRouter } from "./routes/supports.ts";
 import { tasksRouter } from "./routes/tasks.ts";
@@ -95,6 +96,7 @@ export function createApp() {
   app.use(profileRouter);
   app.use(dashboardRouter);
   app.use(projectsImportRouter);
+  app.use(projectsNewRouter);
   app.use(projectsRouter);
   app.use(projectSettingsRouter);
   app.use(tasksCreateRouter);

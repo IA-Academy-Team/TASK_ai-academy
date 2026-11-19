@@ -9,6 +9,9 @@
 <title>Task by Academy — <%= task.title %></title>
 <%- include('../partials/theme-init') %>
 <%- include('../partials/styles') %>
+<style>
+.task-detail-layout{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(280px,.9fr);gap:20px;align-items:start}.task-detail-main{padding:0;overflow:hidden}.task-detail-section{padding:20px;border-bottom:1px solid var(--line)}.task-detail-section:last-child{border-bottom:0}.task-detail-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}.task-detail-heading h2{font-size:15px;margin:0}.task-detail-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.task-detail-stat{padding:13px;border-radius:var(--radius-control);background:var(--bg)}.task-detail-stat small{display:block;color:var(--muted);font-size:10px;margin-bottom:7px}.task-detail-stat strong{display:block;font-size:14px;line-height:1.35}.task-detail-copy{font-size:12px;line-height:1.65;margin:5px 0 0;color:var(--text)}.task-detail-note{margin-top:14px;padding:11px 13px;border:1px solid var(--line);border-radius:var(--radius-control);background:var(--lav);color:var(--primary);font-size:11px;line-height:1.55}.task-detail-actions{display:flex;flex-wrap:wrap;gap:8px}.task-detail-actions .btn{min-height:40px}.task-detail-side{display:grid;gap:14px}.task-detail-side .card{margin:0}.task-member{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line)}.task-member:last-child{border-bottom:0}.task-member-avatar{width:31px;height:31px;border-radius:999px;display:grid;place-items:center;flex:0 0 auto;background:var(--lav);color:var(--primary);font-size:10px;font-weight:800}.task-member strong,.task-member small{display:block}.task-member strong{font-size:12px}.task-member small{margin-top:2px;color:var(--muted);font-size:10px}.task-history-empty{margin:0;color:var(--muted);font-size:11px;line-height:1.55}.task-hours-list{margin-top:14px}.task-evidence-empty{margin:0;color:var(--muted);font-size:11px;line-height:1.55}@media (max-width:1000px){.task-detail-layout{grid-template-columns:1fr}.task-detail-side{grid-template-columns:1fr 1fr}}@media (max-width:650px){.task-detail-summary,.task-detail-side{grid-template-columns:1fr}.task-detail-section{padding:17px}.task-detail-heading{align-items:flex-start;flex-direction:column}.task-detail-actions .btn{width:100%;justify-content:center}}
+</style>
 </head>
 <body>
 <div class="app">
@@ -17,59 +20,33 @@
     <%- include('../partials/navbar', { active: project ? 'proyectos' : 'mis-tareas', crumbs: project ? [{ label: project.name, href: '/proyectos/' + project.id }, { label: task.title }] : [{ label: task.title }] }) %>
     <div class="topbar">
       <div>
-        <p class="subtitle"><% if (project) { %><a href="/proyectos/<%= project.id %>">&larr; <%= project.name %></a><% } else { %>Tarea independiente<% } %></p>
-        <h1 class="page-title"><% if (project) { %>#<%= task.order %> <% } %><%= task.title %></h1>
-        <p class="subtitle"><%= task.deliverable %></p>
+        <p class="subtitle"><% if (project) { %><a href="/proyectos/<%= project.id %>">Volver al proyecto</a><% } else { %>Tarea personal<% } %></p>
+        <h1 class="page-title"><%= task.title %></h1>
+        <p class="subtitle"><%= project ? project.name + ' · ' : '' %>Fecha límite: <%= task.due %><% if (task.dueTime) { %> · <%= task.dueTime %><% } %></p>
       </div>
       <div>
         <span class="badge <%= task.priority %>"><%= task.priority %></span>
         <span class="badge <%= task.status %><%= justUpdated ? ' just-updated' : '' %>">
           <% if (justUpdated && task.status === 'completada') { %><svg class="badge-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12l5 5L20 7" /></svg><% } %><%= task.status %>
         </span>
-        <% if (isLeaderOrAdmin && task.status !== 'completada' && task.status !== 'cancelada') { %>
-        <a class="btn subtle icon-only" title="Editar" href="/tareas/<%= task.id %>/editar"><%- include('../partials/icon', { kind: 'edit', size: 14 }) %></a>
-        <% } %>
       </div>
     </div>
 
     <% if (error) { %><div class="error"><%= error %></div><% } %>
 
-    <section class="card pad">
-      <div class="sectiontitle"><h2>Detalle</h2></div>
-      <% if (task.description) { %><p class="small"><%= task.description %></p><% } %>
-      <div class="detail-row"><span>Responsable</span><strong><% const owner = users.find(function(u){return u.id===task.ownerId}); %><%= owner ? owner.name : task.ownerId %></strong></div>
-      <div class="detail-row"><span>Apoyo</span><strong><%= support.length ? support.map(function(s){ const u = users.find(function(x){return x.id===s.userId}); return u ? u.name : s.userId }).join(', ') : 'Ninguno' %></strong></div>
-      <div class="detail-row"><span>Estimado</span><strong><%= task.estimate %> h</strong></div>
-      <div class="detail-row"><span>Horas registradas</span><strong><%= totalHours %> h</strong></div>
-      <div class="detail-row"><span>Vence</span><strong><%= task.due %><% if (task.dueTime) { %> · <%= task.dueTime %><% } %></strong></div>
-      <% if (dependency) { %><div class="detail-row"><span>Depende de</span><strong>#<%= dependency.order %> <%= dependency.title %> (<%= dependency.status %>)</strong></div><% } %>
-      <% if (task.evidence) { %><div class="detail-row"><span>Evidencia</span><strong><%= task.evidence %></strong></div><% } %>
-      <% if (task.approvedAt) { %><div class="detail-row"><span>Aprobada</span><strong><%= task.approvedAt %></strong></div><% } %>
-
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:17px">
-        <% if (task.status !== 'completada' && task.status !== 'cancelada') { %>
-        <button type="button" class="btn icon-only" title="Cambiar estado" onclick="document.getElementById('modal-cambiar-estado').classList.add('open')"><%- include('../partials/icon', { kind: 'swap', size: 14 }) %></button>
-        <% } %>
-        <% if (task.status === 'activa' && user.id === task.ownerId) { %>
-        <a class="btn primary icon-only" title="Entregar" href="/tareas/<%= task.id %>/entrega"><%- include('../partials/icon', { kind: 'check', size: 14 }) %></a>
-        <% } %>
-        <% if (canRequestSupport) { %>
-        <button type="button" class="btn icon-only" title="Solicitud de apoyo" onclick="document.getElementById('modal-solicitar-apoyo').classList.add('open')"><%- include('../partials/icon', { kind: 'handshake', size: 14 }) %></button>
-        <% } %>
-        <% if (user.id === task.ownerId) { %>
-        <button type="button" class="btn icon-only" title="Registrar horas" onclick="document.getElementById('modal-registrar-horas').classList.add('open')"><%- include('../partials/icon', { kind: 'clock', size: 14 }) %></button>
-        <% } else if (support.some(function(s){return s.userId === user.id}) && (task.status === 'activa' || task.status === 'revision')) { %>
-        <a class="btn icon-only" title="Registrar horas de apoyo" href="/tareas/<%= task.id %>/horas-apoyo"><%- include('../partials/icon', { kind: 'clock', size: 14 }) %></a>
-        <% } %>
-      </div>
-
-      <% if (logs.length > 0) { %>
-      <div class="sectiontitle" style="margin-top:17px"><h2>Horas registradas</h2></div>
-      <% logs.forEach(function(l) { %>
-      <div class="detail-row"><span><%= l.date %> (<%= l.role %>)</span><strong><%= l.hours %> h</strong></div>
-      <% }) %>
-      <% } %>
-    </section>
+    <% const owner = users.find(function(u){ return u.id === task.ownerId; }); %>
+    <div class="task-detail-layout">
+      <section class="card task-detail-main">
+        <div class="task-detail-section">
+          <div class="task-detail-heading"><h2>Ficha de la tarea<% if (project) { %> #<%= task.order %><% } %></h2><div><span class="badge <%= task.status %><%= justUpdated ? ' just-updated' : '' %>"><%= task.status %></span> <span class="badge <%= task.priority %>"><%= task.priority %></span></div></div>
+          <div class="task-detail-summary"><div class="task-detail-stat"><small>Responsable principal</small><strong><%= owner ? owner.name : task.ownerId %></strong></div><div class="task-detail-stat"><small>Horas presupuestadas</small><strong><%= task.estimate %> h</strong></div><div class="task-detail-stat"><small>Horas declaradas</small><strong><%= totalHours ? totalHours + ' h' : '—' %></strong></div><div class="task-detail-stat"><small>Entrega</small><strong><%= task.due %><% if (task.dueTime) { %> · <%= task.dueTime %><% } %></strong></div></div>
+        </div>
+        <div class="task-detail-section"><p class="task-preview-project">Entregable que se debe aprobar</p><strong><%= task.deliverable %></strong><% if (task.description) { %><p class="task-detail-copy"><%= task.description %></p><% } %><% if (dependency) { %><p class="task-detail-note">Depende de #<%= dependency.order %> <strong><%= dependency.title %></strong> (<%= dependency.status %>).</p><% } else { %><p class="task-detail-note">Sin dependencia: esta tarea puede realizarse en paralelo.</p><% } %></div>
+        <div class="task-detail-section"><div class="task-detail-heading"><h2>Acciones</h2></div><div class="task-detail-actions"><% if (isLeaderOrAdmin && task.status !== 'completada' && task.status !== 'cancelada') { %><a class="btn" href="/tareas/<%= task.id %>/editar"><%- include('../partials/icon', { kind: 'edit', size: 14 }) %> Editar / reprogramar</a><% } %><% if (task.status !== 'completada' && task.status !== 'cancelada') { %><button type="button" class="btn" onclick="document.getElementById('modal-cambiar-estado').classList.add('open')"><%- include('../partials/icon', { kind: 'swap', size: 14 }) %> Cambiar estado</button><% } %><% if (task.status === 'activa' && user.id === task.ownerId) { %><a class="btn primary" href="/tareas/<%= task.id %>/entrega"><%- include('../partials/icon', { kind: 'check', size: 14 }) %> Entregar tarea</a><% } %><% if (canRequestSupport) { %><button type="button" class="btn" onclick="document.getElementById('modal-solicitar-apoyo').classList.add('open')"><%- include('../partials/icon', { kind: 'handshake', size: 14 }) %> Solicitar apoyo</button><% } %><% if (user.id === task.ownerId) { %><button type="button" class="btn" onclick="document.getElementById('modal-registrar-horas').classList.add('open')"><%- include('../partials/icon', { kind: 'clock', size: 14 }) %> Registrar horas</button><% } else if (support.some(function(s){return s.userId === user.id}) && (task.status === 'activa' || task.status === 'revision')) { %><a class="btn" href="/tareas/<%= task.id %>/horas-apoyo"><%- include('../partials/icon', { kind: 'clock', size: 14 }) %> Registrar horas</a><% } %><% if (canDelete) { %><form method="post" action="/tareas/<%= task.id %>/eliminar" onsubmit="return confirm('¿Eliminar esta tarea? También se borrarán sus horas, apoyo y auditoría.')"><button type="submit" class="btn danger"><%- include('../partials/icon', { kind: 'trash', size: 14 }) %> Eliminar</button></form><% } %></div></div>
+        <div class="task-detail-section"><div class="task-detail-heading"><h2>Evidencias y control de entrega</h2></div><% if (task.evidence) { %><p class="task-detail-copy"><strong>Evidencia:</strong> <%= task.evidence %></p><% } else { %><p class="task-evidence-empty">Aún no se ha enviado una entrega. El responsable reportará las horas reales y adjuntará la evidencia al finalizar.</p><% } %><% if (task.approvedAt) { %><p class="task-detail-copy"><strong>Aprobada:</strong> <%= task.approvedAt %></p><% } %><% if (logs.length > 0) { %><div class="task-hours-list"><% logs.forEach(function(l) { %><div class="detail-row"><span><%= l.date %> · <%= l.role === 'owner' ? 'responsable' : 'apoyo' %></span><strong><%= l.hours %> h</strong></div><% }) %></div><% } %></div>
+      </section>
+      <aside class="task-detail-side"><section class="card pad"><div class="task-detail-heading"><h2>Equipo de la tarea</h2></div><div class="task-member"><span class="task-member-avatar"><%= (owner ? owner.name : '?').charAt(0).toUpperCase() %></span><span><strong><%= owner ? owner.name : task.ownerId %></strong><small>Responsable principal · entrega y reporta</small></span></div><% if (support.length) { %><p class="task-preview-project" style="margin:14px 0 0">Apoyos aceptados</p><% support.forEach(function(s) { const member = users.find(function(u){ return u.id === s.userId; }); %><div class="task-member"><span class="task-member-avatar"><%= (member ? member.name : '?').charAt(0).toUpperCase() %></span><span><strong><%= member ? member.name : s.userId %></strong><small>Apoyo de la tarea</small></span></div><% }) %><% } else { %><p class="task-history-empty">No hay apoyos aceptados. El titular continúa siendo una sola persona.</p><% } %></section><section class="card pad"><div class="task-detail-heading"><h2>Historial y cambios</h2><a class="btn subtle" href="/tareas/<%= task.id %>/auditoria">Ver historial</a></div><p class="task-history-empty">Consultá las actualizaciones, reasignaciones y cambios de estado registrados para esta tarea.</p></section></aside>
+    </div>
 
     <div class="modal" id="modal-cambiar-estado">
       <div class="modal-backdrop" onclick="document.getElementById('modal-cambiar-estado').classList.remove('open')"></div>

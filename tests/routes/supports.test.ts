@@ -65,6 +65,8 @@ describe("solicitudes de apoyo", () => {
       .get("/solicitudes")
       .set("Cookie", targetCookie);
     expect(list.status).toBe(200);
+    expect(list.text).toContain("Solicitudes de apoyo");
+    expect(list.text).toContain("Solicitudes visibles");
   });
 
   it("POST /tareas/:id/apoyo avisa en tiempo real al usuario destinatario", async () => {

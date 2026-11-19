@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { getProject, listAllActiveUsers } from "../db/projects-repo.ts";
 import {
+  deleteTask,
   getTask,
   listLogs,
   listSupport,
@@ -39,6 +40,11 @@ tasksRouter.get("/tareas/:id", async (req, res) => {
     (!!project && req.user.id === project.leaderId) ||
     (!project && req.user.id === task.ownerId);
 
+  const canDelete =
+    isAdminRole(req.user.role) ||
+    req.user.id === task.ownerId ||
+    support.some((s) => s.userId === req.user?.id);
+
   res.render("tareas/detalle", {
     task,
     project,
@@ -49,6 +55,7 @@ tasksRouter.get("/tareas/:id", async (req, res) => {
     totalHours,
     user: req.user,
     isLeaderOrAdmin,
+    canDelete,
     canRequestSupport:
       (req.user.id === task.ownerId || isLeaderOrAdmin) &&
       ["pendiente", "activa", "bloqueada"].includes(task.status),
@@ -173,4 +180,34 @@ tasksRouter.post("/tareas/:id/horas", async (req, res) => {
   });
 
   res.redirect(303, `/tareas/${req.params.id}`);
+});
+
+tasksRouter.post("/tareas/:id/eliminar", async (req, res) => {
+  if (!req.user) {
+    res.redirect("/login");
+    return;
+  }
+
+  const task = await getTask(req.params.id);
+  if (!task) {
+    throw new HttpError(404, "tarea no encontrada");
+  }
+
+  const support = await listSupport(task.id);
+  const canDelete =
+    isAdminRole(req.user.role) ||
+    req.user.id === task.ownerId ||
+    support.some((s) => s.userId === req.user?.id);
+  if (!canDelete) {
+    throw new HttpError(
+      403,
+      "solo el responsable, el apoyo o un admin pueden eliminar la tarea",
+    );
+  }
+
+  const redirectTo = task.projectId
+    ? `/proyectos/${task.projectId}`
+    : "/mis-tareas";
+  await deleteTask(task.id);
+  res.redirect(303, redirectTo);
 });

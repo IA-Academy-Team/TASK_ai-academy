@@ -9,7 +9,14 @@ describe("GET /", () => {
     const cookie = await signUpAndGetCookie("dash1@test.local");
     const res = await supertest(app).get("/").set("Cookie", cookie);
     expect(res.status).toBe(200);
+    expect(res.text).toContain("Centro de control");
     expect(res.text).toContain("Proyectos activos");
+    expect(res.text).toContain("Avance de proyectos");
+    expect(res.text).toContain("Atención prioritaria");
+    expect(res.text).toContain('href="/tareas/nueva"');
+    expect(res.text).toContain('href="/proyectos/nuevo"');
+    expect(res.text).toContain('href="/planeacion"');
+    expect(res.text).toContain('href="/mis-tareas?estado=urgentes"');
   });
 
   it("sin autenticar, redirige a /login", async () => {

@@ -393,6 +393,44 @@ describe("teamLoad", () => {
     expect(row?.openHours).toBe(4 + (4 - 1));
     expect(untouched.status).toBe("pendiente");
   });
+
+  it("con dueRange, solo cuenta horas abiertas de tareas que vencen en el rango", async () => {
+    const leader = await makeUser("team-range1@test.local");
+    const project = await makeProject(leader.id);
+
+    await createTask({
+      projectId: project.id,
+      title: "Dentro del rango",
+      deliverable: "E",
+      description: "",
+      ownerId: leader.id,
+      priority: "media",
+      weight: 1,
+      estimate: "3",
+      dependencyId: null,
+      due: "2026-03-10",
+      supportIds: [],
+      actorId: leader.id,
+    });
+    await createTask({
+      projectId: project.id,
+      title: "Fuera del rango",
+      deliverable: "E",
+      description: "",
+      ownerId: leader.id,
+      priority: "media",
+      weight: 1,
+      estimate: "5",
+      dependencyId: null,
+      due: "2026-04-01",
+      supportIds: [],
+      actorId: leader.id,
+    });
+
+    const rows = await teamLoad({ from: "2026-03-01", to: "2026-03-31" });
+    const row = rows.find((r) => r.userId === leader.id);
+    expect(row?.openHours).toBe(3);
+  });
 });
 
 describe("límite de 4h estimadas por día", () => {

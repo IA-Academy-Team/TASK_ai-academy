@@ -1,5 +1,4 @@
 import { Router } from "express";
-import { listRecent } from "../db/audit-repo.ts";
 import { listProjects } from "../db/projects-repo.ts";
 import {
   countAllByStatus,
@@ -8,47 +7,9 @@ import {
   hoursByDay,
   listTasksForOwner,
 } from "../db/tasks-repo.ts";
-import { enumerateDays, seriesForDays } from "../domain/chart-data.ts";
-import {
-  activityIconKind,
-  formatActivity,
-  timeAgo,
-} from "../lib/activity-format.ts";
+import { projectSummaryFromTasks } from "../domain/dashboard-summary.ts";
 
 export const dashboardRouter = Router();
-
-const HOURS_WINDOW_DAYS = 14;
-
-interface KpiProjectRow {
-  code: string;
-  name: string;
-  leaderName: string;
-}
-
-// Agrupa filas de listTasksForOwner por proyecto (o "independiente") para
-// los modales de los KPI del dashboard — un proyecto aparece una sola vez
-// aunque tenga varias tareas en el bucket.
-function projectSummaryFromTasks(
-  rows: Awaited<ReturnType<typeof listTasksForOwner>>,
-  leaderNameByProjectId: Map<string, string>,
-): KpiProjectRow[] {
-  const byKey = new Map<string, KpiProjectRow>();
-  for (const r of rows) {
-    const key = r.task.projectId ?? "independiente";
-    if (byKey.has(key)) continue;
-    byKey.set(
-      key,
-      r.task.projectId
-        ? {
-            code: r.projectCode ?? "",
-            name: r.projectName ?? "",
-            leaderName: leaderNameByProjectId.get(r.task.projectId) ?? "",
-          }
-        : { code: "", name: "Tareas independientes", leaderName: "—" },
-    );
-  }
-  return [...byKey.values()];
-}
 
 dashboardRouter.get("/", async (req, res) => {
   if (!req.user) {
@@ -59,29 +20,25 @@ dashboardRouter.get("/", async (req, res) => {
   // En hora local, no UTC: toISOString() adelanta la fecha varias horas antes
   // de la medianoche local, marcando tareas "vencidas" de más.
   const today = new Date().toLocaleDateString("en-CA");
-  const windowStart = new Date();
-  windowStart.setDate(windowStart.getDate() - (HOURS_WINDOW_DAYS - 1));
-  const from = windowStart.toLocaleDateString("en-CA");
+  const weekStart = new Date();
+  weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7));
+  const weekFrom = weekStart.toLocaleDateString("en-CA");
 
   const [
     myActiveTasksCount,
     myOverdueTasksCount,
-    activity,
     statusCounts,
-    dailyHours,
+    weeklyHours,
     ownedTasks,
     allProjects,
   ] = await Promise.all([
     countTasksForOwner(req.user.id, ["activa", "revision"]),
     countOverdueForOwner(req.user.id, today),
-    listRecent(8),
     countAllByStatus(),
-    hoursByDay({ from, to: today }),
+    hoursByDay({ from: weekFrom, to: today }),
     listTasksForOwner(req.user.id),
     listProjects(),
   ]);
-
-  const hoursDays = enumerateDays(from, today);
 
   const leaderNameByProjectId = new Map(
     allProjects.map((p) => [p.id, p.leaderName]),
@@ -97,12 +54,93 @@ dashboardRouter.get("/", async (req, res) => {
       r.task.due < today &&
       !["completada", "cancelada"].includes(r.task.status),
   );
+  const allProjectTasks = allProjects.flatMap((project) => project.tasks);
+  const completedTasks = statusCounts.completada ?? 0;
+  const urgentOrOverdueTasks = allProjectTasks.filter(
+    (task) =>
+      !["completada", "cancelada"].includes(task.status) &&
+      (task.due < today || ["alta", "critica"].includes(task.priority)),
+  ).length;
+  const confirmedWeekHours = weeklyHours.reduce(
+    (total, sample) => total + sample.hours,
+    0,
+  );
+  const projectProgress = allProjects
+    .filter((project) => project.status === "activo")
+    .map((project) => {
+      const totalWeight = project.tasks.reduce(
+        (total, task) => total + task.weight,
+        0,
+      );
+      const completedWeight = project.tasks
+        .filter((task) => task.status === "completada")
+        .reduce((total, task) => total + task.weight, 0);
+      const estimatedHours = project.tasks.reduce(
+        (total, task) => total + Number(task.estimate),
+        0,
+      );
+      const loggedHours = project.logs.reduce(
+        (total, log) => total + Number(log.hours),
+        0,
+      );
+      return {
+        id: project.id,
+        code: project.code,
+        name: project.name,
+        taskCount: project.taskCount,
+        doneCount: project.doneCount,
+        completedWeight,
+        totalWeight,
+        estimatedHours,
+        loggedHours,
+        progress:
+          totalWeight === 0
+            ? 0
+            : Math.round((completedWeight / totalWeight) * 100),
+      };
+    })
+    .slice(0, 4);
+  const priorityTasks = ownedTasks
+    .filter((row) => !["completada", "cancelada"].includes(row.task.status))
+    .sort((a, b) => {
+      const urgencyA =
+        a.task.due < today
+          ? 0
+          : a.task.priority === "critica"
+            ? 1
+            : a.task.priority === "alta"
+              ? 2
+              : 3;
+      const urgencyB =
+        b.task.due < today
+          ? 0
+          : b.task.priority === "critica"
+            ? 1
+            : b.task.priority === "alta"
+              ? 2
+              : 3;
+      return urgencyA - urgencyB || a.task.due.localeCompare(b.task.due);
+    })
+    .slice(0, 4)
+    .map((row) => ({
+      id: row.task.id,
+      title: row.task.title,
+      due: row.task.due,
+      status: row.task.status,
+      priority: row.task.priority,
+      projectName: row.projectName ?? "Tarea independiente",
+    }));
 
   res.render("inicio", {
     user: req.user,
     activeProjects: activeProjectsList.length,
     myActiveTasks: myActiveTasksCount,
     myOverdueTasks: myOverdueTasksCount,
+    completedTasks,
+    urgentOrOverdueTasks,
+    confirmedWeekHours,
+    projectProgress,
+    priorityTasks,
     kpiProjects: activeProjectsList,
     kpiMyActiveProjects: projectSummaryFromTasks(
       myActiveTaskRows,
@@ -112,15 +150,5 @@ dashboardRouter.get("/", async (req, res) => {
       myOverdueTaskRows,
       leaderNameByProjectId,
     ),
-    activity: activity.map((a) => ({
-      icon: activityIconKind(a.action),
-      text: formatActivity(a),
-      when: timeAgo(a.createdAt),
-    })),
-    statusCounts,
-    hoursChart: {
-      labels: hoursDays.map((d) => d.slice(5)),
-      values: seriesForDays(hoursDays, dailyHours),
-    },
   });
 });

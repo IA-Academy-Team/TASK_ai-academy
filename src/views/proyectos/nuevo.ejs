@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<link rel="icon" href="/static/brand/favicon.ico" sizes="any" />
+<title>Task by Academy — Crear proyecto</title>
+<%- include('../partials/theme-init') %>
+<%- include('../partials/styles') %>
+<style>
+  .project-create-layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px}.project-create-card{padding:24px;margin:0}.project-create-head{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:22px}.project-create-head h2{font-size:18px;margin:0}.step-chip{border-radius:999px;background:var(--lav);color:var(--primary);font-size:11px;font-weight:800;padding:7px 10px}.project-create-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.project-create-grid .full{grid-column:1/-1}.project-create-card textarea{min-height:120px}.project-create-code{color:var(--muted);background:var(--bg)!important}.project-limits-note{font-size:11px;color:var(--muted);margin:-8px 0 0}.project-members{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.project-members .person-chip{min-height:60px}.project-members .chip-avatar{width:32px;height:32px}.project-active-panel{padding:22px;margin:0;height:fit-content;position:sticky;top:76px}.project-active-panel h2{font-size:16px;margin:0 0 6px}.project-active-intro{font-size:11px;color:var(--muted);line-height:1.6;margin:0 0 14px}.project-active-list{display:flex;flex-direction:column}.project-active-item{display:flex;flex-direction:column;gap:4px;padding:13px 0;border-bottom:1px solid var(--line)}.project-active-item:last-child{border-bottom:0}.project-active-item strong{font-size:12px;color:var(--ink)}.project-active-item span{font-size:10.5px;color:var(--muted)}.project-active-code{color:var(--primary)!important;font-size:10px!important;font-weight:800;text-transform:uppercase;letter-spacing:.05em}.project-draft-note{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:11px;margin:0 auto 0 0}.project-create-actions{display:flex;justify-content:flex-end;align-items:center;gap:10px;margin-top:24px}.project-create-actions .btn.primary{min-height:44px}.project-create-error{margin-bottom:16px}@media (max-width:1000px){.project-create-layout{grid-template-columns:1fr}.project-active-panel{position:static}.project-active-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 16px}}@media (max-width:650px){.project-create-card,.project-active-panel{padding:19px}.project-create-grid,.project-members{grid-template-columns:1fr}.project-active-list{grid-template-columns:1fr}.project-create-actions{align-items:stretch;flex-direction:column}.project-create-actions .btn{justify-content:center;width:100%}.project-draft-note{margin:0}}
+</style>
+</head>
+<body>
+<div class="app">
+  <%- include('../partials/sidebar', { active: 'proyectos', user }) %>
+  <main class="content">
+    <%- include('../partials/navbar', { active: 'proyectos', crumbs: [{ label: 'Proyectos', href: '/proyectos' }, { label: 'Nuevo' }], actions: [{ label: 'Volver', href: '/proyectos', variant: 'subtle', icon: 'chevron-left', showLabel: true }] }) %>
+    <header class="topbar"><div><h1 class="page-title">Crear proyecto</h1><p class="subtitle">Definí el proyecto y su equipo. Después podrás agregar tareas, responsables y presupuestos.</p></div></header>
+    <div class="project-create-layout">
+      <section class="card project-create-card" aria-labelledby="project-create-title">
+        <div class="project-create-head"><h2 id="project-create-title">Información general</h2><span class="step-chip">Proyecto nuevo</span></div>
+        <% if (error) { %><div class="error project-create-error"><%= error %></div><% } %>
+        <form id="project-create-form" method="post" action="/proyectos" class="project-create-grid">
+          <input type="hidden" name="limitActive" value="2" /><input type="hidden" name="limitReview" value="2" />
+          <div class="field"><label for="project-name">Nombre del proyecto *</label><input id="project-name" name="name" maxlength="120" required placeholder="Ej.: Actualización Nébula" /></div>
+          <div class="field"><label for="project-code">Código interno</label><input id="project-code" class="project-create-code" disabled value="Se asignará al crear" /></div>
+          <div class="field full"><label for="project-objective">Objetivo del proyecto *</label><textarea id="project-objective" name="objective" maxlength="500" required placeholder="Describe el resultado que se debe conseguir."></textarea></div>
+          <div class="field"><label for="project-leader">Líder del proyecto *</label><select id="project-leader" name="leaderId" required><option value="">Selecciona un líder</option><% users.forEach(function(person) { %><option value="<%= person.id %>"><%= person.name %></option><% }) %></select></div>
+          <div class="field"><label for="project-start">Fecha de inicio *</label><input id="project-start" type="date" name="start" required /></div>
+          <div class="field"><label for="project-due">Fecha de entrega prevista *</label><input id="project-due" type="date" name="due" required /></div>
+          <div class="field"><label for="project-active-limit">Máximo de tareas simultáneas en ejecución</label><input id="project-active-limit" type="number" min="1" max="20" value="2" disabled /><p class="project-limits-note">El límite inicial es 2 y se puede ajustar en la configuración del proyecto.</p></div>
+          <div class="field full"><label>Integrantes del proyecto</label><div class="project-members" id="project-members"><% users.forEach(function(person) { %><label class="person-chip"><input type="checkbox" name="members" value="<%= person.id %>" /><span class="chip-avatar"><%= (person.name || '?').split(' ').map(function(part) { return part.charAt(0); }).slice(0, 2).join('').toUpperCase() %></span><span><%= person.name %></span></label><% }) %></div></div>
+          <div class="project-create-actions full"><p class="project-draft-note"><%- include('../partials/icon', { kind: 'clock', size: 14 }) %><span>El borrador se guarda en este navegador.</span></p><a class="btn" href="/proyectos">Cancelar</a><button type="submit" class="btn primary">Crear proyecto y agregar tareas <%- include('../partials/icon', { kind: 'chevron-right', size: 16 }) %></button></div>
+        </form>
+      </section>
+      <aside class="card project-active-panel" aria-labelledby="active-projects-title"><h2 id="active-projects-title">Proyectos activos</h2><p class="project-active-intro">Los proyectos existentes siguen disponibles mientras creás uno nuevo.</p><% if (activeProjects.length === 0) { %><%- include('../partials/empty-state', { text: 'No hay proyectos activos todavía.' }) %><% } else { %><div class="project-active-list"><% activeProjects.forEach(function(project) { %><a class="project-active-item" href="/proyectos/<%= project.id %>"><span class="project-active-code"><%= project.code %></span><strong><%= project.name %></strong><span>Líder: <%= project.leaderName %> · <%= project.taskCount %> tareas</span></a><% }) %></div><% } %></aside>
+    </div>
+  </main>
+</div>
+<script>
+  (function () {
+    var form = document.getElementById('project-create-form');
+    var storageKey = 'aiacademy-project-create-draft';
+    var fields = form.querySelectorAll('input[name], textarea[name], select[name]');
+    function saveDraft() {
+      var draft = {};
+      fields.forEach(function (field) {
+        if (field.type === 'checkbox') {
+          if (!draft[field.name]) draft[field.name] = [];
+          if (field.checked) draft[field.name].push(field.value);
+        } else if (field.name !== 'limitActive' && field.name !== 'limitReview') {
+          draft[field.name] = field.value;
+        }
+      });
+      localStorage.setItem(storageKey, JSON.stringify(draft));
+    }
+    function restoreDraft() {
+      try {
+        var draft = JSON.parse(localStorage.getItem(storageKey) || '{}');
+        fields.forEach(function (field) {
+          if (field.type === 'checkbox') {
+            field.checked = Array.isArray(draft[field.name]) && draft[field.name].includes(field.value);
+          } else if (draft[field.name]) {
+            field.value = draft[field.name];
+          }
+        });
+      } catch (_) { localStorage.removeItem(storageKey); }
+    }
+    function syncLeader() {
+      var leaderId = document.getElementById('project-leader').value;
+      document.querySelectorAll('#project-members input[type=checkbox]').forEach(function (checkbox) {
+        var chip = checkbox.closest('.person-chip');
+        var isLeader = checkbox.value === leaderId;
+        checkbox.disabled = isLeader;
+        if (isLeader) checkbox.checked = false;
+        chip.classList.toggle('is-disabled', isLeader);
+      });
+      saveDraft();
+    }
+    restoreDraft();
+    syncLeader();
+    fields.forEach(function (field) { field.addEventListener('input', saveDraft); field.addEventListener('change', saveDraft); });
+    document.getElementById('project-leader').addEventListener('change', syncLeader);
+    form.addEventListener('submit', function () {
+      saveDraft();
+      sessionStorage.setItem('aiacademy-project-create-submitted', '1');
+    });
+  })();
+</script>
+</body>
+</html>

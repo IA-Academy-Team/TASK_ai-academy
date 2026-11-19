@@ -9,38 +9,29 @@
 <title>Task by Academy — Productividad</title>
 <%- include('partials/theme-init') %>
 <%- include('partials/styles') %>
+<style>
+.productivity-period{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:18px 24px;margin-bottom:20px}.productivity-period .filters{margin:0}.productivity-period p{margin:0;color:var(--muted);font-size:12px}.productivity-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:20px}.productivity-kpis .kpi{min-height:122px;padding:19px}.productivity-kpis .kpi strong{font-size:28px}.productivity-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(330px,.95fr);gap:18px}.productivity-grid .card{margin:0}.productivity-table-card{margin-bottom:20px}@media(max-width:900px){.productivity-grid{grid-template-columns:1fr}.productivity-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:540px){.productivity-period{align-items:flex-start;flex-direction:column;padding:16px}.productivity-kpis{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
 <div class="app">
   <%- include('partials/sidebar', { active: 'productividad', user }) %>
   <main class="content">
-    <%- include('partials/navbar', { active: 'productividad', actions: [{ label: 'Exportar CSV', href: '/productividad/export.csv?rango=' + rango, variant: 'subtle' }] }) %>
+    <%- include('partials/navbar', { active: 'productividad', actions: [{ label: 'Exportar CSV', href: '/productividad/export.csv?rango=' + rango, icon: 'download', showLabel: true }] }) %>
     <div class="topbar">
       <div>
-        <h1 class="page-title">Productividad</h1>
-        <p class="subtitle"><%= range.from %> a <%= range.to %></p>
+        <h1 class="page-title">Productividad y reportes</h1>
+        <p class="subtitle">Horas reales confirmadas por día, semana y mes, comparaciones por tarea y clasificación de consumo de tiempo.</p>
       </div>
     </div>
 
-    <div class="filters">
+    <section class="card productivity-period"><div class="filters">
       <% ['dia','semana','mes'].forEach(function(r) { %>
       <a href="/productividad?rango=<%= r %>" class="<%= rango === r ? 'on' : '' %>"><%= r %></a>
       <% }) %>
-    </div>
+    </div><p><%= range.from %> a <%= range.to %> · horas por fecha de trabajo</p></section>
 
-    <div class="kpi-row">
-      <div class="card kpi"><small>Horas registradas</small><strong><%= totalHours %></strong><p>Periodo seleccionado (<%= rango %>)</p></div>
-      <div class="card kpi"><small>Proyectos con actividad</small><strong><%= byProject.length %></strong><p>Periodo seleccionado (<%= rango %>)</p></div>
-      <div class="card kpi"><small>Tareas con registro</small><strong><%= tasksWithHours %></strong><p>Periodo seleccionado (<%= rango %>)</p></div>
-      <div class="card kpi"><small>Colaboradores con horas</small><strong><%= byCollaborator.length %></strong><p>Periodo seleccionado (<%= rango %>)</p></div>
-    </div>
-
-    <div class="kpi-row">
-      <div class="card kpi"><small>Presupuesto (tareas aprobadas)</small><strong><%= totalEstimate.toFixed(1) %> h</strong><p>Todo el historial, no el periodo de arriba</p></div>
-      <div class="card kpi"><small>Horas reales (tareas aprobadas)</small><strong><%= totalActual.toFixed(1) %> h</strong><p>Todo el historial, no el periodo de arriba</p></div>
-      <div class="card kpi <%= compliance === null ? '' : (compliance <= 100 ? 'kpi-positive' : 'kpi-negative') %>"><small>Cumplimiento de presupuesto</small><strong><%= compliance === null ? '—' : compliance + '%' %></strong><p>Real / presupuesto, tareas aprobadas</p></div>
-      <div class="card kpi"><small>Diferencia real vs. estimado</small><strong><%= (variance >= 0 ? '+' : '') + variance.toFixed(1) %> h</strong><p>Tareas aprobadas, todo el historial</p></div>
-    </div>
+    <div class="productivity-kpis"><div class="card kpi"><small>Horas confirmadas en periodo</small><strong><%= totalHours %> h</strong><p>Solo tareas aprobadas</p></div><div class="card kpi"><small>Cumplimiento de presupuesto</small><strong><%= compliance === null ? '—' : compliance + '%' %></strong><p>Real frente a estimado de aprobadas</p></div><div class="card kpi"><small>Horas presupuestadas aprobadas</small><strong><%= totalEstimate.toFixed(1) %> h</strong><p>Todas las tareas aprobadas</p></div><div class="card kpi"><small>Diferencia total aprobada</small><strong><%= (variance >= 0 ? '+' : '') + variance.toFixed(1) %> h</strong><p>Comparación global de aprobadas</p></div></div>
 
     <section class="card pad">
       <div class="sectiontitle"><h2>Horas por día</h2></div>

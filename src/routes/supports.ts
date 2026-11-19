@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { getProject, listAllActiveUsers } from "../db/projects-repo.ts";
 import {
+  countResolvedForUser,
   createRequest,
   getRequest,
   listPendingApplyForLeader,
@@ -63,14 +64,17 @@ supportsRouter.get("/solicitudes", async (req, res) => {
     return;
   }
 
-  const [forMe, forLeader, requestable, allUsers] = await Promise.all([
-    listPendingForUserEnriched(req.user.id),
-    isAdminRole(req.user.role)
-      ? Promise.resolve([])
-      : listPendingApplyForLeader(req.user.id),
-    listRequestableTasksForUser(req.user.id, req.user.role),
-    listAllActiveUsers(),
-  ]);
+  const [forMe, forLeader, requestable, allUsers, resolved] = await Promise.all(
+    [
+      listPendingForUserEnriched(req.user.id),
+      isAdminRole(req.user.role)
+        ? Promise.resolve([])
+        : listPendingApplyForLeader(req.user.id),
+      listRequestableTasksForUser(req.user.id, req.user.role),
+      listAllActiveUsers(),
+      countResolvedForUser(req.user.id),
+    ],
+  );
 
   res.render("solicitudes/index", {
     user: req.user,
@@ -78,6 +82,10 @@ supportsRouter.get("/solicitudes", async (req, res) => {
     forLeader,
     requestable,
     allUsers,
+    visibleCount: forMe.length + forLeader.length,
+    pendingCount: forMe.length + forLeader.length,
+    acceptedCount: resolved.accepted,
+    rejectedCount: resolved.rejected,
     error: null,
   });
 });

@@ -89,6 +89,11 @@ mytasksRouter.get("/mis-tareas", async (req, res) => {
     matchTaskState(r.task, "urgentes", today),
   );
   const completadasRows = owned.filter((r) => r.task.status === "completada");
+  const activeRows = owned.filter((r) => r.task.status === "activa");
+  const pendingRows = owned.filter((r) => r.task.status === "pendiente");
+  const reviewRows = owned.filter((r) => r.task.status === "revision");
+  const blockedRows = owned.filter((r) => r.task.status === "bloqueada");
+  const cancelledRows = owned.filter((r) => r.task.status === "cancelada");
 
   const filtered = owned
     .filter((r) => matchTaskState(r.task, estado, today))
@@ -110,6 +115,12 @@ mytasksRouter.get("/mis-tareas", async (req, res) => {
     vencidas: vencidasRows.length,
     urgentes: urgentesRows.length,
     completadas: completadasRows.length,
+    active: activeRows.length,
+    pending: pendingRows.length,
+    review: reviewRows.length,
+    blocked: blockedRows.length,
+    cancelled: cancelledRows.length,
+    supportCount: support.length,
     kpiTotalRows: totalRows.map(toKpiRow),
     kpiVencidasRows: vencidasRows.map(toKpiRow),
     kpiUrgentesRows: urgentesRows.map(toKpiRow),

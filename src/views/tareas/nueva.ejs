@@ -1,203 +1,25 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<link rel="icon" href="/static/brand/favicon.ico" sizes="any" />
-<link rel="icon" type="image/png" sizes="32x32" href="/static/brand/favicon-32x32.png" />
-<link rel="icon" type="image/png" sizes="16x16" href="/static/brand/favicon-16x16.png" />
-<title>Task by Academy — Crear tarea</title>
-<%- include('../partials/theme-init') %>
-<%- include('../partials/styles') %>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
+<link rel="icon" href="/static/brand/favicon.ico" sizes="any" /><title>Task by Academy — Crear tarea</title>
+<%- include('../partials/theme-init') %><%- include('../partials/styles') %>
+<style>
+.task-flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}.task-flow-item{display:flex;align-items:center;gap:10px;padding:14px;border:1px solid var(--border);border-radius:var(--radius-control);background:var(--paper);font-size:11px;font-weight:760}.task-flow-item b,.task-section-number{width:28px;height:28px;display:grid;place-items:center;border-radius:9px;background:var(--lav);color:var(--primary);font-size:11px}.task-create-layout{display:grid;grid-template-columns:minmax(0,1fr) 310px;gap:20px}.task-form-card{padding:0;margin:0;overflow:hidden}.task-section{padding:22px;border-bottom:1px solid var(--line)}.task-section:last-child{border-bottom:0}.task-section-head{display:flex;align-items:flex-start;gap:11px;margin-bottom:18px}.task-section-head h2{font-size:15px;margin:1px 0 3px}.task-section-head p{font-size:10.5px;color:var(--muted);margin:0}.task-project-summary{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:var(--radius-control);background:var(--lav);font-size:11px}.task-project-summary strong{display:block}.task-project-summary span{color:var(--muted);font-size:10px}.task-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}.task-fields .full{grid-column:1/-1}.task-fields textarea{min-height:92px}.task-helper{color:var(--muted);font-size:10px;line-height:1.5;margin:5px 0 0}.task-support-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.task-support-list .person-chip{min-height:52px}.task-support-list .person-chip input{position:static;width:16px;height:16px;opacity:1;accent-color:var(--primary)}.task-create-preview{position:sticky;top:76px;height:fit-content}.task-create-preview .card{margin-bottom:14px}.task-preview-title{font-size:16px;margin:13px 0 6px}.task-preview-project{font-size:11px;color:var(--muted);margin:0}.task-preview-badges{display:flex;gap:7px;margin:16px 0}.task-preview-row{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--line);font-size:10.5px;color:var(--muted)}.task-preview-row strong{color:var(--ink);text-align:right}.task-related{display:flex;flex-direction:column}.task-related a{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 0;border-bottom:1px solid var(--line);font-size:10.5px;font-weight:700}.task-related a:last-child{border-bottom:0}.task-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 22px;background:var(--bg)}.task-footer-note{font-size:10px;color:var(--muted);margin:0}.task-footer-actions{display:flex;gap:8px}.task-personal-note{display:none;margin-top:12px;padding:10px 12px;border-radius:var(--radius-control);background:var(--bluelight);color:var(--blue);font-size:11px;line-height:1.5}.task-personal-note.on{display:block}@media (max-width:1050px){.task-flow{grid-template-columns:repeat(2,minmax(0,1fr))}.task-create-layout{grid-template-columns:1fr}.task-create-preview{position:static;display:grid;grid-template-columns:1fr 1fr;gap:16px}.task-create-preview .card{margin-bottom:0}}@media (max-width:650px){.task-flow,.task-fields,.task-create-preview,.task-support-list{grid-template-columns:1fr}.task-section{padding:18px}.task-footer{align-items:stretch;flex-direction:column}.task-footer-actions{flex-direction:column}.task-footer-actions .btn{justify-content:center}.task-create-preview{display:grid}}
+</style>
 </head>
-<body>
-<div class="app">
-  <%- include('../partials/sidebar', { active: 'crear-tarea', user }) %>
-  <main class="content">
-    <%- include('../partials/navbar', { active: 'crear-tarea' }) %>
-    <div class="topbar">
-      <div>
-        <p class="subtitle"><a href="/proyectos">&larr; Proyectos</a></p>
-        <h1 class="page-title">Crear tarea</h1>
-      </div>
-    </div>
-
-    <% if (error) { %><div class="error">Revisa los campos obligatorios de la tarea.</div><% } %>
-
-    <% if (!project && !independent && !pickingProject) { %>
-    <section class="card pad">
-      <p class="subtitle" style="margin-top:0">¿La tarea es independiente o pertenece a un proyecto?</p>
-      <div class="foot-actions">
-        <a href="/tareas/nueva?project=independent" class="btn subtle" style="flex:1;justify-content:center">Tarea independiente</a>
-        <a href="/tareas/nueva?tipo=proyecto" class="btn primary" style="flex:1;justify-content:center">Pertenece a un proyecto</a>
-      </div>
-    </section>
-    <% } else if (!project && !independent) { %>
-    <section class="card pad">
-      <p class="subtitle" style="margin-top:0">Elige el proyecto.</p>
-      <form method="get" action="/tareas/nueva" class="form-grid">
-        <input type="hidden" name="tipo" value="proyecto" />
-        <div class="field full"><label>Proyecto</label>
-          <select name="project">
-            <option value="">Elige un proyecto</option>
-            <% projects.forEach(function(p) { %><option value="<%= p.id %>"><%= p.code %> — <%= p.name %></option><% }) %>
-          </select>
-        </div>
-        <div class="foot-actions full">
-          <a href="/tareas/nueva" class="btn subtle">&larr; Atrás</a>
-          <button type="submit" class="btn primary">Continuar</button>
-        </div>
-      </form>
-    </section>
-    <% } else { %>
-    <p class="subtitle"><% if (independent) { %>Tarea independiente (sin proyecto)<% } else { %><%= project.code %> — <%= project.name %><% } %></p>
-
-    <div class="task-create-steps">
-      <div class="task-create-step"><b>1</b> Proyecto</div>
-      <div class="task-create-step"><b>2</b> Detalles</div>
-      <div class="task-create-step"><b>3</b> Asignación y prioridad</div>
-      <div class="task-create-step"><b>4</b> Revisar y crear</div>
-    </div>
-
-    <div class="task-create-layout">
-    <section class="card pad">
-      <form method="post" action="/tareas" class="form-grid" id="task-create-form">
-        <% if (!independent) { %><input type="hidden" name="projectId" value="<%= project.id %>" /><% } %>
-        <div class="field full"><label>Título *</label><input id="f-title" name="title" maxlength="200" required /></div>
-        <div class="field full"><label>Entregable esperado *</label><input name="deliverable" maxlength="300" required /></div>
-        <div class="field full"><label>Descripción</label><textarea name="description" maxlength="2000"></textarea></div>
-        <% var showOwnerSelect = !independent || user.role === 'administrador'; %>
-        <% if (!showOwnerSelect) { %>
-        <input type="hidden" name="ownerId" value="<%= user.id %>" />
-        <div class="field"><label>Responsable</label><input value="<%= user.name || user.email %> (vos)" disabled /></div>
-        <% } else { %>
-        <div class="field"><label>Responsable *</label>
-          <select name="ownerId" required>
-            <% allUsers.forEach(function(u) { %><option value="<%= u.id %>" <%= independent && u.id === user.id ? 'selected' : '' %>><%= u.name %></option><% }) %>
-          </select>
-        </div>
-        <% } %>
-        <div class="field full"><label>Apoyo</label>
-          <div class="dropdown-select" id="support-dropdown">
-            <button type="button" class="dropdown-select-trigger" onclick="document.getElementById('support-dropdown').classList.toggle('open')">
-              <span id="support-label">Selecciona apoyo</span>
-              <%- include('../partials/icon', { kind: 'chevron-down', size: 14 }) %>
-            </button>
-            <div class="dropdown-select-panel people-grid" id="support-panel">
-              <% allUsers.forEach(function(u) { %>
-              <label class="person-chip">
-                <input type="checkbox" name="support" value="<%= u.id %>" onchange="aiacademyUpdateSupportSelection()" />
-                <span class="chip-avatar" style="background:<%= u.color || '#7346CC' %>;color:#fff"><%= (u.name || '?').charAt(0).toUpperCase() %></span>
-                <%= u.name %>
-              </label>
-              <% }) %>
-            </div>
-          </div>
-          <div class="selected-pills" id="support-selected"></div>
-        </div>
-        <div class="field"><label>Prioridad *</label>
-          <select id="f-priority" name="priority" required>
-            <option value="baja">Baja</option>
-            <option value="media" selected>Media</option>
-            <option value="alta">Alta</option>
-            <option value="critica">Crítica</option>
-          </select>
-        </div>
-        <div class="field"><label>Horas estimadas *</label><input id="f-estimate" type="number" name="estimate" min="0.5" step="0.5" required /></div>
-        <div class="field"><label>Fecha límite *</label><input id="f-due" type="date" name="due" required /></div>
-        <div class="field"><label>Hora de entrega</label><input id="f-due-time" type="time" name="dueTime" /></div>
-        <div class="foot-actions full">
-          <a href="/tareas/nueva" class="btn subtle"><% if (independent) { %>Elegir un proyecto<% } else { %>Elegir otro proyecto<% } %></a>
-          <button type="submit" class="btn primary">Crear tarea</button>
-        </div>
-      </form>
-    </section>
-
-    <aside class="task-create-preview">
-      <div class="card pad">
-        <div class="sectiontitle"><h2>Vista previa</h2></div>
-        <div class="task-create-preview-row"><span>Título</span><strong id="pv-title">Sin título</strong></div>
-        <div class="task-create-preview-row"><span>Proyecto</span><strong><% if (independent) { %>Ninguno<% } else { %><%= project.code %><% } %></strong></div>
-        <div class="task-create-preview-row"><span>Estado</span><strong>Pendiente</strong></div>
-        <div class="task-create-preview-row"><span>Prioridad</span><strong id="pv-priority">Media</strong></div>
-        <div class="task-create-preview-row"><span>Horas est.</span><strong id="pv-estimate">—</strong></div>
-        <div class="task-create-preview-row"><span>Vence</span><strong id="pv-due">—</strong></div>
-      </div>
-      <div class="card pad">
-        <div class="sectiontitle"><h2><% if (independent) { %>Otras tareas independientes<% } else { %>Tareas del proyecto<% } %></h2></div>
-        <% if (allTasks.length === 0) { %>
-        <%- include('../partials/empty-state', { text: independent ? 'Todavía no hay tareas independientes.' : 'Todavía no hay tareas en este proyecto.' }) %>
-        <% } else { %>
-        <div class="task-create-related">
-          <% allTasks.forEach(function(t) { %>
-          <a href="/tareas/<%= t.id %>"><span>#<%= t.order %> <%= t.title %></span><span class="badge <%= t.status %>"><%= t.status %></span></a>
-          <% }) %>
-        </div>
-        <% } %>
-      </div>
-    </aside>
-    </div>
-
-    <script>
-    (function () {
-      var form = document.getElementById('task-create-form');
-      if (!form) return;
-      var pvTitle = document.getElementById('pv-title');
-      var pvPriority = document.getElementById('pv-priority');
-      var pvEstimate = document.getElementById('pv-estimate');
-      var pvDue = document.getElementById('pv-due');
-      var titleInput = document.getElementById('f-title');
-      var priorityInput = document.getElementById('f-priority');
-      var estimateInput = document.getElementById('f-estimate');
-      var dueInput = document.getElementById('f-due');
-      var dueTimeInput = document.getElementById('f-due-time');
-      var PRIORITY_LABEL = { baja: 'Baja', media: 'Media', alta: 'Alta', critica: 'Crítica' };
-      form.addEventListener('input', function () {
-        pvTitle.textContent = titleInput.value.trim() || 'Sin título';
-        pvPriority.textContent = PRIORITY_LABEL[priorityInput.value] || priorityInput.value;
-        pvEstimate.textContent = estimateInput.value ? estimateInput.value + ' h' : '—';
-        pvDue.textContent = dueInput.value ? dueInput.value + (dueTimeInput.value ? ' ' + dueTimeInput.value : '') : '—';
-      });
-    })();
-
-    function aiacademyUpdateSupportSelection() {
-      var boxes = Array.prototype.slice.call(document.querySelectorAll('#support-panel input[type=checkbox]'));
-      var checked = boxes.filter(function (cb) { return cb.checked; });
-      var label = document.getElementById('support-label');
-      label.textContent = checked.length === 0
-        ? 'Selecciona apoyo'
-        : checked.length + ' seleccionado' + (checked.length === 1 ? '' : 's');
-
-      var selected = document.getElementById('support-selected');
-      selected.replaceChildren();
-      checked.forEach(function (cb) {
-        var pill = document.createElement('span');
-        pill.className = 'selected-pill';
-        var name = document.createElement('span');
-        name.textContent = cb.closest('.person-chip').textContent.trim();
-        var remove = document.createElement('button');
-        remove.type = 'button';
-        remove.setAttribute('aria-label', 'Quitar');
-        remove.textContent = '×';
-        remove.onclick = function () {
-          cb.checked = false;
-          aiacademyUpdateSupportSelection();
-        };
-        pill.appendChild(name);
-        pill.appendChild(remove);
-        selected.appendChild(pill);
-      });
-      selected.style.display = checked.length ? 'flex' : 'none';
-    }
-    aiacademyUpdateSupportSelection();
-
-    document.addEventListener('click', function (e) {
-      var dropdown = document.getElementById('support-dropdown');
-      if (dropdown && !dropdown.contains(e.target)) dropdown.classList.remove('open');
-    });
-    </script>
-    <% } %>
-  </main>
-</div>
-</body>
-</html>
+<body><div class="app"><%- include('../partials/sidebar', { active: 'crear-tarea', user }) %><main class="content">
+<%- include('../partials/navbar', { active: 'crear-tarea', crumbs: [{ label: 'Crear tarea' }], actions: project ? [{ label: 'Ver proyecto', href: '/proyectos/' + project.id, variant: 'subtle', icon: 'chevron-left', showLabel: true }] : [{ label: 'Ver proyectos', href: '/proyectos', variant: 'subtle', icon: 'chevron-left', showLabel: true }] }) %>
+<header class="topbar"><div><h1 class="page-title">Crear tarea</h1><p class="subtitle">Registrá una actividad concreta en un proyecto o marcala como tarea personal.</p></div></header>
+<% if (error) { %><div class="error">Revisa los campos obligatorios de la tarea.</div><% } %>
+<section class="task-flow" aria-label="Pasos para crear una tarea"><div class="task-flow-item"><b>01</b><span>Elegir proyecto o tarea personal</span></div><div class="task-flow-item"><b>02</b><span>Definir entregable</span></div><div class="task-flow-item"><b>03</b><span>Asignar y presupuestar</span></div><div class="task-flow-item"><b>04</b><span>Guardar tarea</span></div></section>
+<div class="task-create-layout"><section class="card task-form-card"><form method="post" action="/tareas" id="task-create-form">
+<section class="task-section"><div class="task-section-head"><span class="task-section-number">1</span><div><h2>Proyecto al que pertenece</h2><p>Elegí un proyecto activo o creá una tarea personal sin proyecto.</p></div></div><div class="field"><label for="task-project">Proyecto *</label><select id="task-project" name="projectId" onchange="aiacademyChangeTaskProject(this.value)"><option value="">Tarea personal (sin proyecto)</option><% projects.filter(function(p) { return p.status === 'activo'; }).forEach(function(p) { %><option value="<%= p.id %>" <%= project && p.id === project.id ? 'selected' : '' %>><%= p.code %> — <%= p.name %></option><% }) %></select></div><div class="task-personal-note <%= independent ? 'on' : '' %>" id="task-personal-note">Esta tarea será personal: no aparecerá dentro de un proyecto y se asignará a vos, salvo que un administrador elija otro responsable.</div><% if (project) { %><div class="task-project-summary"><div><strong><%= project.code %> · <%= project.name %></strong><span>Líder: <%= project.leaderName || 'Sin asignar' %> · <%= allTasks.length %> tareas existentes</span></div><span class="badge activa">Proyecto activo</span></div><% } %></section>
+<section class="task-section"><div class="task-section-head"><span class="task-section-number">2</span><div><h2>Datos de la actividad</h2><p>Describe claramente el resultado que se debe entregar.</p></div></div><div class="task-fields"><div class="field full"><label for="f-title">Nombre de la tarea *</label><input id="f-title" name="title" maxlength="200" required placeholder="Ej.: Validar acceso y evaluaciones" /></div><div class="field full"><label for="f-deliverable">Entregable esperado *</label><input id="f-deliverable" name="deliverable" maxlength="300" required placeholder="Ej.: informe de pruebas con capturas y correcciones" /></div><div class="field full"><label for="f-description">Descripción de la actividad</label><textarea id="f-description" name="description" maxlength="2000" placeholder="Explica el trabajo, el alcance y los recursos disponibles."></textarea></div></div></section>
+<section class="task-section"><div class="task-section-head"><span class="task-section-number">3</span><div><h2>Responsable, tiempos y prioridad</h2><p>El responsable y presupuesto orientan la planificación del trabajo.</p></div></div><div class="task-fields"><% var showOwnerSelect = !independent || user.role === 'administrador'; %><% if (!showOwnerSelect) { %><input type="hidden" name="ownerId" value="<%= user.id %>" /><div class="field"><label>Responsable principal</label><input value="<%= user.name || user.email %> (vos)" disabled /></div><% } else { %><div class="field"><label for="f-owner">Responsable principal *</label><select id="f-owner" name="ownerId" required><% allUsers.forEach(function(person) { %><option value="<%= person.id %>" <%= independent && person.id === user.id ? 'selected' : '' %>><%= person.name %></option><% }) %></select></div><% } %><div class="field"><label for="f-estimate">Horas presupuestadas *</label><input id="f-estimate" type="number" name="estimate" min="0.5" step="0.5" required placeholder="Ej.: 8" /></div><div class="field"><label for="f-priority">Prioridad *</label><select id="f-priority" name="priority" required><option value="baja">Baja</option><option value="media" selected>Media · normal</option><option value="alta">Alta</option><option value="critica">Crítica</option></select></div><div class="field"><label for="f-due">Fecha límite *</label><input id="f-due" type="date" name="due" required /></div><div class="field"><label for="f-due-time">Hora de entrega</label><input id="f-due-time" type="time" name="dueTime" /><p class="task-helper">Opcional: podés registrar una fecha sin hora.</p></div><div class="field full"><label>Apoyos</label><div class="task-support-list"><% allUsers.forEach(function(person) { %><label class="person-chip"><input type="checkbox" name="support" value="<%= person.id %>" /><span class="chip-avatar"><%= (person.name || '?').charAt(0).toUpperCase() %></span><span><%= person.name %></span></label><% }) %></div><p class="task-helper">Marcá una o varias personas para apoyar la tarea.</p></div></div></section>
+<footer class="task-footer"><p class="task-footer-note">Estado inicial: <strong>Pendiente</strong> · La tarea se podrá gestionar desde su detalle.</p><div class="task-footer-actions"><a href="/tareas/nueva" class="btn">Cancelar</a><button type="submit" class="btn primary">Guardar tarea <%- include('../partials/icon', { kind: 'check', size: 15 }) %></button></div></footer></form></section>
+<aside class="task-create-preview"><section class="card pad"><div class="sectiontitle"><h2>Vista previa</h2><span class="step-chip">Nueva tarea</span></div><p class="task-preview-project" id="pv-project"><%= project ? project.code + ' · ' + project.name : 'Tarea personal' %></p><h2 class="task-preview-title" id="pv-title">Nombre de la nueva tarea</h2><p class="task-preview-project" id="pv-deliverable">Aquí verás el entregable definido.</p><div class="task-preview-badges"><span class="badge pendiente">Pendiente</span><span class="badge media" id="pv-priority">Media</span></div><div class="task-preview-row"><span>Responsable</span><strong id="pv-owner"><%= user.name || user.email %></strong></div><div class="task-preview-row"><span>Horas presupuestadas</span><strong id="pv-estimate">Pendiente</strong></div><div class="task-preview-row"><span>Fecha límite</span><strong id="pv-due">Pendiente</strong></div></section><section class="card pad"><div class="sectiontitle"><h2><%= project ? 'Orden actual' : 'Tareas personales' %></h2></div><% if (allTasks.length === 0) { %><%- include('../partials/empty-state', { text: 'Todavía no hay tareas para mostrar.' }) %><% } else { %><div class="task-related"><% allTasks.slice(0, 5).forEach(function(task) { %><a href="/tareas/<%= task.id %>"><span>#<%= task.order %> · <%= task.title %></span><span class="badge <%= task.status %>"><%= task.status %></span></a><% }) %></div><% } %></section></aside></div>
+</main></div><script>
+function aiacademyChangeTaskProject(projectId) { window.location.href = projectId ? '/tareas/nueva?project=' + encodeURIComponent(projectId) : '/tareas/nueva'; }
+(function(){var form=document.getElementById('task-create-form');var title=document.getElementById('f-title');var deliverable=document.getElementById('f-deliverable');var priority=document.getElementById('f-priority');var estimate=document.getElementById('f-estimate');var due=document.getElementById('f-due');var owner=document.getElementById('f-owner');var labels={baja:'Baja',media:'Media',alta:'Alta',critica:'Crítica'};function sync(){document.getElementById('pv-title').textContent=title.value.trim()||'Nombre de la nueva tarea';document.getElementById('pv-deliverable').textContent=deliverable.value.trim()||'Aquí verás el entregable definido.';document.getElementById('pv-priority').textContent=labels[priority.value]||priority.value;document.getElementById('pv-estimate').textContent=estimate.value?estimate.value+' h':'Pendiente';document.getElementById('pv-due').textContent=due.value||'Pendiente';if(owner){document.getElementById('pv-owner').textContent=owner.options[owner.selectedIndex].text;}}form.addEventListener('input',sync);form.addEventListener('change',sync);sync();})();
+</script></body></html>
