@@ -7,7 +7,7 @@ services:
       db:
         condition: service_healthy
     ports:
-      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:3012:3000"
     restart: unless-stopped
     healthcheck:
       test:
