@@ -15,7 +15,7 @@
 
   <div class="navgroup">
     <span class="navlabel">Equipo</span>
-    <a class="navbtn <%= active === 'equipo' ? 'on' : '' %>" href="/equipo" aria-label="Equipo y cargas"><%- include('./icon', { kind: 'users', size: 16 }) %><span class="navbtn-label">Equipo y cargas</span></a>
+    <a class="navbtn <%= active === 'equipo' ? 'on' : '' %>" href="/equipo" aria-label="Operatividad"><%- include('./icon', { kind: 'users', size: 16 }) %><span class="navbtn-label">Operatividad</span></a>
     <a class="navbtn <%= active === 'solicitudes' ? 'on' : '' %>" href="/solicitudes" aria-label="Solicitudes de apoyo">
       <%- include('./icon', { kind: 'handshake', size: 16 }) %><span class="navbtn-label">Solicitudes de apoyo</span>
       <% if (typeof sidebarCounts !== 'undefined' && sidebarCounts && sidebarCounts.supports > 0) { %><span class="navcount"><%= sidebarCounts.supports %></span><% } %>
