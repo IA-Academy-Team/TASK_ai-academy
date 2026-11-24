@@ -29,3 +29,7 @@ blueprints/
 .claude/skills/ponytail-help
 .claude/skills/ponytail-review
 skills-lock.json
+
+# Estado local del despliegue en el VPS
+deploy/.deploy-history
+deploy/.deploy.lock
