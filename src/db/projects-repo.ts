@@ -271,6 +271,45 @@ export async function updateSettings(
   return row;
 }
 
+// Edita el proyecto completo: solo accesible para administradores (ver
+// requireAdmin en project-settings.ts) — a diferencia de updateSettings,
+// que el líder del proyecto también puede usar.
+export async function updateProject(
+  id: string,
+  input: {
+    name: string;
+    code: string;
+    objective: string;
+    leaderId: string;
+    start: string;
+    due: string;
+    actorId: string;
+  },
+) {
+  const [row] = await db
+    .update(projects)
+    .set({
+      name: input.name,
+      code: input.code,
+      objective: input.objective,
+      leaderId: input.leaderId,
+      start: input.start,
+      due: input.due,
+      updatedAt: new Date(),
+    })
+    .where(eq(projects.id, id))
+    .returning();
+
+  await recordChange({
+    projectId: id,
+    actorId: input.actorId,
+    action: "project_updated",
+    note: `proyecto editado: ${input.name} (${input.code})`,
+  });
+
+  return row;
+}
+
 export async function deleteProject(id: string) {
   await db.delete(projects).where(eq(projects.id, id));
 }

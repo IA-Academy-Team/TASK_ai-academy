@@ -4,14 +4,18 @@ import {
   listAllActiveUsers,
   listMembers,
   setMembers,
+  updateProject,
   updateSettings,
 } from "../db/projects-repo.ts";
 import { getTask, listTasksByProject, moveTask } from "../db/tasks-repo.ts";
-import { isAdminRole } from "../domain/roles.ts";
+import { getUser } from "../db/users-repo.ts";
+import { ADMIN_ROLE, isAdminRole } from "../domain/roles.ts";
 import { HttpError } from "../lib/http-error.ts";
+import { authorize } from "../middleware/authorize.ts";
 import {
   moveTaskSchema,
   toArray,
+  updateProjectSchema,
   updateSettingsSchema,
 } from "../schemas/project.ts";
 
@@ -47,11 +51,22 @@ projectSettingsRouter.get("/proyectos/:id/configuracion", async (req, res) => {
     listTasksByProject(project.id),
   ]);
 
+  // El líder actual puede ser una cuenta administradora de antes de que se
+  // excluyera admin de listAllActiveUsers() — igual debe aparecer en el
+  // selector de líder, si no el formulario de edición lo reemplazaría sin
+  // que el admin lo haya elegido.
+  const leaderOptions = allUsers.some((u) => u.id === project.leaderId)
+    ? allUsers
+    : [await getUser(project.leaderId), ...allUsers].filter(
+        (u): u is NonNullable<typeof u> => Boolean(u),
+      );
+
   res.render("proyectos/configuracion", {
     user: req.user,
     project,
     members,
     allUsers,
+    leaderOptions,
     tasks,
     error: null,
   });
@@ -88,6 +103,41 @@ projectSettingsRouter.post("/proyectos/:id/config", async (req, res) => {
 
   res.redirect(303, `/proyectos/${project.id}/configuracion`);
 });
+
+// Edición completa del proyecto (nombre, código, objetivo, líder, fechas) —
+// a diferencia de /config arriba, esto es exclusivo de administradores,
+// nunca del líder del proyecto.
+projectSettingsRouter.post(
+  "/proyectos/:id/editar",
+  authorize(ADMIN_ROLE),
+  async (req, res) => {
+    const project = await getProject(String(req.params.id));
+    if (!project) {
+      throw new HttpError(404, "proyecto no encontrado");
+    }
+
+    const parsed = updateProjectSchema.safeParse(req.body);
+    if (!parsed.success) {
+      throw new HttpError(400, "datos de proyecto inválidos");
+    }
+    if (!req.user) {
+      res.redirect("/login");
+      return;
+    }
+
+    await updateProject(project.id, {
+      name: parsed.data.name,
+      code: parsed.data.code,
+      objective: parsed.data.objective,
+      leaderId: parsed.data.leaderId,
+      start: parsed.data.start,
+      due: parsed.data.due,
+      actorId: req.user.id,
+    });
+
+    res.redirect(303, `/proyectos/${project.id}/configuracion`);
+  },
+);
 
 projectSettingsRouter.post(
   "/proyectos/:id/tareas/:taskId/mover",

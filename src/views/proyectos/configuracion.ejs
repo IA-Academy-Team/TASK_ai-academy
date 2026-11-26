@@ -24,6 +24,25 @@
 
     <% if (error) { %><div class="error"><%= error %></div><% } %>
 
+    <% if (user.role === "administrador") { %>
+    <section class="card pad">
+      <div class="sectiontitle"><h2>Editar proyecto</h2></div>
+      <form method="post" action="/proyectos/<%= project.id %>/editar" class="form-grid">
+        <div class="field full"><label>Nombre del proyecto *</label><input name="name" value="<%= project.name %>" maxlength="120" required /></div>
+        <div class="field"><label>Código interno *</label><input name="code" value="<%= project.code %>" maxlength="20" required /></div>
+        <div class="field"><label>Líder del proyecto *</label>
+          <select name="leaderId" required>
+            <% leaderOptions.forEach(function(u) { %><option value="<%= u.id %>" <%= u.id === project.leaderId ? 'selected' : '' %>><%= u.name %></option><% }) %>
+          </select>
+        </div>
+        <div class="field full"><label>Objetivo *</label><textarea name="objective" maxlength="500" required><%= project.objective %></textarea></div>
+        <div class="field"><label>Fecha de inicio *</label><input type="date" name="start" value="<%= project.start %>" required /></div>
+        <div class="field"><label>Fecha límite *</label><input type="date" name="due" value="<%= project.due %>" required /></div>
+        <div class="foot-actions full"><button type="submit" class="btn primary">Guardar cambios del proyecto</button></div>
+      </form>
+    </section>
+    <% } %>
+
     <section class="card pad">
       <div class="sectiontitle"><h2>Límites y fecha</h2></div>
       <form method="post" action="/proyectos/<%= project.id %>/config" class="form-grid">

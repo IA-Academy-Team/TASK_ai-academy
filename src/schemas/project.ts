@@ -17,6 +17,20 @@ export const createProjectSchema = z
     path: ["due"],
   });
 
+export const updateProjectSchema = z
+  .object({
+    name: z.string().min(1).max(120),
+    code: z.string().min(1).max(20),
+    objective: z.string().min(1).max(500),
+    leaderId: z.string().min(1),
+    start: dateString,
+    due: dateString,
+  })
+  .refine((data) => data.due >= data.start, {
+    message: "la fecha de vencimiento no puede ser anterior al inicio",
+    path: ["due"],
+  });
+
 export const updateSettingsSchema = z.object({
   limitActive: z.coerce.number().int().min(1).max(20),
   limitReview: z.coerce.number().int().min(1).max(20),
