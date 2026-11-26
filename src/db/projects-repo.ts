@@ -225,12 +225,20 @@ export async function listMembers(projectId: string) {
 }
 
 // Excluye administrador: nunca debe aparecer como opción asignable
-// (líder, miembro, responsable, apoyo) en ningún formulario.
+// (miembro, responsable, apoyo) en ningún formulario. Para elegir líder
+// de proyecto, donde un admin sí puede asignarse, usar
+// listLeaderCandidates() en su lugar.
 export async function listAllActiveUsers() {
   return db
     .select()
     .from(user)
     .where(and(eq(user.isActive, true), ne(user.role, ADMIN_ROLE)));
+}
+
+// A diferencia de listAllActiveUsers(), incluye administradores: un admin
+// puede asignarse a sí mismo (o a otro admin) como líder de un proyecto.
+export async function listLeaderCandidates() {
+  return db.select().from(user).where(eq(user.isActive, true));
 }
 
 export async function countActiveProjects() {

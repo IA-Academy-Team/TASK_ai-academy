@@ -153,6 +153,38 @@ describe("GET/POST /proyectos", () => {
       .set("Cookie", cookie);
     expect(res.status).toBe(404);
   });
+
+  it("admin puede aparecer como líder y GET /proyectos/:id muestra su nombre", async () => {
+    const app = createApp();
+    const { cookie, me } = await makeAdminCookie("proj5-admin@test.local");
+    const project = await createProject({
+      name: "Proyecto liderado por admin",
+      code: "PLA-1",
+      objective: "Objetivo",
+      leaderId: me.id,
+      start: "2026-01-01",
+      due: "2026-02-01",
+      limitActive: 2,
+      limitReview: 2,
+      memberIds: [],
+    });
+
+    const res = await supertest(app)
+      .get(`/proyectos/${project.id}`)
+      .set("Cookie", cookie);
+    expect(res.status).toBe(200);
+    expect(res.text).toContain(me.name);
+  });
+
+  it("GET /proyectos/nuevo incluye administradores entre los líderes posibles", async () => {
+    const app = createApp();
+    const { cookie, me } = await makeAdminCookie("proj6-admin@test.local");
+    const res = await supertest(app)
+      .get("/proyectos/nuevo")
+      .set("Cookie", cookie);
+    expect(res.status).toBe(200);
+    expect(res.text).toContain(`value="${me.id}"`);
+  });
 });
 
 describe("POST /proyectos/:id/eliminar", () => {

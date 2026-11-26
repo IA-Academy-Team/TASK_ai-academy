@@ -2,13 +2,13 @@ import { Router } from "express";
 import {
   getProject,
   listAllActiveUsers,
+  listLeaderCandidates,
   listMembers,
   setMembers,
   updateProject,
   updateSettings,
 } from "../db/projects-repo.ts";
 import { getTask, listTasksByProject, moveTask } from "../db/tasks-repo.ts";
-import { getUser } from "../db/users-repo.ts";
 import { ADMIN_ROLE, isAdminRole } from "../domain/roles.ts";
 import { HttpError } from "../lib/http-error.ts";
 import { authorize } from "../middleware/authorize.ts";
@@ -45,21 +45,12 @@ projectSettingsRouter.get("/proyectos/:id/configuracion", async (req, res) => {
   }
   requireLeaderOrAdmin(req.user, project);
 
-  const [members, allUsers, tasks] = await Promise.all([
+  const [members, allUsers, leaderOptions, tasks] = await Promise.all([
     listMembers(project.id),
     listAllActiveUsers(),
+    listLeaderCandidates(),
     listTasksByProject(project.id),
   ]);
-
-  // El líder actual puede ser una cuenta administradora de antes de que se
-  // excluyera admin de listAllActiveUsers() — igual debe aparecer en el
-  // selector de líder, si no el formulario de edición lo reemplazaría sin
-  // que el admin lo haya elegido.
-  const leaderOptions = allUsers.some((u) => u.id === project.leaderId)
-    ? allUsers
-    : [await getUser(project.leaderId), ...allUsers].filter(
-        (u): u is NonNullable<typeof u> => Boolean(u),
-      );
 
   res.render("proyectos/configuracion", {
     user: req.user,

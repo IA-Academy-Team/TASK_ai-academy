@@ -4,6 +4,7 @@ import {
   deleteProject,
   getProject,
   listAllActiveUsers,
+  listLeaderCandidates,
   listMembers,
   listProjects,
 } from "../db/projects-repo.ts";
@@ -33,9 +34,10 @@ projectsRouter.get("/proyectos", async (req, res) => {
     return;
   }
   const today = new Date().toLocaleDateString("en-CA");
-  const [allRows, users] = await Promise.all([
+  const [allRows, users, leaderCandidates] = await Promise.all([
     listProjects(),
     listAllActiveUsers(),
+    listLeaderCandidates(),
   ]);
 
   const supportByTask = await listSupportUserIdsByTaskIds(
@@ -75,6 +77,7 @@ projectsRouter.get("/proyectos", async (req, res) => {
   res.render("proyectos/index", {
     items,
     users,
+    leaderCandidates,
     user: req.user,
     openNewProjectModal: req.query.error === "1",
     error:
@@ -155,8 +158,14 @@ projectsRouter.get("/proyectos/:id", async (req, res) => {
     throw new HttpError(403, "no tenés acceso a este proyecto");
   }
 
-  const allUsers = await listAllActiveUsers();
-  const leader = allUsers.find((u) => u.id === project.leaderId) ?? null;
+  const [allUsers, leaderCandidates] = await Promise.all([
+    listAllActiveUsers(),
+    listLeaderCandidates(),
+  ]);
+  // El líder puede ser un admin (excluido de listAllActiveUsers) — resolver
+  // su nombre y datos contra el universo completo de usuarios activos.
+  const leader =
+    leaderCandidates.find((u) => u.id === project.leaderId) ?? null;
   const activeCount = await countByStatus(project.id, "activa");
   const reviewCount = await countByStatus(project.id, "revision");
 

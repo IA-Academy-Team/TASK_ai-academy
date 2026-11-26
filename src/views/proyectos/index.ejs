@@ -157,7 +157,7 @@
           <div class="field full"><label>Líder del proyecto *</label>
             <select name="leaderId" required onchange="onNewProjectLeaderChange(this)">
               <option value="">Selecciona un líder</option>
-              <% users.forEach(function(u) { %><option value="<%= u.id %>"><%= u.name %></option><% }) %>
+              <% leaderCandidates.forEach(function(u) { %><option value="<%= u.id %>"><%= u.name %></option><% }) %>
             </select>
           </div>
           <div class="field full">

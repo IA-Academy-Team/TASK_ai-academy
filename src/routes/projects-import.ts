@@ -3,6 +3,7 @@ import multer from "multer";
 import {
   createProjectWithCode,
   listAllActiveUsers,
+  listLeaderCandidates,
 } from "../db/projects-repo.ts";
 import { validateProjectImportRow } from "../domain/project-import.ts";
 import { ADMIN_ROLE } from "../domain/roles.ts";
@@ -60,9 +61,15 @@ projectsImportRouter.post(
       );
     }
 
-    const activeUsers = await listAllActiveUsers();
-    const usersByEmail = new Map(
+    const [activeUsers, leaderCandidates] = await Promise.all([
+      listAllActiveUsers(),
+      listLeaderCandidates(),
+    ]);
+    const memberUsersByEmail = new Map(
       activeUsers.map((u) => [u.email.toLowerCase(), u.id]),
+    );
+    const leaderUsersByEmail = new Map(
+      leaderCandidates.map((u) => [u.email.toLowerCase(), u.id]),
     );
 
     const results: ImportResultRow[] = [];
@@ -71,7 +78,8 @@ projectsImportRouter.post(
       const outcome = validateProjectImportRow(
         rawRows[i],
         rowNumber,
-        usersByEmail,
+        leaderUsersByEmail,
+        memberUsersByEmail,
       );
       if (!outcome.ok) {
         results.push({ row: rowNumber, ok: false, message: outcome.message });

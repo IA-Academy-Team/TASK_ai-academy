@@ -62,7 +62,8 @@ function parseOptionalLimit(
 export function validateProjectImportRow(
   raw: ProjectImportRow,
   row: number,
-  usersByEmail: Map<string, string>,
+  leaderUsersByEmail: Map<string, string>,
+  memberUsersByEmail: Map<string, string>,
 ): ProjectImportOutcome {
   const name = raw.name.trim();
   if (!name) return { ok: false, row, message: "falta el nombre" };
@@ -80,7 +81,7 @@ export function validateProjectImportRow(
   if (!leaderEmail) {
     return { ok: false, row, message: "falta el email del líder" };
   }
-  const leaderId = usersByEmail.get(leaderEmail);
+  const leaderId = leaderUsersByEmail.get(leaderEmail);
   if (!leaderId) {
     return {
       ok: false,
@@ -95,7 +96,7 @@ export function validateProjectImportRow(
     .filter(Boolean);
   const memberIds: string[] = [];
   for (const email of memberEmails) {
-    const id = usersByEmail.get(email);
+    const id = memberUsersByEmail.get(email);
     if (!id) {
       return {
         ok: false,

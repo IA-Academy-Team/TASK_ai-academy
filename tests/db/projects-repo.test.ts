@@ -7,12 +7,15 @@ import {
   deleteProject,
   generateProjectCode,
   getProject,
+  listAllActiveUsers,
+  listLeaderCandidates,
   listMembers,
   listProjects,
   setMembers,
   updateSettings,
 } from "../../src/db/projects-repo.ts";
 import { createTask } from "../../src/db/tasks-repo.ts";
+import { ADMIN_ROLE } from "../../src/domain/roles.ts";
 import { auth } from "../../src/lib/auth.ts";
 
 async function makeUser(email: string) {
@@ -60,6 +63,23 @@ describe("projects-repo", () => {
 
     const members = await listMembers(project.id);
     expect(members.map((m) => m.id).sort()).toEqual([other.id].sort());
+  });
+
+  it("listAllActiveUsers excluye administrador, listLeaderCandidates lo incluye", async () => {
+    const admin = await makeUser("admin-candidate@test.local");
+    await db
+      .update(user)
+      .set({ role: ADMIN_ROLE })
+      .where(eq(user.id, admin.id));
+    const colaborador = await makeUser("colaborador-candidate@test.local");
+
+    const assignable = await listAllActiveUsers();
+    expect(assignable.map((u) => u.id)).not.toContain(admin.id);
+    expect(assignable.map((u) => u.id)).toContain(colaborador.id);
+
+    const leaderCandidates = await listLeaderCandidates();
+    expect(leaderCandidates.map((u) => u.id)).toContain(admin.id);
+    expect(leaderCandidates.map((u) => u.id)).toContain(colaborador.id);
   });
 
   it("listProjects incluye el conteo de tareas", async () => {

@@ -1,5 +1,9 @@
 import { Router } from "express";
-import { listAllActiveUsers, listProjects } from "../db/projects-repo.ts";
+import {
+  listAllActiveUsers,
+  listLeaderCandidates,
+  listProjects,
+} from "../db/projects-repo.ts";
 import { ADMIN_ROLE } from "../domain/roles.ts";
 import { authorize } from "../middleware/authorize.ts";
 
@@ -14,13 +18,15 @@ projectsNewRouter.get(
       res.redirect("/login");
       return;
     }
-    const [users, projects] = await Promise.all([
+    const [users, leaderCandidates, projects] = await Promise.all([
       listAllActiveUsers(),
+      listLeaderCandidates(),
       listProjects(),
     ]);
     res.render("proyectos/nuevo", {
       user,
       users,
+      leaderCandidates,
       activeProjects: projects.filter((project) => project.status === "activo"),
       error:
         req.query.error === "1"
