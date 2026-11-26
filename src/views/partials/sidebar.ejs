@@ -84,6 +84,59 @@ function showErrorAlert(title, message) {
   setTimeout(function () { dismissToast(toast); }, 12000);
 }
 
+function aiacademyConfirmModal(message, onConfirm, opts) {
+  opts = opts || {};
+  var modal = document.getElementById('app-confirm-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.id = 'app-confirm-modal';
+    modal.innerHTML =
+      '<div class="modal-backdrop"></div>' +
+      '<div class="modal-panel">' +
+        '<h3 id="app-confirm-title"></h3>' +
+        '<p id="app-confirm-text" style="color:var(--muted);font-size:13px;margin:0 0 18px"></p>' +
+        '<div class="foot-actions">' +
+          '<button type="button" class="btn" id="app-confirm-cancel">Cancelar</button>' +
+          '<button type="button" class="btn danger" id="app-confirm-ok">Confirmar</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(modal);
+    modal.querySelector('.modal-backdrop').onclick = function () { modal.classList.remove('open'); };
+    modal.querySelector('#app-confirm-cancel').onclick = function () { modal.classList.remove('open'); };
+  }
+  modal.querySelector('#app-confirm-title').textContent = opts.title || 'Confirmar acción';
+  modal.querySelector('#app-confirm-text').textContent = message;
+  var okBtn = modal.querySelector('#app-confirm-ok');
+  okBtn.className = 'btn ' + (opts.danger === false ? 'primary' : 'danger');
+  okBtn.textContent = opts.okLabel || 'Confirmar';
+  // Reemplaza el botón para no acumular un listener por cada llamada —
+  // el modal es un singleton reusado por todas las páginas.
+  var freshOk = okBtn.cloneNode(true);
+  okBtn.parentNode.replaceChild(freshOk, okBtn);
+  freshOk.onclick = function () {
+    modal.classList.remove('open');
+    onConfirm();
+  };
+  modal.classList.add('open');
+}
+
+// Sustituye window.confirm() nativo en formularios: bloquea el submit,
+// muestra el modal de la app y, al confirmar, vuelve a enviar el mismo
+// formulario (conserva los valores de sus campos, p.ej. un <select>).
+function aiacademyConfirmSubmit(form, message, opts) {
+  if (form.dataset.aiacademyConfirmed === '1') {
+    delete form.dataset.aiacademyConfirmed;
+    return true;
+  }
+  aiacademyConfirmModal(message, function () {
+    form.dataset.aiacademyConfirmed = '1';
+    if (typeof form.requestSubmit === 'function') form.requestSubmit();
+    else form.submit();
+  }, opts);
+  return false;
+}
+
 function aiacademySignOut(button) {
   button.disabled = true;
   fetch('/api/auth/sign-out', { method: 'POST' })

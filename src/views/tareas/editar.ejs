@@ -26,7 +26,7 @@
 
     <section class="card pad">
       <form method="post" action="/tareas/<%= task.id %>/editar" class="form-grid"
-        onsubmit="return '<%= task.ownerId %>' === this.ownerId.value || <%= task.status !== 'activa' %> || confirm('Esta tarea está activa: reasignarla no traspasa el trabajo ya registrado. ¿Continuar?');">
+        onsubmit="return '<%= task.ownerId %>' === this.ownerId.value || <%= task.status !== 'activa' %> || aiacademyConfirmSubmit(this, 'Esta tarea está activa: reasignarla no traspasa el trabajo ya registrado. ¿Continuar?');">
         <div class="field full"><label>Motivo de la edición *</label><input name="motivo" maxlength="500" required /></div>
         <div class="field full"><label>Título *</label><input name="title" value="<%= task.title %>" maxlength="200" required /></div>
         <div class="field full"><label>Entregable esperado *</label><input name="deliverable" value="<%= task.deliverable %>" maxlength="300" required /></div>
@@ -62,7 +62,7 @@
     <section class="card pad">
       <div class="sectiontitle"><h2>Cancelar tarea</h2></div>
       <form method="post" action="/tareas/<%= task.id %>/estado" style="display:flex;gap:8px"
-        onsubmit="return confirm('¿Cancelar esta tarea? No se puede reabrir.');">
+        onsubmit="return aiacademyConfirmSubmit(this, '¿Cancelar esta tarea? No se puede reabrir.');">
         <input type="hidden" name="status" value="cancelada" />
         <input name="note" placeholder="Motivo de la cancelación" required style="flex:1;padding:8px;border:1px solid var(--line);border-radius:8px" />
         <button type="submit" class="btn danger">Cancelar tarea</button>

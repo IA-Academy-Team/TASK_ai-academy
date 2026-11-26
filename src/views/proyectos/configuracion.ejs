@@ -86,7 +86,7 @@
 <script>
 function confirmDeleteProject(form) {
   var name = form.getAttribute('data-project-name') || '';
-  return confirm('¿Eliminar el proyecto "' + name + '"? Se borran también sus tareas, horas y auditoría. Esta acción no se puede deshacer.');
+  return aiacademyConfirmSubmit(form, '¿Eliminar el proyecto "' + name + '"? Se borran también sus tareas, horas y auditoría. Esta acción no se puede deshacer.');
 }
 </script>
 </body>

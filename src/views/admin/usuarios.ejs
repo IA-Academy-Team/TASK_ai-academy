@@ -32,16 +32,12 @@
             <td><%= u.name %></td>
             <td><%= u.email %></td>
             <td>
-              <% if (u.id === user.id) { %>
-              <span class="badge <%= u.role %>"><%= roleLabels[u.role] || u.role %></span>
-              <% } else { %>
-              <form method="post" action="/admin/usuarios/<%= u.id %>/rol" style="display:flex;gap:6px;align-items:center" onsubmit="return confirm('¿Cambiar el rol de <%= u.name %> a ' + this.role.options[this.role.selectedIndex].text + '?')">
-                <select name="role" aria-label="Rol de <%= u.name %>">
-                  <% roles.forEach(function(r) { %><option value="<%= r %>" <%= r === u.role ? 'selected' : '' %>><%= roleLabels[r] %></option><% }) %>
-                </select>
-                <button type="submit" class="btn subtle">Guardar</button>
-              </form>
-              <% } %>
+              <div style="display:flex;gap:8px;align-items:center">
+                <span class="badge <%= u.role %>"><%= roleLabels[u.role] || u.role %></span>
+                <% if (u.id !== user.id) { %>
+                <button type="button" class="btn-icon" aria-label="Cambiar rol de <%= u.name %>" onclick='openRoleModal("<%= u.id %>", <%- JSON.stringify(u.name) %>, "<%= u.role %>")'><%- include('../partials/icon', { kind: 'edit', size: 14 }) %></button>
+                <% } %>
+              </div>
             </td>
             <td><span class="badge <%= u.isActive ? '' : 'off' %>"><%= u.isActive ? 'activo' : 'inactivo' %></span></td>
             <td>
@@ -51,7 +47,7 @@
                   <form method="post" action="/admin/usuarios/<%= u.id %>/desactivar"><button type="submit" class="btn subtle">Desactivar</button></form>
                   <% } %>
                   <% if (u.id !== user.id) { %>
-                  <form method="post" action="/admin/usuarios/<%= u.id %>/restablecer-password" onsubmit="return confirm('¿Restablecer la contraseña de <%= u.name %> a la genérica? Va a tener que cambiarla al volver a iniciar sesión.')"><button type="submit" class="btn subtle">Restablecer contraseña</button></form>
+                  <form method="post" action="/admin/usuarios/<%= u.id %>/restablecer-password" onsubmit='return aiacademyConfirmSubmit(this, "¿Restablecer la contraseña de <%= u.name %> a la genérica? Va a tener que cambiarla al volver a iniciar sesión.")'><button type="submit" class="btn subtle">Restablecer contraseña</button></form>
                   <button type="button" class="btn danger" data-user-id="<%= u.id %>" data-user-name="<%= u.name %>" onclick="openDeleteModal(this)">Eliminar</button>
                   <% } %>
               </div>
@@ -89,6 +85,25 @@
       </div>
     </div>
 
+    <div class="modal" id="change-role-modal">
+      <div class="modal-backdrop" onclick="closeRoleModal()"></div>
+      <div class="modal-panel">
+        <h3>Cambiar rol</h3>
+        <p id="change-role-text" style="color:var(--muted);font-size:13px;margin:0 0 14px"></p>
+        <form method="post" id="change-role-form" class="form-grid" onsubmit='return aiacademyConfirmSubmit(this, "¿Cambiar el rol de " + this.dataset.userName + " a " + this.role.options[this.role.selectedIndex].text + "?")'>
+          <div class="field full"><label>Rol *</label>
+            <select name="role" id="change-role-select" required>
+              <% roles.forEach(function(r) { %><option value="<%= r %>"><%= roleLabels[r] %></option><% }) %>
+            </select>
+          </div>
+          <div class="foot-actions full">
+            <button type="button" class="btn" onclick="closeRoleModal()">Cancelar</button>
+            <button type="submit" class="btn primary">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <div class="modal" id="confirm-delete-modal">
       <div class="modal-backdrop" onclick="closeDeleteModal()"></div>
       <div class="modal-panel">
@@ -105,6 +120,17 @@
   </main>
 </div>
 <script>
+function openRoleModal(id, name, role) {
+  var form = document.getElementById('change-role-form');
+  form.setAttribute('action', '/admin/usuarios/' + id + '/rol');
+  form.dataset.userName = name;
+  document.getElementById('change-role-select').value = role;
+  document.getElementById('change-role-text').textContent = 'Usuario: ' + name;
+  document.getElementById('change-role-modal').classList.add('open');
+}
+function closeRoleModal() {
+  document.getElementById('change-role-modal').classList.remove('open');
+}
 function openDeleteModal(btn) {
   var name = btn.getAttribute('data-user-name');
   var id = btn.getAttribute('data-user-id');
