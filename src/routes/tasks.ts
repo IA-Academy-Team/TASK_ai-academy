@@ -162,14 +162,7 @@ tasksRouter.post("/tareas/:id/horas", async (req, res) => {
     throw new HttpError(400, "registro de horas inválido");
   }
 
-  const support = await listSupport(task.id);
   const role = req.user.id === task.ownerId ? "owner" : "support";
-  if (role === "support" && !support.some((s) => s.userId === req.user?.id)) {
-    throw new HttpError(
-      403,
-      "solo el responsable o el apoyo de la tarea pueden registrar horas",
-    );
-  }
 
   await logHours({
     taskId: task.id,
@@ -177,6 +170,7 @@ tasksRouter.post("/tareas/:id/horas", async (req, res) => {
     role,
     date: parsed.data.date,
     hours: String(parsed.data.hours),
+    description: parsed.data.description,
   });
 
   res.redirect(303, `/tareas/${req.params.id}`);

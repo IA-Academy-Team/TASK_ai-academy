@@ -31,7 +31,18 @@
           <tr>
             <td><%= u.name %></td>
             <td><%= u.email %></td>
-            <td><span class="badge <%= u.role %>"><%= roleLabels[u.role] || u.role %></span></td>
+            <td>
+              <% if (u.id === user.id) { %>
+              <span class="badge <%= u.role %>"><%= roleLabels[u.role] || u.role %></span>
+              <% } else { %>
+              <form method="post" action="/admin/usuarios/<%= u.id %>/rol" style="display:flex;gap:6px;align-items:center" onsubmit="return confirm('¿Cambiar el rol de <%= u.name %> a ' + this.role.options[this.role.selectedIndex].text + '?')">
+                <select name="role" aria-label="Rol de <%= u.name %>">
+                  <% roles.forEach(function(r) { %><option value="<%= r %>" <%= r === u.role ? 'selected' : '' %>><%= roleLabels[r] %></option><% }) %>
+                </select>
+                <button type="submit" class="btn subtle">Guardar</button>
+              </form>
+              <% } %>
+            </td>
             <td><span class="badge <%= u.isActive ? '' : 'off' %>"><%= u.isActive ? 'activo' : 'inactivo' %></span></td>
             <td>
               <% if (u.isActive || u.id !== user.id) { %>

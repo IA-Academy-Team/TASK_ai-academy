@@ -9,7 +9,9 @@ import {
   topTasksByHours,
 } from "../db/tasks-repo.ts";
 import { enumerateDays, seriesForDays } from "../domain/chart-data.ts";
+import { isAdminRole } from "../domain/roles.ts";
 import { toCsv } from "../lib/csv.ts";
+import { HttpError } from "../lib/http-error.ts";
 
 export const reportsRouter = Router();
 
@@ -114,6 +116,9 @@ reportsRouter.get("/productividad", async (req, res) => {
     res.redirect("/login");
     return;
   }
+  if (!isAdminRole(req.user.role)) {
+    throw new HttpError(403, "solo un admin puede ver este reporte");
+  }
 
   const rango = parseRango(req.query.rango);
   const report = await loadReport(rango);
@@ -125,6 +130,9 @@ reportsRouter.get("/productividad/export.csv", async (req, res) => {
   if (!req.user) {
     res.redirect("/login");
     return;
+  }
+  if (!isAdminRole(req.user.role)) {
+    throw new HttpError(403, "solo un admin puede ver este reporte");
   }
 
   const rango = parseRango(req.query.rango);

@@ -71,6 +71,13 @@
       "when": 1795017004460,
       "tag": "0009_superb_ultimates",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1795645336407,
+      "tag": "0010_shallow_iron_monger",
+      "breakpoints": true
     }
   ]
 }

@@ -354,6 +354,7 @@ export async function logHours(input: {
   role: "owner" | "support";
   date: string;
   hours: string;
+  description?: string;
 }) {
   const [row] = await db.insert(taskLogs).values(input).returning();
 

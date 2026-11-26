@@ -12,7 +12,11 @@ import {
 import { ADMIN_ROLE, ROLE_LABELS, ROLES } from "../domain/roles.ts";
 import { auth } from "../lib/auth.ts";
 import { authorize } from "../middleware/authorize.ts";
-import { createUserSchema, GENERIC_PASSWORD } from "../schemas/admin.ts";
+import {
+  changeRoleSchema,
+  createUserSchema,
+  GENERIC_PASSWORD,
+} from "../schemas/admin.ts";
 
 export const adminRouter = Router();
 
@@ -57,6 +61,38 @@ adminRouter.post("/admin/usuarios", authorize(ADMIN_ROLE), async (req, res) => {
   await setMustChangePassword(created.user.id, true);
   res.redirect(303, "/admin/usuarios");
 });
+
+adminRouter.post(
+  "/admin/usuarios/:id/rol",
+  authorize(ADMIN_ROLE),
+  async (req, res) => {
+    if (!req.user) {
+      res.redirect(303, "/login");
+      return;
+    }
+    const id = String(req.params.id);
+
+    if (id === req.user.id) {
+      await renderUsersPage(req, res, {
+        status: 400,
+        error: "No podés cambiar tu propio rol.",
+      });
+      return;
+    }
+
+    const parsed = changeRoleSchema.safeParse(req.body);
+    if (!parsed.success) {
+      await renderUsersPage(req, res, {
+        status: 400,
+        error: "Elegí un rol válido.",
+      });
+      return;
+    }
+
+    await setUserRole(id, parsed.data.role);
+    res.redirect(303, "/admin/usuarios");
+  },
+);
 
 adminRouter.post(
   "/admin/usuarios/:id/desactivar",

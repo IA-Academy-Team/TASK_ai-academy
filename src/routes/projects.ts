@@ -163,18 +163,28 @@ projectsRouter.get("/proyectos/:id", async (req, res) => {
     candidates.some((p) => p.id === id),
   );
 
+  const allSupportByTask = await listSupportUserIdsByTaskIds(
+    allTasks.map((t) => t.id),
+  );
+  const canSeeAllTasks =
+    isAdminRole(req.user.role) || req.user.id === project.leaderId;
+  const visibleTasks = canSeeAllTasks
+    ? allTasks
+    : allTasks.filter(
+        (t) =>
+          t.ownerId === req.user?.id ||
+          (allSupportByTask.get(t.id) ?? []).includes(req.user?.id ?? ""),
+      );
+
   let tasksView = estadoParsed.data
-    ? allTasks.filter((t) => t.status === estadoParsed.data)
-    : allTasks;
+    ? visibleTasks.filter((t) => t.status === estadoParsed.data)
+    : visibleTasks;
   if (responsableFilter.length > 0) {
     tasksView = tasksView.filter((t) => responsableFilter.includes(t.ownerId));
   }
 
-  const supportByTask = await listSupportUserIdsByTaskIds(
-    tasksView.map((t) => t.id),
-  );
   const supportTaskIdsForUser = new Set(
-    [...supportByTask.entries()]
+    [...allSupportByTask.entries()]
       .filter(([, userIds]) => userIds.includes(req.user?.id ?? ""))
       .map(([taskId]) => taskId),
   );

@@ -54,13 +54,13 @@ describe("GET/POST /tareas/:id/entrega", () => {
     expect(res.status).toBe(200);
   });
 
-  it("GET responde 403 si no es el responsable", async () => {
+  it("GET responde 200 aunque no sea el responsable", async () => {
     const { app, task } = await setup("td2-owner@test.local");
     const otherCookie = await signUpAndGetCookie("td2-other@test.local");
     const res = await supertest(app)
       .get(`/tareas/${task.id}/entrega`)
       .set("Cookie", otherCookie);
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(200);
   });
 
   it("POST registra horas, guarda evidencia y envía la tarea a revisión", async () => {

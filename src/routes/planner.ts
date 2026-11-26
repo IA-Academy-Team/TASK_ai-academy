@@ -1,11 +1,13 @@
 import { Router } from "express";
 import { listAllActiveUsers, listProjects } from "../db/projects-repo.ts";
 import {
+  listSupportUserIdsByTaskIds,
   listTasksByProject,
   listTasksWithoutProject,
   teamLoad,
 } from "../db/tasks-repo.ts";
 import { fridayOf, mondayOf, toDateString } from "../domain/dates.ts";
+import { isAdminRole } from "../domain/roles.ts";
 import { groupTasksByWeekday } from "../domain/week-plan.ts";
 
 export const plannerRouter = Router();
@@ -67,9 +69,26 @@ plannerRouter.get("/planeacion", async (req, res) => {
 
   // El plan semanal muestra las tareas planificadas de lunes a viernes
   // y las distribuye por fecha para que el equipo vea la carga de cada día.
-  const weekTasks = allTasks.filter(
+  const rawWeekTasks = allTasks.filter(
     (t) => t.due >= mondayStr && t.due <= fridayStr,
   );
+
+  // Un admin o el líder de un proyecto ve toda la carga del equipo; el resto
+  // solo ve las tareas en las que es responsable o apoyo.
+  const leaderProjectIds = new Set(
+    projects.filter((p) => p.leaderId === req.user?.id).map((p) => p.id),
+  );
+  const weekSupportByTask = await listSupportUserIdsByTaskIds(
+    rawWeekTasks.map((t) => t.id),
+  );
+  const weekTasks = isAdminRole(req.user.role)
+    ? rawWeekTasks
+    : rawWeekTasks.filter(
+        (t) =>
+          t.ownerId === req.user?.id ||
+          (t.projectId && leaderProjectIds.has(t.projectId)) ||
+          (weekSupportByTask.get(t.id) ?? []).includes(req.user?.id ?? ""),
+      );
 
   const [users, teamCapacity] = await Promise.all([
     listAllActiveUsers(),

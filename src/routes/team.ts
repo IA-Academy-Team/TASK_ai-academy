@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { getProject } from "../db/projects-repo.ts";
 import {
   DAILY_ESTIMATE_LIMIT_HOURS,
   listTasksForOwner,
@@ -13,6 +14,7 @@ import {
   monthStartOf,
   toDateString,
 } from "../domain/dates.ts";
+import { isAdminRole } from "../domain/roles.ts";
 import { HttpError } from "../lib/http-error.ts";
 
 export const teamRouter = Router();
@@ -108,6 +110,29 @@ teamRouter.get("/equipo/:userId/detalle", async (req, res) => {
     listTasksForSupport(req.params.userId),
   ]);
 
+  // Un admin ve todo; cada quien ve su propio detalle; el resto solo ve, de
+  // esa persona, las tareas de proyectos donde quien consulta es líder.
+  const isSelf = req.user.id === req.params.userId;
+  const canSeeAll = isAdminRole(req.user.role) || isSelf;
+  const projectIds = [
+    ...new Set(
+      [...owned, ...support]
+        .map((row) => row.task.projectId)
+        .filter((id): id is string => !!id),
+    ),
+  ];
+  const leaderIdByProjectId = new Map(
+    canSeeAll
+      ? []
+      : (await Promise.all(projectIds.map((id) => getProject(id))))
+          .filter((p): p is NonNullable<typeof p> => !!p)
+          .map((p) => [p.id, p.leaderId] as const),
+  );
+  function canSeeTask(projectId: string | null): boolean {
+    if (canSeeAll) return true;
+    return !!projectId && leaderIdByProjectId.get(projectId) === req.user?.id;
+  }
+
   const byProject = new Map<string, PersonProjectDetail>();
   const independent: PersonProjectDetail["tasks"] = [];
 
@@ -119,6 +144,7 @@ teamRouter.get("/equipo/:userId/detalle", async (req, res) => {
     },
     role: "owner" | "apoyo",
   ) {
+    if (!canSeeTask(row.task.projectId)) return;
     const entry = {
       id: row.task.id,
       title: row.task.title,

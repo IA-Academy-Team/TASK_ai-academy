@@ -107,6 +107,7 @@ export const taskLogs = pgTable("task_logs", {
   role: text("role").notNull(),
   date: date("date").notNull(),
   hours: numeric("hours", { precision: 5, scale: 1 }).notNull(),
+  description: text("description").notNull().default(""),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

@@ -53,6 +53,7 @@ export const transitionSchema = z.object({
 export const logHoursSchema = z.object({
   date: dateString,
   hours: z.coerce.number().positive().max(24),
+  description: z.string().max(1000).optional().default(""),
 });
 
 export const updateTaskSchema = z.object({

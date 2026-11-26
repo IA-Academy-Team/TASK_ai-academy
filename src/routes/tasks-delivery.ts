@@ -20,9 +20,6 @@ tasksDeliveryRouter.get("/tareas/:id/entrega", async (req, res) => {
   if (!task) {
     throw new HttpError(404, "tarea no encontrada");
   }
-  if (req.user.id !== task.ownerId) {
-    throw new HttpError(403, "solo el responsable puede entregar la tarea");
-  }
   if (task.status !== "activa") {
     throw new HttpError(400, "solo se puede entregar una tarea activa");
   }
@@ -47,9 +44,6 @@ tasksDeliveryRouter.post("/tareas/:id/entrega", async (req, res) => {
   if (!task) {
     throw new HttpError(404, "tarea no encontrada");
   }
-  if (req.user.id !== task.ownerId) {
-    throw new HttpError(403, "solo el responsable puede entregar la tarea");
-  }
 
   const parsed = deliverySchema.safeParse(req.body);
   if (!parsed.success) {
@@ -66,9 +60,10 @@ tasksDeliveryRouter.post("/tareas/:id/entrega", async (req, res) => {
   await logHours({
     taskId: task.id,
     userId: req.user.id,
-    role: "owner",
+    role: req.user.id === task.ownerId ? "owner" : "support",
     date: parsed.data.date,
     hours: String(parsed.data.hours),
+    description: parsed.data.evidence,
   });
 
   await transitionTask(task.id, "revision", req.user.id, {

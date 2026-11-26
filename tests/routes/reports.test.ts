@@ -10,25 +10,38 @@ import {
   logHours,
   transitionTask,
 } from "../../src/db/tasks-repo.ts";
+import { ADMIN_ROLE } from "../../src/domain/roles.ts";
 import { signUpAndGetCookie } from "../helpers/auth.ts";
+
+async function makeAdminCookie(email: string) {
+  const cookie = await signUpAndGetCookie(email);
+  await db.update(user).set({ role: ADMIN_ROLE }).where(eq(user.email, email));
+  const [me] = await db.select().from(user).where(eq(user.email, email));
+  return { cookie, me };
+}
 
 describe("GET /productividad", () => {
   it("responde 200 sin horas registradas", async () => {
     const app = createApp();
-    const cookie = await signUpAndGetCookie("rep1@test.local");
+    const { cookie } = await makeAdminCookie("rep1@test.local");
     const res = await supertest(app)
       .get("/productividad")
       .set("Cookie", cookie);
     expect(res.status).toBe(200);
   });
 
+  it("un usuario sin perfil admin no puede ver el reporte", async () => {
+    const app = createApp();
+    const cookie = await signUpAndGetCookie("rep1-user@test.local");
+    const res = await supertest(app)
+      .get("/productividad")
+      .set("Cookie", cookie);
+    expect(res.status).toBe(403);
+  });
+
   it("muestra horas por proyecto para cada rango", async () => {
     const app = createApp();
-    const cookie = await signUpAndGetCookie("rep2@test.local");
-    const [me] = await db
-      .select()
-      .from(user)
-      .where(eq(user.email, "rep2@test.local"));
+    const { cookie, me } = await makeAdminCookie("rep2@test.local");
     const project = await createProject({
       name: "Proyecto",
       code: "PR-1",
@@ -76,11 +89,7 @@ describe("GET /productividad", () => {
 describe("cumplimiento de presupuesto", () => {
   it("es real/estimado de las tareas completadas, no % de tareas dentro de presupuesto", async () => {
     const app = createApp();
-    const cookie = await signUpAndGetCookie("rep4@test.local");
-    const [me] = await db
-      .select()
-      .from(user)
-      .where(eq(user.email, "rep4@test.local"));
+    const { cookie, me } = await makeAdminCookie("rep4@test.local");
     const project = await createProject({
       name: "Proyecto compliance",
       code: "PR-2",
@@ -129,12 +138,21 @@ describe("cumplimiento de presupuesto", () => {
 describe("GET /productividad/export.csv", () => {
   it("responde con un CSV con BOM y separador ;", async () => {
     const app = createApp();
-    const cookie = await signUpAndGetCookie("rep3@test.local");
+    const { cookie } = await makeAdminCookie("rep3@test.local");
     const res = await supertest(app)
       .get("/productividad/export.csv")
       .set("Cookie", cookie);
     expect(res.status).toBe(200);
     expect(res.headers["content-type"]).toContain("text/csv");
     expect(res.text).toContain("Proyecto;Horas");
+  });
+
+  it("un usuario sin perfil admin no puede exportar el reporte", async () => {
+    const app = createApp();
+    const cookie = await signUpAndGetCookie("rep3-user@test.local");
+    const res = await supertest(app)
+      .get("/productividad/export.csv")
+      .set("Cookie", cookie);
+    expect(res.status).toBe(403);
   });
 });

@@ -339,6 +339,97 @@ describe("admin usuarios", () => {
     expect(res.status).toBe(400);
   });
 
+  it("admin cambia el rol de otro usuario", async () => {
+    const app = createApp();
+    const adminEmail = "adminx12@test.local";
+    const adminCookie = await signUpAndGetCookie(adminEmail);
+    await db
+      .update(user)
+      .set({ role: ADMIN_ROLE })
+      .where(eq(user.email, adminEmail));
+
+    await signUpAndGetCookie("target-role1@test.local");
+    const [target] = await db
+      .select()
+      .from(user)
+      .where(eq(user.email, "target-role1@test.local"));
+    expect(target.role).toBe("colaborador");
+
+    const res = await supertest(app)
+      .post(`/admin/usuarios/${target.id}/rol`)
+      .set("Cookie", adminCookie)
+      .type("form")
+      .send({ role: "trainer" });
+    expect(res.status).toBe(303);
+
+    const [after] = await db
+      .select()
+      .from(user)
+      .where(eq(user.email, "target-role1@test.local"));
+    expect(after.role).toBe("trainer");
+  });
+
+  it("admin no puede cambiar su propio rol", async () => {
+    const app = createApp();
+    const email = "adminx13@test.local";
+    const cookie = await signUpAndGetCookie(email);
+    await db
+      .update(user)
+      .set({ role: ADMIN_ROLE })
+      .where(eq(user.email, email));
+    const [self] = await db.select().from(user).where(eq(user.email, email));
+
+    const res = await supertest(app)
+      .post(`/admin/usuarios/${self.id}/rol`)
+      .set("Cookie", cookie)
+      .type("form")
+      .send({ role: "trainer" });
+    expect(res.status).toBe(400);
+
+    const [after] = await db.select().from(user).where(eq(user.email, email));
+    expect(after.role).toBe(ADMIN_ROLE);
+  });
+
+  it("POST /admin/usuarios/:id/rol con rol inválido responde 400", async () => {
+    const app = createApp();
+    const adminEmail = "adminx14@test.local";
+    const adminCookie = await signUpAndGetCookie(adminEmail);
+    await db
+      .update(user)
+      .set({ role: ADMIN_ROLE })
+      .where(eq(user.email, adminEmail));
+
+    await signUpAndGetCookie("target-role2@test.local");
+    const [target] = await db
+      .select()
+      .from(user)
+      .where(eq(user.email, "target-role2@test.local"));
+
+    const res = await supertest(app)
+      .post(`/admin/usuarios/${target.id}/rol`)
+      .set("Cookie", adminCookie)
+      .type("form")
+      .send({ role: "invalido" });
+    expect(res.status).toBe(400);
+  });
+
+  it("usuario comun no puede cambiar roles (403)", async () => {
+    const app = createApp();
+    const cookie = await signUpAndGetCookie("noadmin-role@test.local");
+    await signUpAndGetCookie("target-role3@test.local");
+    const [target] = await db
+      .select()
+      .from(user)
+      .where(eq(user.email, "target-role3@test.local"));
+
+    const res = await supertest(app)
+      .post(`/admin/usuarios/${target.id}/rol`)
+      .set("Cookie", cookie)
+      .type("form")
+      .send({ role: "trainer" });
+    expect(res.status).toBe(403);
+  });
+
   it("POST /admin/usuarios sin rol responde 400", async () => {
     const app = createApp();
     const email = "adminx11@test.local";
