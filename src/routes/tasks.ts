@@ -45,6 +45,14 @@ tasksRouter.get("/tareas/:id", async (req, res) => {
     req.user.id === task.ownerId ||
     support.some((s) => s.userId === req.user?.id);
 
+  const canAccessTask =
+    isLeaderOrAdmin ||
+    req.user.id === task.ownerId ||
+    support.some((s) => s.userId === req.user?.id);
+  if (!canAccessTask) {
+    throw new HttpError(403, "no tenés acceso a esta tarea");
+  }
+
   res.render("tareas/detalle", {
     task,
     project,

@@ -1,4 +1,5 @@
-import { count, desc, eq, inArray, like, sql } from "drizzle-orm";
+import { and, count, desc, eq, inArray, like, ne, sql } from "drizzle-orm";
+import { ADMIN_ROLE } from "../domain/roles.ts";
 import { isUuid } from "../lib/uuid.ts";
 import { recordChange } from "./audit-repo.ts";
 import { user } from "./auth-schema.ts";
@@ -217,11 +218,19 @@ export async function listMembers(projectId: string) {
     .where(eq(projectMembers.projectId, projectId));
   const ids = memberRows.map((m) => m.userId);
   if (ids.length === 0) return [];
-  return db.select().from(user).where(inArray(user.id, ids));
+  return db
+    .select()
+    .from(user)
+    .where(and(inArray(user.id, ids), ne(user.role, ADMIN_ROLE)));
 }
 
+// Excluye administrador: nunca debe aparecer como opción asignable
+// (líder, miembro, responsable, apoyo) en ningún formulario.
 export async function listAllActiveUsers() {
-  return db.select().from(user).where(eq(user.isActive, true));
+  return db
+    .select()
+    .from(user)
+    .where(and(eq(user.isActive, true), ne(user.role, ADMIN_ROLE)));
 }
 
 export async function countActiveProjects() {

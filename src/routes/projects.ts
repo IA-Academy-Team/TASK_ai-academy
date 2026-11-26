@@ -33,10 +33,25 @@ projectsRouter.get("/proyectos", async (req, res) => {
     return;
   }
   const today = new Date().toLocaleDateString("en-CA");
-  const [rows, users] = await Promise.all([
+  const [allRows, users] = await Promise.all([
     listProjects(),
     listAllActiveUsers(),
   ]);
+
+  const supportByTask = await listSupportUserIdsByTaskIds(
+    allRows.flatMap((p) => p.tasks.map((t) => t.id)),
+  );
+  const isVisibleToUser = (p: (typeof allRows)[number]): boolean =>
+    isAdminRole(req.user?.role ?? "") ||
+    p.leaderId === req.user?.id ||
+    p.members.some((m) => m.userId === req.user?.id) ||
+    p.tasks.some(
+      (t) =>
+        t.ownerId === req.user?.id ||
+        (supportByTask.get(t.id) ?? []).includes(req.user?.id ?? ""),
+    );
+  const rows = allRows.filter(isVisibleToUser);
+
   const items = rows.map((p) => {
     const logsByTask = new Map<string, { hours: string }[]>();
     for (const log of p.logs) {
@@ -123,6 +138,23 @@ projectsRouter.get("/proyectos/:id", async (req, res) => {
   const allTasks = await listTasksByProject(project.id);
 
   const members = await listMembers(project.id);
+
+  const allSupportByTask = await listSupportUserIdsByTaskIds(
+    allTasks.map((t) => t.id),
+  );
+  const canAccessProject =
+    isAdminRole(req.user.role) ||
+    req.user.id === project.leaderId ||
+    members.some((m) => m.id === req.user?.id) ||
+    allTasks.some(
+      (t) =>
+        t.ownerId === req.user?.id ||
+        (allSupportByTask.get(t.id) ?? []).includes(req.user?.id ?? ""),
+    );
+  if (!canAccessProject) {
+    throw new HttpError(403, "no tenés acceso a este proyecto");
+  }
+
   const allUsers = await listAllActiveUsers();
   const leader = allUsers.find((u) => u.id === project.leaderId) ?? null;
   const activeCount = await countByStatus(project.id, "activa");
@@ -163,9 +195,6 @@ projectsRouter.get("/proyectos/:id", async (req, res) => {
     candidates.some((p) => p.id === id),
   );
 
-  const allSupportByTask = await listSupportUserIdsByTaskIds(
-    allTasks.map((t) => t.id),
-  );
   const canSeeAllTasks =
     isAdminRole(req.user.role) || req.user.id === project.leaderId;
   const visibleTasks = canSeeAllTasks
