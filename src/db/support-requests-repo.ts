@@ -131,6 +131,36 @@ export async function listPendingApplyForLeader(leaderId: string) {
     .orderBy(desc(supportRequests.createdAt));
 }
 
+export async function listPendingByTask(taskId: string) {
+  return db
+    .select()
+    .from(supportRequests)
+    .where(
+      and(
+        eq(supportRequests.taskId, taskId),
+        eq(supportRequests.status, "pendiente"),
+      ),
+    )
+    .orderBy(desc(supportRequests.createdAt));
+}
+
+// Reasigna el destinatario de una solicitud pendiente — para cuando la
+// cuenta original fue desactivada o eliminada y el líder/admin necesita
+// redirigirla a otra persona sin perder la solicitud.
+export async function updateRequestTarget(id: string, targetUserId: string) {
+  const request = await getRequest(id);
+  if (!request) return undefined;
+  if (request.status !== "pendiente") {
+    throw new HttpError(400, "la solicitud ya fue resuelta");
+  }
+  const [row] = await db
+    .update(supportRequests)
+    .set({ targetUserId })
+    .where(eq(supportRequests.id, id))
+    .returning();
+  return row;
+}
+
 export async function getRequest(id: string) {
   if (!isUuid(id)) return undefined;
   const [row] = await db

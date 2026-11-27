@@ -1,5 +1,8 @@
 import { Router } from "express";
-import { getProject, listAllActiveUsers } from "../db/projects-repo.ts";
+import {
+  getProject,
+  listAllActiveUsersIncludingAdmins,
+} from "../db/projects-repo.ts";
 import {
   countResolvedForUser,
   createRequest,
@@ -71,7 +74,7 @@ supportsRouter.get("/solicitudes", async (req, res) => {
         ? Promise.resolve([])
         : listPendingApplyForLeader(req.user.id),
       listRequestableTasksForUser(req.user.id, req.user.role),
-      listAllActiveUsers(),
+      listAllActiveUsersIncludingAdmins(),
       countResolvedForUser(req.user.id),
     ],
   );

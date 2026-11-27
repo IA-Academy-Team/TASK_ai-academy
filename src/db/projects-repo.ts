@@ -225,9 +225,10 @@ export async function listMembers(projectId: string) {
 }
 
 // Excluye administrador: nunca debe aparecer como opción asignable
-// (miembro del proyecto, apoyo de una tarea) en ningún formulario. Para
-// líder de proyecto o responsable de una tarea, donde un admin sí puede
-// asignarse, usar listAllActiveUsersIncludingAdmins() en su lugar.
+// (miembro del proyecto, apoyo directo de una tarea) en ningún formulario.
+// Para líder de proyecto, responsable de una tarea, o el destinatario de
+// una SOLICITUD de apoyo (donde un admin sí puede ser invitado/postularse),
+// usar listAllActiveUsersIncludingAdmins() en su lugar.
 export async function listAllActiveUsers() {
   return db
     .select()

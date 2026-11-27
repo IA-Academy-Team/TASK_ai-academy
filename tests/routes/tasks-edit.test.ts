@@ -5,6 +5,7 @@ import { createApp } from "../../src/app.ts";
 import { user } from "../../src/db/auth-schema.ts";
 import { db } from "../../src/db/client.ts";
 import { createProject } from "../../src/db/projects-repo.ts";
+import { createRequest } from "../../src/db/support-requests-repo.ts";
 import { createTask } from "../../src/db/tasks-repo.ts";
 import { signUpAndGetCookie } from "../helpers/auth.ts";
 
@@ -95,5 +96,57 @@ describe("GET/POST /tareas/:id/editar", () => {
       });
     expect(res.status).toBe(303);
     expect(res.headers.location).toBe(`/tareas/${task.id}`);
+  });
+});
+
+async function makeExtraUser(email: string) {
+  await signUpAndGetCookie(email);
+  const [row] = await db.select().from(user).where(eq(user.email, email));
+  return row;
+}
+
+describe("POST /tareas/:id/solicitudes/:requestId/reasignar", () => {
+  it("el líder reasigna el destinatario y redirige al formulario de edición", async () => {
+    const { app, cookie, me, task } = await setup("ter1-leader@test.local");
+    const target = await makeExtraUser("ter1-target@test.local");
+    const newTarget = await makeExtraUser("ter1-newtarget@test.local");
+
+    const request = await createRequest({
+      taskId: task.id,
+      requestedBy: me.id,
+      targetUserId: target.id,
+      mode: "invite",
+      reason: "",
+    });
+
+    const res = await supertest(app)
+      .post(`/tareas/${task.id}/solicitudes/${request.id}/reasignar`)
+      .set("Cookie", cookie)
+      .type("form")
+      .send({ targetUserId: newTarget.id });
+
+    expect(res.status).toBe(303);
+    expect(res.headers.location).toBe(`/tareas/${task.id}/editar`);
+  });
+
+  it("responde 403 para quien no es líder ni admin", async () => {
+    const { app, me, task } = await setup("ter2-leader@test.local");
+    const memberCookie = await signUpAndGetCookie("ter2-member@test.local");
+
+    const request = await createRequest({
+      taskId: task.id,
+      requestedBy: me.id,
+      targetUserId: me.id,
+      mode: "invite",
+      reason: "",
+    });
+
+    const res = await supertest(app)
+      .post(`/tareas/${task.id}/solicitudes/${request.id}/reasignar`)
+      .set("Cookie", memberCookie)
+      .type("form")
+      .send({ targetUserId: me.id });
+
+    expect(res.status).toBe(403);
   });
 });

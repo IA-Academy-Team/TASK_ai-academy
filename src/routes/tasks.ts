@@ -12,6 +12,7 @@ import {
   logHours,
   transitionTask,
 } from "../db/tasks-repo.ts";
+import { getUser } from "../db/users-repo.ts";
 import { isAdminRole } from "../domain/roles.ts";
 import { HttpError } from "../lib/http-error.ts";
 import { logHoursSchema, transitionSchema } from "../schemas/task.ts";
@@ -41,6 +42,20 @@ tasksRouter.get("/tareas/:id", async (req, res) => {
     : null;
   const totalHours = logs.reduce((sum, l) => sum + Number(l.hours), 0);
 
+  // Resuelve nombres por id directo (sin el filtro de activos/no-admin de
+  // users/ownerCandidates) para que un responsable o apoyo con cuenta
+  // desactivada o eliminada no se muestre como un id crudo en la ficha.
+  const relevantUserIds = [
+    task.ownerId,
+    ...support.map((s) => s.userId),
+  ].filter((id, index, all) => all.indexOf(id) === index);
+  const relevantUsers = await Promise.all(
+    relevantUserIds.map((id) => getUser(id)),
+  );
+  const peopleById = new Map(
+    relevantUsers.filter((u) => u !== undefined).map((u) => [u.id, u]),
+  );
+
   // Sin proyecto no hay líder que delegue — el responsable hace de líder.
   const isLeaderOrAdmin =
     isAdminRole(req.user.role) ||
@@ -67,6 +82,7 @@ tasksRouter.get("/tareas/:id", async (req, res) => {
     logs,
     users,
     ownerCandidates,
+    peopleById,
     dependency,
     totalHours,
     user: req.user,

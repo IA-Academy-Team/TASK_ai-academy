@@ -78,6 +78,10 @@ export const requestSupportSchema = z.object({
   reason: z.string().max(1000).optional().default(""),
 });
 
+export const reassignSupportRequestSchema = z.object({
+  targetUserId: z.string().min(1),
+});
+
 export const resolveSupportRequestSchema = z.object({
   status: z.enum(["aceptada", "rechazada"]),
 });

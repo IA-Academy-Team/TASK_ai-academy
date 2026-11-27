@@ -32,9 +32,12 @@
         <div class="field full"><label>Entregable esperado *</label><input name="deliverable" value="<%= task.deliverable %>" maxlength="300" required /></div>
         <div class="field full"><label>Descripción</label><textarea name="description" maxlength="2000"><%= task.description %></textarea></div>
         <div class="field"><label>Responsable *</label>
+          <% var ownerIsGhost = !allUsers.some(function(u){ return u.id === task.ownerId; }); %>
           <select name="ownerId" required>
+            <% if (ownerIsGhost) { %><option value="<%= task.ownerId %>" selected>Cuenta eliminada o inactiva — reasigná</option><% } %>
             <% allUsers.forEach(function(u) { %><option value="<%= u.id %>" <%= u.id === task.ownerId ? 'selected' : '' %>><%= u.name %></option><% }) %>
           </select>
+          <% if (ownerIsGhost) { %><p class="task-helper">El responsable actual ya no tiene cuenta activa: elegí uno nuevo antes de guardar.</p><% } %>
         </div>
         <div class="field"><label>Prioridad *</label>
           <select name="priority" required>
@@ -58,6 +61,25 @@
         </div>
       </form>
     </section>
+
+    <% if (pendingRequests.length) { %>
+    <section class="card pad">
+      <div class="sectiontitle"><h2>Solicitudes de apoyo pendientes</h2></div>
+      <% pendingRequests.forEach(function(p) { %>
+      <form method="post" action="/tareas/<%= task.id %>/solicitudes/<%= p.request.id %>/reasignar" class="form-grid" style="margin-bottom:12px">
+        <div class="field full">
+          <label><%= p.request.mode === 'invite' ? 'Invitación a' : 'Postulación de' %> <% if (!p.targetName) { %><span style="color:var(--muted);font-style:italic">Cuenta eliminada o inactiva</span><% } else { %><%= p.targetName %><% } %></label>
+          <div style="display:flex;gap:6px">
+            <select name="targetUserId" required style="flex:1">
+              <% allUsers.forEach(function(u) { %><option value="<%= u.id %>" <%= u.id === p.request.targetUserId ? 'selected' : '' %>><%= u.name %></option><% }) %>
+            </select>
+            <button type="submit" class="btn">Reasignar</button>
+          </div>
+        </div>
+      </form>
+      <% }) %>
+    </section>
+    <% } %>
 
     <section class="card pad">
       <div class="sectiontitle"><h2>Cancelar tarea</h2></div>
