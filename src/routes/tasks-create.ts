@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   getProject,
   listAllActiveUsers,
+  listAllActiveUsersIncludingAdmins,
   listProjects,
 } from "../db/projects-repo.ts";
 import {
@@ -34,8 +35,9 @@ tasksCreateRouter.get("/tareas/nueva", async (req, res) => {
   const error = req.query.error === "1";
 
   if (!projectParam) {
-    const [allUsers, allTasks, projects] = await Promise.all([
+    const [allUsers, ownerCandidates, allTasks, projects] = await Promise.all([
       listAllActiveUsers(),
+      listAllActiveUsersIncludingAdmins(),
       listTasksWithoutProject(),
       listProjects(),
     ]);
@@ -44,6 +46,7 @@ tasksCreateRouter.get("/tareas/nueva", async (req, res) => {
       project: null,
       independent: true,
       allUsers,
+      ownerCandidates,
       allTasks,
       projects,
       error,
@@ -52,8 +55,9 @@ tasksCreateRouter.get("/tareas/nueva", async (req, res) => {
   }
 
   if (projectParam === "independent") {
-    const [allUsers, allTasks] = await Promise.all([
+    const [allUsers, ownerCandidates, allTasks] = await Promise.all([
       listAllActiveUsers(),
+      listAllActiveUsersIncludingAdmins(),
       listTasksWithoutProject(),
     ]);
     res.render("tareas/nueva", {
@@ -61,6 +65,7 @@ tasksCreateRouter.get("/tareas/nueva", async (req, res) => {
       project: null,
       independent: true,
       allUsers,
+      ownerCandidates,
       allTasks,
       projects: await listProjects(),
       error,
@@ -73,8 +78,9 @@ tasksCreateRouter.get("/tareas/nueva", async (req, res) => {
     throw new HttpError(404, "proyecto no encontrado");
   }
 
-  const [allUsers, allTasks, projects] = await Promise.all([
+  const [allUsers, ownerCandidates, allTasks, projects] = await Promise.all([
     listAllActiveUsers(),
+    listAllActiveUsersIncludingAdmins(),
     listTasksByProject(project.id),
     listProjects(),
   ]);
@@ -84,6 +90,7 @@ tasksCreateRouter.get("/tareas/nueva", async (req, res) => {
     project,
     independent: false,
     allUsers,
+    ownerCandidates,
     allTasks,
     projects,
     error,

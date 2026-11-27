@@ -1,5 +1,9 @@
 import { Router } from "express";
-import { getProject, listAllActiveUsers } from "../db/projects-repo.ts";
+import {
+  getProject,
+  listAllActiveUsers,
+  listAllActiveUsersIncludingAdmins,
+} from "../db/projects-repo.ts";
 import {
   deleteTask,
   getTask,
@@ -28,7 +32,10 @@ tasksRouter.get("/tareas/:id", async (req, res) => {
   const project = await getProject(task.projectId);
   const support = await listSupport(task.id);
   const logs = await listLogs(task.id);
-  const users = await listAllActiveUsers();
+  const [users, ownerCandidates] = await Promise.all([
+    listAllActiveUsers(),
+    listAllActiveUsersIncludingAdmins(),
+  ]);
   const dependency = task.dependencyId
     ? await getTask(task.dependencyId)
     : null;
@@ -59,6 +66,7 @@ tasksRouter.get("/tareas/:id", async (req, res) => {
     support,
     logs,
     users,
+    ownerCandidates,
     dependency,
     totalHours,
     user: req.user,

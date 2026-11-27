@@ -1,5 +1,8 @@
 import { Router } from "express";
-import { listAllActiveUsers, listProjects } from "../db/projects-repo.ts";
+import {
+  listAllActiveUsersIncludingAdmins,
+  listProjects,
+} from "../db/projects-repo.ts";
 import {
   listSupportUserIdsByTaskIds,
   listTasksByProject,
@@ -91,7 +94,7 @@ plannerRouter.get("/planeacion", async (req, res) => {
       );
 
   const [users, teamCapacity] = await Promise.all([
-    listAllActiveUsers(),
+    listAllActiveUsersIncludingAdmins(),
     teamLoad({ from: mondayStr, to: fridayStr }),
   ]);
   const ownerNameById = new Map(users.map((u) => [u.id, u.name]));

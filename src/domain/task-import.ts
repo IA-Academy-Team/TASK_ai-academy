@@ -57,7 +57,8 @@ const DUE_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 export function validateTaskImportRow(
   raw: TaskImportRow,
   row: number,
-  usersByEmail: Map<string, string>,
+  ownerUsersByEmail: Map<string, string>,
+  supportUsersByEmail: Map<string, string>,
 ): TaskImportOutcome {
   const title = raw.title.trim();
   if (!title) return { ok: false, row, message: "falta el título" };
@@ -75,7 +76,7 @@ export function validateTaskImportRow(
   if (!ownerEmail) {
     return { ok: false, row, message: "falta el email del responsable" };
   }
-  const ownerId = usersByEmail.get(ownerEmail);
+  const ownerId = ownerUsersByEmail.get(ownerEmail);
   if (!ownerId) {
     return {
       ok: false,
@@ -90,7 +91,7 @@ export function validateTaskImportRow(
     .filter(Boolean);
   const supportIds: string[] = [];
   for (const email of supportEmails) {
-    const id = usersByEmail.get(email);
+    const id = supportUsersByEmail.get(email);
     if (!id) {
       return {
         ok: false,

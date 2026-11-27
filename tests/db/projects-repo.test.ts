@@ -8,7 +8,7 @@ import {
   generateProjectCode,
   getProject,
   listAllActiveUsers,
-  listLeaderCandidates,
+  listAllActiveUsersIncludingAdmins,
   listMembers,
   listProjects,
   setMembers,
@@ -65,7 +65,7 @@ describe("projects-repo", () => {
     expect(members.map((m) => m.id).sort()).toEqual([other.id].sort());
   });
 
-  it("listAllActiveUsers excluye administrador, listLeaderCandidates lo incluye", async () => {
+  it("listAllActiveUsers excluye administrador, listAllActiveUsersIncludingAdmins lo incluye", async () => {
     const admin = await makeUser("admin-candidate@test.local");
     await db
       .update(user)
@@ -77,7 +77,7 @@ describe("projects-repo", () => {
     expect(assignable.map((u) => u.id)).not.toContain(admin.id);
     expect(assignable.map((u) => u.id)).toContain(colaborador.id);
 
-    const leaderCandidates = await listLeaderCandidates();
+    const leaderCandidates = await listAllActiveUsersIncludingAdmins();
     expect(leaderCandidates.map((u) => u.id)).toContain(admin.id);
     expect(leaderCandidates.map((u) => u.id)).toContain(colaborador.id);
   });

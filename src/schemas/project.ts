@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { PROJECT_RISK_FILTERS } from "../domain/project-risk.ts";
 import { dateString } from "./shared.ts";
 
 export const createProjectSchema = z
@@ -40,6 +41,15 @@ export const updateSettingsSchema = z.object({
 
 export const moveTaskSchema = z.object({
   direction: z.enum(["subir", "bajar"]),
+});
+
+export const projectListFilterSchema = z.object({
+  nombre: z.string().trim().max(120).optional().default(""),
+  responsable: z.string().trim().max(200).optional().default(""),
+  estado: z
+    .union([z.enum(PROJECT_RISK_FILTERS), z.literal("")])
+    .optional()
+    .default(""),
 });
 
 export function toArray(value: string | string[] | undefined): string[] {

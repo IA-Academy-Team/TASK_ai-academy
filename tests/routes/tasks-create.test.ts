@@ -5,6 +5,7 @@ import { createApp } from "../../src/app.ts";
 import { user } from "../../src/db/auth-schema.ts";
 import { db } from "../../src/db/client.ts";
 import { createProject } from "../../src/db/projects-repo.ts";
+import { ADMIN_ROLE } from "../../src/domain/roles.ts";
 import { signUpAndGetCookie } from "../helpers/auth.ts";
 
 async function setup(email: string) {
@@ -40,6 +41,16 @@ describe("GET/POST /tareas/nueva", () => {
       .get(`/tareas/nueva?project=${project.id}`)
       .set("Cookie", cookie);
     expect(res.status).toBe(200);
+  });
+
+  it("el selector de responsable incluye administradores", async () => {
+    const { app, cookie, me, project } = await setup("tc2b@test.local");
+    await db.update(user).set({ role: ADMIN_ROLE }).where(eq(user.id, me.id));
+    const res = await supertest(app)
+      .get(`/tareas/nueva?project=${project.id}`)
+      .set("Cookie", cookie);
+    expect(res.status).toBe(200);
+    expect(res.text).toContain(`value="${me.id}"`);
   });
 
   it("POST /tareas crea la tarea en el proyecto y redirige", async () => {

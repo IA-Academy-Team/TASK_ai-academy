@@ -3,7 +3,7 @@ import multer from "multer";
 import {
   createProjectWithCode,
   listAllActiveUsers,
-  listLeaderCandidates,
+  listAllActiveUsersIncludingAdmins,
 } from "../db/projects-repo.ts";
 import { validateProjectImportRow } from "../domain/project-import.ts";
 import { ADMIN_ROLE } from "../domain/roles.ts";
@@ -63,7 +63,7 @@ projectsImportRouter.post(
 
     const [activeUsers, leaderCandidates] = await Promise.all([
       listAllActiveUsers(),
-      listLeaderCandidates(),
+      listAllActiveUsersIncludingAdmins(),
     ]);
     const memberUsersByEmail = new Map(
       activeUsers.map((u) => [u.email.toLowerCase(), u.id]),

@@ -31,6 +31,7 @@ describe("validateTaskImportRow", () => {
       row({ supportEmails: "valentina@aiacademy.local" }),
       2,
       usersByEmail,
+      usersByEmail,
     );
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -41,7 +42,12 @@ describe("validateTaskImportRow", () => {
   });
 
   it("rechaza si falta el título", () => {
-    const result = validateTaskImportRow(row({ title: "" }), 2, usersByEmail);
+    const result = validateTaskImportRow(
+      row({ title: "" }),
+      2,
+      usersByEmail,
+      usersByEmail,
+    );
     expect(result).toEqual({ ok: false, row: 2, message: "falta el título" });
   });
 
@@ -49,6 +55,7 @@ describe("validateTaskImportRow", () => {
     const result = validateTaskImportRow(
       row({ ownerEmail: "nadie@aiacademy.local" }),
       3,
+      usersByEmail,
       usersByEmail,
     );
     expect(result.ok).toBe(false);
@@ -60,6 +67,7 @@ describe("validateTaskImportRow", () => {
       row({ supportEmails: "nadie@aiacademy.local" }),
       4,
       usersByEmail,
+      usersByEmail,
     );
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.message).toContain("apoyo");
@@ -70,6 +78,7 @@ describe("validateTaskImportRow", () => {
       row({ priority: "urgentisima" }),
       5,
       usersByEmail,
+      usersByEmail,
     );
     expect(result.ok).toBe(false);
   });
@@ -78,6 +87,7 @@ describe("validateTaskImportRow", () => {
     const result = validateTaskImportRow(
       row({ weight: "11" }),
       6,
+      usersByEmail,
       usersByEmail,
     );
     expect(result.ok).toBe(false);
@@ -88,6 +98,7 @@ describe("validateTaskImportRow", () => {
       row({ estimate: "cuatro" }),
       7,
       usersByEmail,
+      usersByEmail,
     );
     expect(result.ok).toBe(false);
   });
@@ -96,6 +107,7 @@ describe("validateTaskImportRow", () => {
     const result = validateTaskImportRow(
       row({ due: "01/12/2026" }),
       8,
+      usersByEmail,
       usersByEmail,
     );
     expect(result.ok).toBe(false);
@@ -107,6 +119,7 @@ describe("validateTaskImportRow", () => {
         supportEmails: "santiago@aiacademy.local, valentina@aiacademy.local",
       }),
       9,
+      usersByEmail,
       usersByEmail,
     );
     expect(result.ok).toBe(true);

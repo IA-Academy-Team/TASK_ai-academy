@@ -2,7 +2,7 @@ import { Router } from "express";
 import {
   getProject,
   listAllActiveUsers,
-  listLeaderCandidates,
+  listAllActiveUsersIncludingAdmins,
   listMembers,
   setMembers,
   updateProject,
@@ -48,7 +48,7 @@ projectSettingsRouter.get("/proyectos/:id/configuracion", async (req, res) => {
   const [members, allUsers, leaderOptions, tasks] = await Promise.all([
     listMembers(project.id),
     listAllActiveUsers(),
-    listLeaderCandidates(),
+    listAllActiveUsersIncludingAdmins(),
     listTasksByProject(project.id),
   ]);
 

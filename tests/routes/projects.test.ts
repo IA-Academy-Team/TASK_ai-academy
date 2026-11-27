@@ -48,6 +48,92 @@ describe("GET/POST /proyectos", () => {
     expect(res.text).toContain("project-list-grid");
   });
 
+  it("admin, GET /proyectos?nombre filtra por nombre", async () => {
+    const app = createApp();
+    const { cookie, me } = await makeAdminCookie(
+      "proj-filter-nombre@test.local",
+    );
+    await createProject({
+      name: "Proyecto Alfa",
+      code: "PF-A",
+      objective: "Objetivo",
+      leaderId: me.id,
+      start: "2026-01-01",
+      due: "2026-02-01",
+      limitActive: 2,
+      limitReview: 2,
+      memberIds: [],
+    });
+    await createProject({
+      name: "Proyecto Beta",
+      code: "PF-B",
+      objective: "Objetivo",
+      leaderId: me.id,
+      start: "2026-01-01",
+      due: "2026-02-01",
+      limitActive: 2,
+      limitReview: 2,
+      memberIds: [],
+    });
+
+    const res = await supertest(app)
+      .get("/proyectos?nombre=Alfa")
+      .set("Cookie", cookie);
+    expect(res.status).toBe(200);
+    expect(res.text).toContain("Proyecto Alfa");
+    expect(res.text).not.toContain("Proyecto Beta");
+  });
+
+  it("admin, GET /proyectos?responsable filtra por líder", async () => {
+    const app = createApp();
+    const { cookie, me } = await makeAdminCookie(
+      "proj-filter-leader-a@test.local",
+    );
+    const { me: otherLeader } = await makeAdminCookie(
+      "proj-filter-leader-b@test.local",
+    );
+    await createProject({
+      name: "Proyecto Liderado Por A",
+      code: "PF-C",
+      objective: "Objetivo",
+      leaderId: me.id,
+      start: "2026-01-01",
+      due: "2026-02-01",
+      limitActive: 2,
+      limitReview: 2,
+      memberIds: [],
+    });
+    await createProject({
+      name: "Proyecto Liderado Por B",
+      code: "PF-D",
+      objective: "Objetivo",
+      leaderId: otherLeader.id,
+      start: "2026-01-01",
+      due: "2026-02-01",
+      limitActive: 2,
+      limitReview: 2,
+      memberIds: [],
+    });
+
+    const res = await supertest(app)
+      .get(`/proyectos?responsable=${otherLeader.id}`)
+      .set("Cookie", cookie);
+    expect(res.status).toBe(200);
+    expect(res.text).toContain("Proyecto Liderado Por B");
+    expect(res.text).not.toContain("Proyecto Liderado Por A");
+  });
+
+  it("GET /proyectos con estado inválido responde 400", async () => {
+    const app = createApp();
+    const cookie = await signUpAndGetCookie(
+      "proj-filter-bad-estado@test.local",
+    );
+    const res = await supertest(app)
+      .get("/proyectos?estado=no-existe")
+      .set("Cookie", cookie);
+    expect(res.status).toBe(400);
+  });
+
   it("sin autenticar, GET /proyectos redirige a /login", async () => {
     const app = createApp();
     const res = await supertest(app).get("/proyectos");

@@ -365,4 +365,32 @@ describe("POST /tareas/:id/eliminar", () => {
     expect(res.status).toBe(303);
     expect(await getTask(task.id)).toBeUndefined();
   });
+
+  it("muestra el nombre del responsable cuando es un admin, no su id crudo", async () => {
+    const { app, cookie, me, project } = await setup(
+      "task-owner-admin@test.local",
+    );
+    await db.update(user).set({ role: ADMIN_ROLE }).where(eq(user.id, me.id));
+    const task = await createTask({
+      projectId: project.id,
+      title: "Tarea con responsable admin",
+      deliverable: "E",
+      description: "",
+      ownerId: me.id,
+      priority: "media",
+      weight: 1,
+      estimate: "4",
+      dependencyId: null,
+      due: "2026-01-10",
+      supportIds: [],
+      actorId: me.id,
+    });
+
+    const res = await supertest(app)
+      .get(`/tareas/${task.id}`)
+      .set("Cookie", cookie);
+    expect(res.status).toBe(200);
+    expect(res.text).toContain(me.name);
+    expect(res.text).not.toContain(me.id);
+  });
 });

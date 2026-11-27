@@ -4,7 +4,7 @@ import {
   deleteProject,
   getProject,
   listAllActiveUsers,
-  listLeaderCandidates,
+  listAllActiveUsersIncludingAdmins,
   listMembers,
   listProjects,
 } from "../db/projects-repo.ts";
@@ -20,11 +20,15 @@ import {
   projectStats,
   weightedProgress,
 } from "../domain/hours.ts";
-import { projectRiskInfo } from "../domain/project-risk.ts";
+import { matchesRiskFilter, projectRiskInfo } from "../domain/project-risk.ts";
 import { ADMIN_ROLE, isAdminRole } from "../domain/roles.ts";
 import { HttpError } from "../lib/http-error.ts";
 import { authorize } from "../middleware/authorize.ts";
-import { createProjectSchema, toArray } from "../schemas/project.ts";
+import {
+  createProjectSchema,
+  projectListFilterSchema,
+  toArray,
+} from "../schemas/project.ts";
 import { statusEnum } from "../schemas/task.ts";
 
 export const projectsRouter = Router();
@@ -33,11 +37,18 @@ projectsRouter.get("/proyectos", async (req, res) => {
     res.redirect("/login");
     return;
   }
+
+  const filterParsed = projectListFilterSchema.safeParse(req.query);
+  if (!filterParsed.success) {
+    throw new HttpError(400, "filtro inválido");
+  }
+  const filters = filterParsed.data;
+
   const today = new Date().toLocaleDateString("en-CA");
   const [allRows, users, leaderCandidates] = await Promise.all([
     listProjects(),
     listAllActiveUsers(),
-    listLeaderCandidates(),
+    listAllActiveUsersIncludingAdmins(),
   ]);
 
   const supportByTask = await listSupportUserIdsByTaskIds(
@@ -74,10 +85,34 @@ projectsRouter.get("/proyectos", async (req, res) => {
       stats: projectStats(statsItems),
     };
   });
+
+  // Las opciones del filtro de responsable solo muestran líderes que
+  // efectivamente dirigen un proyecto visible para este usuario.
+  const leaderIdsInView = new Set(items.map((p) => p.leaderId));
+  const responsableOptions = leaderCandidates.filter((u) =>
+    leaderIdsInView.has(u.id),
+  );
+
+  const nombreFilter = filters.nombre.toLowerCase();
+  const filteredItems = items.filter((p) => {
+    if (nombreFilter && !p.name.toLowerCase().includes(nombreFilter)) {
+      return false;
+    }
+    if (filters.responsable && p.leaderId !== filters.responsable) {
+      return false;
+    }
+    if (filters.estado && !matchesRiskFilter(p.risk, filters.estado)) {
+      return false;
+    }
+    return true;
+  });
+
   res.render("proyectos/index", {
-    items,
+    items: filteredItems,
     users,
     leaderCandidates,
+    responsableOptions,
+    filters,
     user: req.user,
     openNewProjectModal: req.query.error === "1",
     error:
@@ -160,7 +195,7 @@ projectsRouter.get("/proyectos/:id", async (req, res) => {
 
   const [allUsers, leaderCandidates] = await Promise.all([
     listAllActiveUsers(),
-    listLeaderCandidates(),
+    listAllActiveUsersIncludingAdmins(),
   ]);
   // El líder puede ser un admin (excluido de listAllActiveUsers) — resolver
   // su nombre y datos contra el universo completo de usuarios activos.
@@ -235,6 +270,7 @@ projectsRouter.get("/proyectos/:id", async (req, res) => {
     members,
     leader,
     allUsers,
+    ownerCandidates: leaderCandidates,
     activeCount,
     reviewCount,
     estado: estadoParsed.data ?? null,

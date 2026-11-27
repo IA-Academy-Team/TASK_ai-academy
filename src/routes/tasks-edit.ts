@@ -1,5 +1,8 @@
 import { Router } from "express";
-import { getProject, listAllActiveUsers } from "../db/projects-repo.ts";
+import {
+  getProject,
+  listAllActiveUsersIncludingAdmins,
+} from "../db/projects-repo.ts";
 import {
   getTask,
   listTasksByProject,
@@ -50,7 +53,7 @@ tasksEditRouter.get("/tareas/:id/editar", async (req, res) => {
   }
 
   const [allUsers, allTasks] = await Promise.all([
-    listAllActiveUsers(),
+    listAllActiveUsersIncludingAdmins(),
     task.projectId
       ? listTasksByProject(task.projectId)
       : listTasksWithoutProject(),
@@ -87,7 +90,7 @@ tasksEditRouter.post("/tareas/:id/editar", async (req, res) => {
   const parsed = updateTaskSchema.safeParse(req.body);
   if (!parsed.success) {
     const [allUsers, allTasks] = await Promise.all([
-      listAllActiveUsers(),
+      listAllActiveUsersIncludingAdmins(),
       task.projectId
         ? listTasksByProject(task.projectId)
         : listTasksWithoutProject(),

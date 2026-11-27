@@ -1,6 +1,10 @@
 import { Router } from "express";
 import multer from "multer";
-import { getProject, listAllActiveUsers } from "../db/projects-repo.ts";
+import {
+  getProject,
+  listAllActiveUsers,
+  listAllActiveUsersIncludingAdmins,
+} from "../db/projects-repo.ts";
 import { createTask } from "../db/tasks-repo.ts";
 import { isAdminRole } from "../domain/roles.ts";
 import { validateTaskImportRow } from "../domain/task-import.ts";
@@ -81,9 +85,15 @@ tasksImportRouter.post(
       );
     }
 
-    const activeUsers = await listAllActiveUsers();
-    const usersByEmail = new Map(
+    const [activeUsers, ownerCandidates] = await Promise.all([
+      listAllActiveUsers(),
+      listAllActiveUsersIncludingAdmins(),
+    ]);
+    const supportUsersByEmail = new Map(
       activeUsers.map((u) => [u.email.toLowerCase(), u.id]),
+    );
+    const ownerUsersByEmail = new Map(
+      ownerCandidates.map((u) => [u.email.toLowerCase(), u.id]),
     );
 
     const results: ImportResultRow[] = [];
@@ -92,7 +102,8 @@ tasksImportRouter.post(
       const outcome = validateTaskImportRow(
         rawRows[i],
         rowNumber,
-        usersByEmail,
+        ownerUsersByEmail,
+        supportUsersByEmail,
       );
       if (!outcome.ok) {
         results.push({ row: rowNumber, ok: false, message: outcome.message });

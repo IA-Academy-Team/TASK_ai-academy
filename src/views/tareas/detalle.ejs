@@ -34,7 +34,7 @@
 
     <% if (error) { %><div class="error"><%= error %></div><% } %>
 
-    <% const owner = users.find(function(u){ return u.id === task.ownerId; }); %>
+    <% const owner = ownerCandidates.find(function(u){ return u.id === task.ownerId; }); %>
     <div class="task-detail-layout">
       <section class="card task-detail-main">
         <div class="task-detail-section">

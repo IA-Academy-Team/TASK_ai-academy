@@ -1,7 +1,7 @@
 import { Router } from "express";
 import {
   listAllActiveUsers,
-  listLeaderCandidates,
+  listAllActiveUsersIncludingAdmins,
   listProjects,
 } from "../db/projects-repo.ts";
 import { ADMIN_ROLE } from "../domain/roles.ts";
@@ -20,7 +20,7 @@ projectsNewRouter.get(
     }
     const [users, leaderCandidates, projects] = await Promise.all([
       listAllActiveUsers(),
-      listLeaderCandidates(),
+      listAllActiveUsersIncludingAdmins(),
       listProjects(),
     ]);
     res.render("proyectos/nuevo", {

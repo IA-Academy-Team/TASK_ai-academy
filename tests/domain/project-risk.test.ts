@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { daysUntil, projectRiskInfo } from "../../src/domain/project-risk.ts";
+import {
+  daysUntil,
+  matchesRiskFilter,
+  projectRiskInfo,
+} from "../../src/domain/project-risk.ts";
 
 describe("daysUntil", () => {
   it("cuenta los días entre hoy y la fecha límite", () => {
@@ -42,5 +46,43 @@ describe("projectRiskInfo", () => {
       "2026-11-06",
     );
     expect(info.level).toBe("risk");
+  });
+});
+
+describe("matchesRiskFilter", () => {
+  it("'completado' solo matchea level done", () => {
+    expect(
+      matchesRiskFilter({ level: "done", daysLeft: 5 }, "completado"),
+    ).toBe(true);
+    expect(matchesRiskFilter({ level: "ok", daysLeft: 20 }, "completado")).toBe(
+      false,
+    );
+  });
+
+  it("'ejecucion' solo matchea level ok", () => {
+    expect(matchesRiskFilter({ level: "ok", daysLeft: 20 }, "ejecucion")).toBe(
+      true,
+    );
+    expect(matchesRiskFilter({ level: "risk", daysLeft: 3 }, "ejecucion")).toBe(
+      false,
+    );
+  });
+
+  it("'vencido' es level risk con daysLeft negativo", () => {
+    expect(matchesRiskFilter({ level: "risk", daysLeft: -2 }, "vencido")).toBe(
+      true,
+    );
+    expect(matchesRiskFilter({ level: "risk", daysLeft: 2 }, "vencido")).toBe(
+      false,
+    );
+  });
+
+  it("'por-vencer' es level risk con daysLeft no negativo", () => {
+    expect(
+      matchesRiskFilter({ level: "risk", daysLeft: 2 }, "por-vencer"),
+    ).toBe(true);
+    expect(
+      matchesRiskFilter({ level: "risk", daysLeft: -2 }, "por-vencer"),
+    ).toBe(false);
   });
 });

@@ -33,3 +33,32 @@ export function projectRiskInfo(
   }
   return { level: "ok", daysLeft };
 }
+
+// Las mismas categorías que ya muestra la tarjeta de proyecto (badge
+// "Completado" / "Venció" / "Vence en Xd" / "En ejecución"), para que el
+// filtro de la lista de proyectos use el mismo criterio que lo que el
+// usuario ve.
+export const PROJECT_RISK_FILTERS = [
+  "ejecucion",
+  "por-vencer",
+  "vencido",
+  "completado",
+] as const;
+
+export type ProjectRiskFilter = (typeof PROJECT_RISK_FILTERS)[number];
+
+export function matchesRiskFilter(
+  risk: ProjectRiskInfo,
+  filter: ProjectRiskFilter,
+): boolean {
+  switch (filter) {
+    case "completado":
+      return risk.level === "done";
+    case "vencido":
+      return risk.level === "risk" && risk.daysLeft < 0;
+    case "por-vencer":
+      return risk.level === "risk" && risk.daysLeft >= 0;
+    case "ejecucion":
+      return risk.level === "ok";
+  }
+}

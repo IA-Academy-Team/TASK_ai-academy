@@ -11,6 +11,7 @@
 <%- include('../partials/styles') %>
 <style>
 .project-list-grid{grid-template-columns:repeat(auto-fill,minmax(330px,1fr));align-items:stretch}.project-card{min-height:374px;padding:20px;border-left-width:1px}.project-card .meta{justify-content:flex-start;gap:13px}.project-card .meta span{white-space:nowrap}.project-card-new{min-height:374px;border:1px dashed var(--accent);background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;color:var(--primary)}.project-card-new h2{margin:13px 0 6px;font-size:17px;color:var(--ink)}.project-card-new p{margin:0 0 18px;max-width:280px;color:var(--muted);font-size:11px;line-height:1.55}.project-card-new-icon{display:grid;place-items:center;width:38px;height:38px;border-radius:999px;background:var(--lav);font-size:22px}.project-card-new .btn{color:var(--primary);background:var(--lav);border-color:var(--lav)}@media (max-width:700px){.project-list-grid{grid-template-columns:1fr}.project-card,.project-card-new{min-height:auto}}
+.project-filter-box{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:14px;padding:14px;border:1px solid var(--line);border-radius:var(--radius-control);background:var(--bg);margin-bottom:16px}.project-filter-fields{display:flex;align-items:flex-end;flex-wrap:wrap;gap:10px}.project-filter-fields .field{margin:0}.project-filter-label{display:block;margin:0 0 7px;font-size:10px;font-weight:800;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}.project-filter-fields input[type=text]{min-height:36px;font-size:11px;width:200px}.project-filter-fields select{min-height:36px;font-size:11px;width:180px}.project-filter-chips{display:flex;flex-wrap:wrap;gap:7px}.project-filter-chips a{display:inline-flex;align-items:center;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--text);font-size:10px;font-weight:730}.project-filter-chips a.on{background:var(--primary);border-color:var(--primary);color:var(--primary-text)}@media (max-width:900px){.project-filter-box{align-items:stretch;flex-direction:column}.project-filter-fields input[type=text],.project-filter-fields select{width:100%}}
 </style>
 </head>
 <body>
@@ -31,6 +32,38 @@
         <p class="subtitle">Crea proyectos nuevos y abre su lista de tareas ordenadas por dependencias.</p>
       </div>
     </div>
+
+    <% var hasActiveFilters = !!(filters.nombre || filters.responsable || filters.estado); %>
+    <% var estadoLinkBase = '/proyectos?nombre=' + encodeURIComponent(filters.nombre) + '&responsable=' + encodeURIComponent(filters.responsable) + '&estado='; %>
+    <div class="project-filter-box">
+      <form method="get" action="/proyectos" class="project-filter-fields">
+        <div class="field">
+          <label class="project-filter-label" for="project-filter-nombre">Nombre</label>
+          <input type="text" id="project-filter-nombre" name="nombre" value="<%= filters.nombre %>" placeholder="Buscar por nombre..." />
+        </div>
+        <div class="field">
+          <label class="project-filter-label" for="project-filter-responsable">Responsable</label>
+          <select id="project-filter-responsable" name="responsable">
+            <option value="">Todos</option>
+            <% responsableOptions.forEach(function(u) { %><option value="<%= u.id %>" <%= filters.responsable === u.id ? 'selected' : '' %>><%= u.name %></option><% }) %>
+          </select>
+        </div>
+        <input type="hidden" name="estado" value="<%= filters.estado %>" />
+        <button type="submit" class="btn subtle">Filtrar</button>
+        <% if (hasActiveFilters) { %><a href="/proyectos" class="btn subtle">Limpiar filtros</a><% } %>
+      </form>
+      <div class="project-filter-chips">
+        <a href="<%= estadoLinkBase %>" class="<%= filters.estado === '' ? 'on' : '' %>">Todos</a>
+        <a href="<%= estadoLinkBase %>ejecucion" class="<%= filters.estado === 'ejecucion' ? 'on' : '' %>">En ejecución</a>
+        <a href="<%= estadoLinkBase %>por-vencer" class="<%= filters.estado === 'por-vencer' ? 'on' : '' %>">Por vencer</a>
+        <a href="<%= estadoLinkBase %>vencido" class="<%= filters.estado === 'vencido' ? 'on' : '' %>">Vencido</a>
+        <a href="<%= estadoLinkBase %>completado" class="<%= filters.estado === 'completado' ? 'on' : '' %>">Completado</a>
+      </div>
+    </div>
+
+    <% if (items.length === 0 && hasActiveFilters) { %>
+    <div class="card" style="margin-bottom:16px"><%- include('../partials/empty-state', { text: 'Ningún proyecto coincide con ese filtro.' }) %></div>
+    <% } %>
 
     <div class="project-grid project-list-grid">
       <% items.forEach(function(p) { %>
@@ -78,7 +111,7 @@
       </a>
       <% } %>
     </div>
-    <% if (items.length === 0 && user.role !== "administrador") { %>
+    <% if (items.length === 0 && !hasActiveFilters && user.role !== "administrador") { %>
     <div class="card" style="margin-top:16px"><%- include('../partials/empty-state', { text: 'Todavía no hay proyectos visibles para vos.' }) %></div>
     <% } %>
 

@@ -120,7 +120,7 @@
             <div class="form-grid">
               <div class="field full"><label>Responsable *</label>
                 <select name="ownerId" required>
-                  <% allUsers.forEach(function(u) { %><option value="<%= u.id %>"><%= u.name %></option><% }) %>
+                  <% ownerCandidates.forEach(function(u) { %><option value="<%= u.id %>"><%= u.name %></option><% }) %>
                 </select>
               </div>
               <div class="field full"><label>Apoyo</label>
@@ -215,7 +215,7 @@
           <tr onclick="location.href='/tareas/<%= t.id %>'" style="cursor:pointer">
             <td><%= t.order %></td>
             <td><strong><%= t.title %></strong><br/><small class="muted"><%= t.deliverable %></small></td>
-            <td><% const owner = allUsers.find(function(u){ return u.id === t.ownerId }); %><%= owner ? owner.name : t.ownerId %></td>
+            <td><% const owner = ownerCandidates.find(function(u){ return u.id === t.ownerId }); %><%= owner ? owner.name : t.ownerId %></td>
             <td><span class="badge <%= t.priority %>"><%= t.priority %></span></td>
             <td><span class="badge <%= t.status %>"><%= t.status %></span></td>
             <td><%= t.due %></td>
